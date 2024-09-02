@@ -506,7 +506,7 @@ describe("deploy", () => {
       await deploy({...TEST_OPTIONS, config}, effects);
       assert.fail("expected error");
     } catch (err) {
-      CliError.assert(err, {message: /Found invalid project slug.*Business Intelligence/});
+      CliError.assert(err, {message: /Found invalid `projectSlug`.*Business Intelligence/});
     }
 
     effects.close();
@@ -651,7 +651,7 @@ describe("deploy", () => {
       await deploy({...TEST_OPTIONS, config}, effects);
       assert.fail("expected error");
     } catch (err) {
-      assert.ok(err instanceof Error && err.message.match(/out of inputs for.*Do you want to create a new project/));
+      assert.ok(err instanceof Error && err.message.match(/out of inputs for.*Do you want to create a new app/));
     }
   });
 
@@ -676,7 +676,7 @@ describe("deploy", () => {
     } catch (err) {
       CliError.assert(err, {message: "Error during deploy", print: false});
     }
-    effects.clack.log.assertLogged({message: /Starter tier can only deploy one project/, level: "error"});
+    effects.clack.log.assertLogged({message: /Starter tier can only deploy one app/, level: "error"});
   });
 
   it("gives a nice error when there are no workspaces to deploy to", async () => {

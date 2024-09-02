@@ -35,7 +35,7 @@ Framework provides a variety of ways to import. When you reference `d3`, `Inputs
 - [local paths](#local-imports), or
 - [remote URLs](#remote-imports).
 
-With the exception of remote imports, imported modules are bundled with your project, improving performance, security, and stability. In some cases, such as stylesheets and WebAssembly modules, you may need to specify additional files to download via [`import.meta.resolve`](#dynamic-imports).
+With the exception of remote imports, imported modules are bundled with your app, improving performance, security, and stability. In some cases, such as stylesheets and WebAssembly modules, you may need to specify additional files to download via [`import.meta.resolve`](#dynamic-imports).
 
 ## npm imports
 
@@ -65,7 +65,7 @@ If you do not specify an entry point, the default entry point is determined by t
 
 ### Self-hosting of npm imports
 
-Framework downloads `npm:` imports from jsDelivr during preview and build. This improves performance, security, and stability of your built site by removing runtime dependencies on external sites.
+Framework downloads `npm:` imports from jsDelivr during preview and build. This improves performance, security, and stability of your built app by removing runtime dependencies on external sites.
 
 Downloads from npm are cached in `.observablehq/cache/_npm` within your [source root](./config#root) (typically `src`). An imported module is downloaded from jsDelivr only if it is not already in the cache. You can clear the cache and restart the server to re-fetch the latest versions of libraries from npm.
 
@@ -252,7 +252,7 @@ Imported modules are copied to the output root (`dist` by default) during build,
 ├─ src
 │  ├─ chart.js
 │  └─ index.md
-└─ ...
+└─ …
 ```
 
 And `index.md` includes a JavaScript code block that says:
@@ -269,9 +269,9 @@ The resulting output root is:
 │  ├─ _import
 │  │  └─ chart.c79c2048.js
 │  ├─ _observablehq
-│  │  └─ ... # additional assets for serving the site
+│  │  └─ … # additional assets
 │  └─ index.html
-└─ ...
+└─ …
 ```
 
 The import declaration is automatically rewritten during build to point to `./_import/chart.c79c2048.js` instead of `./chart.js`. The content hash `c79c2048` ensures cache-breaking during deploy, and allows assets to be marked as `cache-control: immutable` to improve performance.

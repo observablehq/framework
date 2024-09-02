@@ -221,7 +221,7 @@ Attached files live in the source root (typically `src`) alongside your Markdown
 ├─ src
 │  ├─ index.md
 │  └─ quakes.csv
-└─ ...
+└─ …
 ```
 
 On build, any files referenced by `FileAttachment` will automatically be copied to the `_file` folder under the output root (`dist`), here resulting in:
@@ -232,9 +232,9 @@ On build, any files referenced by `FileAttachment` will automatically be copied 
 │  ├─ _file
 │  │  └─ quakes.e5f2eb94.csv
 │  ├─ _observablehq
-│  │  └─ ... # additional assets for serving the site
+│  │  └─ … # additional assets
 │  └─ index.html
-└─ ...
+└─ …
 ```
 
 `FileAttachment` references are automatically rewritten during build; for example, a reference to `quakes.csv` might be replaced with `_file/quakes.e5f2eb94.csv`. (As with imports, file names are given a content hash, here `e5f2eb94`, to improve performance.) Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.
