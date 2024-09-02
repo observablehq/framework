@@ -1,31 +1,26 @@
 import assert from "node:assert";
-import {isParameterizedPath, route} from "../src/route.js";
+import {isParameterized, route} from "../src/route.js";
 
-describe("isParameterizedPath(path)", () => {
+describe("isParameterizedName(path)", () => {
   it("returns true for a parameterized file name", () => {
-    assert.strictEqual(isParameterizedPath("/[file].md"), true);
-    assert.strictEqual(isParameterizedPath("/prefix-[file].md"), true);
-    assert.strictEqual(isParameterizedPath("/[file]-suffix.md"), true);
-    assert.strictEqual(isParameterizedPath("/[file]-[number].md"), true);
-    assert.strictEqual(isParameterizedPath("/path/[file].md"), true);
-    assert.strictEqual(isParameterizedPath("/path/to/[file].md"), true);
-    assert.strictEqual(isParameterizedPath("/path/[dir]/[file].md"), true);
+    assert.strictEqual(isParameterized("[file].md"), true);
+    assert.strictEqual(isParameterized("prefix-[file].md"), true);
+    assert.strictEqual(isParameterized("[file]-suffix.md"), true);
+    assert.strictEqual(isParameterized("[file]-[number].md"), true);
   });
   it("returns true for a parameterized directory name", () => {
-    assert.strictEqual(isParameterizedPath("/[dir]/file.md"), true);
-    assert.strictEqual(isParameterizedPath("/prefix-[dir]/file.md"), true);
-    assert.strictEqual(isParameterizedPath("/[dir]-suffix/file.md"), true);
-    assert.strictEqual(isParameterizedPath("/[dir]-[number]/file.md"), true);
-    assert.strictEqual(isParameterizedPath("/path/[dir]/file.md"), true);
-    assert.strictEqual(isParameterizedPath("/[dir1]/[dir2]/file.md"), true);
+    assert.strictEqual(isParameterized("[dir]"), true);
+    assert.strictEqual(isParameterized("prefix-[dir]"), true);
+    assert.strictEqual(isParameterized("[dir]-suffix"), true);
+    assert.strictEqual(isParameterized("[dir]-[number]"), true);
   });
   it("doesn’t consider an empty parameter to be valid", () => {
-    assert.strictEqual(isParameterizedPath("/[]/file.md"), false);
-    assert.strictEqual(isParameterizedPath("/path/to/[].md"), false);
+    assert.strictEqual(isParameterized("[]"), false);
+    assert.strictEqual(isParameterized("[].md"), false);
   });
   it("returns false for a non-parameterized path", () => {
-    assert.strictEqual(isParameterizedPath("/file.md"), false);
-    assert.strictEqual(isParameterizedPath("/path/to/file.md"), false);
+    assert.strictEqual(isParameterized("file.md"), false);
+    assert.strictEqual(isParameterized("dir"), false);
   });
 });
 
@@ -36,12 +31,18 @@ describe("route(root, path, exts)", () => {
   it("finds an exact file with multiple extensions", () => {
     assert.deepStrictEqual(route("test/input/build/simple", "data", [".txt", ".txt.js", ".txt.py"]), {path: "data.txt.js", ext: ".txt.js"}); // prettier-ignore
   });
+  it("finds an exact file with the empty extension", () => {
+    assert.deepStrictEqual(route("test/input/params", "README", [""]), {path: "README", ext: ""}); // prettier-ignore
+  });
   it("finds a parameterized file", () => {
     assert.deepStrictEqual(route("test/input/params", "bar", [".md"]), {path: "[file].md", ext: ".md", params: {file: "bar"}}); // prettier-ignore
     assert.deepStrictEqual(route("test/input/params", "baz", [".md"]), {path: "[file].md", ext: ".md", params: {file: "baz"}}); // prettier-ignore
   });
   it("finds a parameterized file with multiple extensions", () => {
     assert.deepStrictEqual(route("test/input/params", "data", [".csv", ".csv.js", ".csv.py"]), {path: "[file].csv.js", ext: ".csv.js", params: {file: "data"}}); // prettier-ignore
+  });
+  it("finds a parameterized file with the empty extension", () => {
+    assert.deepStrictEqual(route("test/input/params/bar", "README", [""]), {path: "[file]", ext: "", params: {file: "README"}}); // prettier-ignore
   });
   it("finds a non-parameterized file ahead of a parameterized file", () => {
     assert.deepStrictEqual(route("test/input/params", "foo", [".md"]), {path: "foo.md", ext: ".md"}); // prettier-ignore
@@ -73,9 +74,5 @@ describe("route(root, path, exts)", () => {
   it("does not allow an empty match", () => {
     assert.deepStrictEqual(route("test/input/params", "foo/", [".md"]), undefined);
     assert.deepStrictEqual(route("test/input/params", "bar/", [".md"]), undefined);
-  });
-  it("does not allow the empty extension", () => {
-    assert.throws(() => route("test/input/build/simple", "simple.md", [""]), /empty extension/);
-    assert.throws(() => route("test/input/build/simple", "data.txt", ["", ".js", ".py"]), /empty extension/);
   });
 });

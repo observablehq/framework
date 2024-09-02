@@ -35,7 +35,7 @@ index: false
   gap: 2rem;
 }
 
-@container not (min-width: 400px) {
+@container not (min-width: 560px) {
   .cta {
     flex-direction: column;
     align-items: start;

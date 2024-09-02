@@ -8,7 +8,7 @@ import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
 import {enoent} from "./error.js";
-import {maybeStat, prepareOutput} from "./files.js";
+import {maybeStat, prepareOutput, visitFiles} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
 import type {FileInfo} from "./javascript/module.js";
@@ -17,7 +17,7 @@ import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage, ParseOptions} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
 import type {Params} from "./route.js";
-import {route} from "./route.js";
+import {isParameterized, requote, route} from "./route.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
 
 const runningCommands = new Map<string, Promise<string>>();
@@ -87,7 +87,7 @@ export class LoaderResolver {
    * page object.
    */
   async loadPage(path: string, options: LoadOptions & ParseOptions, effects?: LoadEffects): Promise<MarkdownPage> {
-    const loader = this.find(`${path}.md`);
+    const loader = this.findPage(path, options);
     if (!loader) throw enoent(path);
     const source = await readFile(join(this.root, await loader.load(effects)), "utf8");
     return parseMarkdown(source, {params: loader.params, ...options});
@@ -100,6 +100,25 @@ export class LoaderResolver {
     const loader = this.find(`${path}.md`);
     if (!loader) throw enoent(path);
     return watch(join(this.root, loader.path), listener);
+  }
+
+  /**
+   * Finds the paths of all non-parameterized pages within the source root.
+   */
+  *findPagePaths(): Generator<string> {
+    const ext = new RegExp(`\\.md(${["", ...this.interpreters.keys()].map(requote).join("|")})$`);
+    for (const path of visitFiles(this.root, (name) => !isParameterized(name))) {
+      if (!ext.test(path)) continue;
+      yield `/${path.slice(0, path.lastIndexOf(".md"))}`;
+    }
+  }
+
+  /**
+   * Finds the page loader for the specified target path, relative to the source
+   * root, if the loader exists. If there is no such loader, returns undefined.
+   */
+  findPage(path: string, options?: LoadOptions): Loader | undefined {
+    return this.find(`${path}.md`, options);
   }
 
   /**
@@ -132,8 +151,8 @@ export class LoaderResolver {
   // - /[param1]/[param2]/[param3].csv.js
   private findFile(targetPath: string, {useStale}: {useStale: boolean}): Loader | undefined {
     const ext = extname(targetPath);
-    const exts = [ext, ...Array.from(this.interpreters.keys(), (iext) => ext + iext)];
-    const found = route(this.root, targetPath.slice(0, -ext.length), exts);
+    const exts = ext ? [ext, ...Array.from(this.interpreters.keys(), (iext) => ext + iext)] : [ext];
+    const found = route(this.root, ext ? targetPath.slice(0, -ext.length) : targetPath, exts);
     if (!found) return;
     const {path, params, ext: fext} = found;
     if (fext === ext) return new StaticLoader({root: this.root, path, params});

@@ -2,6 +2,7 @@ import assert from "node:assert";
 import {mkdir, readFile, rm, stat, unlink, utimes, writeFile} from "node:fs/promises";
 import os from "node:os";
 import {join} from "node:path/posix";
+import {sort} from "d3-array";
 import {clearFileInfo} from "../src/javascript/module.js";
 import type {LoadEffects} from "../src/loader.js";
 import {LoaderResolver} from "../src/loader.js";
@@ -10,6 +11,21 @@ const noopEffects: LoadEffects = {
   logger: {log() {}, warn() {}, error() {}},
   output: {write() {}}
 };
+
+describe("LoaderResolver.findPagePaths()", () => {
+  it("finds static Markdown pages", () => {
+    const loaders = new LoaderResolver({root: "test/input/build/simple"});
+    assert.deepStrictEqual(sort(loaders.findPagePaths()), ["/simple"]);
+  });
+  it("finds non-parameterized Markdown page loaders", () => {
+    const loaders = new LoaderResolver({root: "test/input/build/page-loaders"});
+    assert.deepStrictEqual(sort(loaders.findPagePaths()), ["/hello-js", "/hello-ts", "/index"]);
+  });
+  it("ignores parameterized pages", () => {
+    const loaders = new LoaderResolver({root: "test/input/build/params"});
+    assert.deepStrictEqual(sort(loaders.findPagePaths()), []);
+  });
+});
 
 describe("LoaderResolver.find(path)", () => {
   const loaders = new LoaderResolver({root: "test"});
