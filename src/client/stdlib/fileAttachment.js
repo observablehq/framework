@@ -6,19 +6,14 @@ export function registerFile(name, info, base = location) {
     files.delete(href);
   } else {
     const {path, mimeType, lastModified, size} = info;
-    const file = new FileAttachmentImpl(
-      new URL(path, base).href,
-      name.split("/").pop(),
-      mimeType,
-      lastModified,
-      size
-    );
+    const file = new FileAttachmentImpl(new URL(path, base).href, name.split("/").pop(), mimeType, lastModified, size);
     files.set(href, file);
   }
 }
 
 export function FileAttachment(name, base = location) {
   if (new.target !== undefined) throw new TypeError("FileAttachment is not a constructor");
+  if (typeof name !== "string") registerFile(name.name, name, base), (name = name.name); // XXX
   const file = files.get(new URL(name, base).href);
   if (!file) throw new Error(`File not found: ${name}`);
   return file;

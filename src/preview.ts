@@ -4,7 +4,7 @@ import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {basename, dirname, extname, join, normalize} from "node:path/posix";
+import {basename, dirname, join, normalize} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
@@ -26,8 +26,8 @@ import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import type {LoaderResolver} from "./loader.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
-import {isPathImport, relativePath, resolvePath} from "./path.js";
-import {registerFiles, renderPage} from "./render.js";
+import {isPathImport, resolvePath} from "./path.js";
+import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
@@ -151,7 +151,13 @@ export class PreviewServer {
           const module = findModule(root, path);
           if (module) {
             const input = await readJavaScript(join(root, module.path));
-            const output = await transpileModule(input, {root, path, params: module.params});
+            const output = await transpileModule(input, {
+              root,
+              path,
+              params: module.params,
+              resolveFile: (name) => loaders.resolveFilePath(resolvePath(path, name)),
+              resolveFileInfo: (name) => loaders.getSourceInfo(resolvePath(path, name))
+            });
             end(req, res, output, "text/javascript");
             return;
           }
@@ -194,23 +200,10 @@ export class PreviewServer {
           const module = findModule(root, path);
           if (module) {
             const info = getModuleInfo(root, path)!;
-            const input = `import {registerFile} from "observablehq:stdlib";${[
-              ...info.globalStaticImports,
-              ...info.localStaticImports
-            ]
+            const input = `${[...info.globalStaticImports, ...info.localStaticImports]
               .filter((i) => i !== "npm:@observablehq/stdlib")
-              .map((i) => `\nimport ${JSON.stringify(i)};`)
-              .join("")}
-${
-  info.files.size
-    ? registerFiles(
-        info.files,
-        (specifier): string => relativePath(path, loaders.resolveFilePath(resolvePath(path, specifier))),
-        (name) => loaders.getSourceInfo(resolvePath(path, name))
-      ) + "\n"
-    : ""
-}
-export * from ${JSON.stringify(pathname)};
+              .map((i) => `import ${JSON.stringify(i)};\n`)
+              .join("")}export * from ${JSON.stringify(pathname)};
 `;
             const output = await transpileModule(input, {
               root,

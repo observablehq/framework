@@ -163,7 +163,7 @@ class TestEffects extends FileBuildEffects {
   async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
     if (typeof contents === "string" && outputPath.endsWith(".html")) {
       contents = contents.replace(/^(\s*<script>\{).*(\}<\/script>)$/gm, "$1/* redacted init script */$2");
-      contents = contents.replace(/^(registerFile\(.*,"lastModified":)\d+(,"size":\d+\}\);)$/gm, "$1/* ts */1706742000000$2"); // prettier-ignore
+      contents = contents.replace(/^(registerFile\(.*,"lastModified":)\d+(,"size":\d+.*\);)$/gm, "$1/* ts */1706742000000$2"); // prettier-ignore
     }
     return super.writeFile(outputPath, contents);
   }
