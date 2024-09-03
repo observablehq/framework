@@ -155,6 +155,7 @@ export class PreviewServer {
               root,
               path,
               params: module.params,
+              // TODO resolveFile and resolveFileInfo are needed during build, too
               resolveFile: (name) => loaders.resolveFilePath(resolvePath(path, name)),
               resolveFileInfo: (name) => loaders.getSourceInfo(resolvePath(path, name))
             });
@@ -188,13 +189,8 @@ export class PreviewServer {
         //
         // TODO Move this to render (renderComponent?)
         //
-        // TODO Can static imports include non-.js files that shouldn’t be preloaded?
-        //
-        // TODO The registerFile calls here happen too late because we’re using
-        // static imports to load the transitive dependencies: the imported
-        // modules could call FileAttachment before registerFile here has a
-        // chance to run. We might be able to fix that by using a dynamic import
-        // or by pushing the registerFile calls down to the imported modules.
+        // TODO Can static imports include non-.js files that shouldn’t be
+        // preloaded?
         if (pathname.endsWith(".js")) {
           const path = pathname;
           const module = findModule(root, path);
