@@ -54,7 +54,25 @@ If the specified config file does not yet exist, you will again be prompted to c
 
 ## Automated deploys
 
-To set up automatic deploys (also known as *continuous deployment* or *CD*), we recommend [GitHub Actions](https://github.com/features/actions). In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
+Once the app has been set up, you can have Observable build the next deploys for you. You can opt in to build *on commit* (whenever you push a new commit to your project’s default branch), and *on schedule*, such as daily or weekly.
+
+Automatic deploys — also known as *continuous deployment* or *CD* — ensure that your  data is up to date, and that any changes you make to your app are immediately reflected in the deployed version.
+
+On your project’s configuration page on Observable, open the **Build settings** tab and click **Connect to GitHub**. This will prompt you to sign in to GitHub and authorize Observable to access (a selection of) your repositories. Once you’ve done that, you can select the project repository and branch you want to deploy from. Observable will then listen for changes in the repo and deploy the app automatically.
+
+In the same tab, you can choose the **Build environment** — “Observable Cloud” is the default, but Enterprise customers can opt in to [build on their own infrastructure](https://observablehq.com/documentation/projects/security#on-premises-hosting-self-hosting).
+
+To set up a schedule, follow the instructions in the **Automation** tab.
+
+If your project needs secrets (such as API keys and database connection credentials), you can add them in the **Secrets** tab. These values are available as environment variables to be used, typically, by data loaders. They are redacted in logs, and are not present in the deployed app.
+
+You can also deploy manually at any time from the project configuration page, for example to refresh the data without waiting for the next scheduled deploy.
+
+The build logs are then available from the **History** tab. If a build fails, you can see the error message to help you debug the issue.
+
+## GitHub Actions
+
+As an alternative, you can use [GitHub Actions](https://github.com/features/actions) to have GitHub build a new version of your app and deploy it to Observable. In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
 
 ```yaml
 name: Deploy
