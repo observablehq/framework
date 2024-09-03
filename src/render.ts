@@ -59,7 +59,7 @@ if (location.pathname.endsWith("/")) {
 import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
     resolveImport("observablehq:client")
   )};${
-    files.size || data?.sql
+    files.size
       ? `\nimport {registerFile${data?.sql ? ", FileAttachment" : ""}} from ${JSON.stringify(
           resolveImport("observablehq:stdlib")
         )};`
