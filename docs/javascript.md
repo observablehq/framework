@@ -238,13 +238,13 @@ Implicit display also implicitly awaits promises.
 
 ## Responsive display
 
-In Markdown, the built-in [`width` reactive variable](#width) represents the current width of the main element. This variable is implemented by [`Generators.width`](./lib/generators#width(element)) and backed by a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver). The reactive width can be a handy thing to pass, say, as the **width** option to [Observable Plot](./lib/plot).
+In Markdown, the built-in [`width` reactive variable](#width) represents the current width of the main element. This variable is implemented by [`Generators.width`](./lib/generators#width-element) and backed by a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver). The reactive width can be a handy thing to pass, say, as the **width** option to [Observable Plot](./lib/plot).
 
 ```js echo
 Plot.barX([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width})
 ```
 
-For non-top-level elements, as when rendering content within an inline expression, use the built-in [`resize` function](#resize(render)) instead. This takes a _render_ function which is called whenever the width or height [changes](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), and the element returned by the render function is inserted into the DOM.
+For non-top-level elements, as when rendering content within an inline expression, use the built-in [`resize` function](#resize-render) instead. This takes a _render_ function which is called whenever the width or height [changes](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), and the element returned by the render function is inserted into the DOM.
 
 ```html echo
 <div class="card">
