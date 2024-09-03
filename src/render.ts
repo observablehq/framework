@@ -102,7 +102,7 @@ function registerTable(name: string, source: string, {path}: RenderOptions): str
   });`;
 }
 
-export function registerFiles(
+function registerFiles(
   files: Iterable<string>,
   resolve: (name: string) => string,
   getInfo: (name: string) => FileInfo | undefined
