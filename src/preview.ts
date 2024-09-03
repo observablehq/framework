@@ -176,6 +176,10 @@ export class PreviewServer {
         // precedence over any page (such as /chart.js.md). Generate a wrapper
         // module that allows this JavaScript module to be embedded remotely.
         //
+        // TODO We need to use getResolvers here (or equivalent) in order to
+        // compute the transitive dependencies of the specified module, rather
+        // than just the direct dependencies.
+        //
         // TODO Move this to render (renderComponent?)
         //
         // TODO Can static imports include non-.js files that shouldn’t be preloaded?
@@ -190,7 +194,13 @@ export class PreviewServer {
           const module = findModule(root, path);
           if (module) {
             const info = getModuleInfo(root, path)!;
-            const input = `import {registerFile} from "observablehq:stdlib";
+            const input = `import {registerFile} from "observablehq:stdlib";${[
+              ...info.globalStaticImports,
+              ...info.localStaticImports
+            ]
+              .filter((i) => i !== "npm:@observablehq/stdlib")
+              .map((i) => `\nimport ${JSON.stringify(i)};`)
+              .join("")}
 ${
   info.files.size
     ? registerFiles(
@@ -199,13 +209,7 @@ ${
         (name) => loaders.getSourceInfo(resolvePath(path, name))
       ) + "\n"
     : ""
-}${[
-  ...info.globalStaticImports,
-  ...info.localStaticImports
-]
-  .filter((i) => i !== "npm:@observablehq/stdlib")
-  .map((i) => `\nimport ${JSON.stringify(i)};`)
-  .join("")}
+}
 export * from ${JSON.stringify(pathname)};
 `;
             const output = await transpileModule(input, {
