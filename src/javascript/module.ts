@@ -4,6 +4,7 @@ import {accessSync, constants, readFileSync, statSync} from "node:fs";
 import {readFile} from "node:fs/promises";
 import {extname, join} from "node:path/posix";
 import type {Program} from "acorn";
+import type {TransformOptions} from "esbuild";
 import {transform, transformSync} from "esbuild";
 import {resolveNodeImport} from "../node.js";
 import {resolveNpmImport} from "../npm.js";
@@ -229,30 +230,11 @@ export async function readJavaScript(sourcePath: string): Promise<string> {
   const source = await readFile(sourcePath, "utf-8");
   switch (extname(sourcePath)) {
     case ".ts":
-      return (
-        await transform(source, {
-          loader: "ts",
-          sourcefile: sourcePath
-        })
-      ).code;
+      return transformJavaScript(source, "ts", sourcePath);
     case ".jsx":
-      return (
-        await transform(source, {
-          loader: "jsx",
-          jsx: "automatic",
-          jsxImportSource: "npm:react",
-          sourcefile: sourcePath
-        })
-      ).code;
+      return transformJavaScript(source, "jsx", sourcePath);
     case ".tsx":
-      return (
-        await transform(source, {
-          loader: "tsx",
-          jsx: "automatic",
-          jsxImportSource: "npm:react",
-          sourcefile: sourcePath
-        })
-      ).code;
+      return transformJavaScript(source, "tsx", sourcePath);
   }
   return source;
 }
@@ -261,24 +243,51 @@ export function readJavaScriptSync(sourcePath: string): string {
   const source = readFileSync(sourcePath, "utf-8");
   switch (extname(sourcePath)) {
     case ".ts":
-      return transformSync(source, {
-        loader: "ts",
-        sourcefile: sourcePath
-      }).code;
+      return transformJavaScriptSync(source, "ts", sourcePath);
     case ".jsx":
-      return transformSync(source, {
-        loader: "jsx",
-        jsx: "automatic",
-        jsxImportSource: "npm:react",
-        sourcefile: sourcePath
-      }).code;
+      return transformJavaScriptSync(source, "jsx", sourcePath);
     case ".tsx":
-      return transformSync(source, {
-        loader: "tsx",
-        jsx: "automatic",
-        jsxImportSource: "npm:react",
-        sourcefile: sourcePath
-      }).code;
+      return transformJavaScriptSync(source, "tsx", sourcePath);
   }
   return source;
+}
+
+export async function transformJavaScript(
+  source: string,
+  loader: "ts" | "jsx" | "tsx",
+  sourcePath?: string
+): Promise<string> {
+  return (await transform(source, getTransformOptions(loader, sourcePath))).code;
+}
+
+export function transformJavaScriptSync(source: string, loader: "ts" | "jsx" | "tsx", sourcePath?: string): string {
+  return transformSync(source, getTransformOptions(loader, sourcePath)).code;
+}
+
+function getTransformOptions(loader: "ts" | "jsx" | "tsx", sourcePath?: string): TransformOptions {
+  switch (loader) {
+    case "ts":
+      return {
+        loader,
+        sourcefile: sourcePath,
+        tsconfigRaw: '{"compilerOptions": {"verbatimModuleSyntax": true}}'
+      };
+    case "jsx":
+      return {
+        loader,
+        jsx: "automatic",
+        jsxImportSource: "npm:react",
+        sourcefile: sourcePath
+      };
+    case "tsx":
+      return {
+        loader,
+        jsx: "automatic",
+        jsxImportSource: "npm:react",
+        sourcefile: sourcePath,
+        tsconfigRaw: '{"compilerOptions": {"verbatimModuleSyntax": true}}'
+      };
+    default:
+      throw new Error(`unknown loader: ${loader}`);
+  }
 }

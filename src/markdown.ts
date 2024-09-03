@@ -1,7 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
 import slugify from "@sindresorhus/slugify";
-import {transformSync} from "esbuild";
 import he from "he";
 import MarkdownIt from "markdown-it";
 import type {Token} from "markdown-it";
@@ -15,6 +14,7 @@ import type {FrontMatter} from "./frontMatter.js";
 import {readFrontMatter} from "./frontMatter.js";
 import {html, rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
+import {transformJavaScriptSync} from "./javascript/module.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
 import {isAssetPath, relativePath} from "./path.js";
@@ -63,17 +63,9 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
-function transformJsx(content: string, tag: "jsx" | "tsx"): string {
+function transpileJavaScript(content: string, tag: "ts" | "jsx" | "tsx"): string {
   try {
-    return transformSync(content, {loader: tag, jsx: "automatic", jsxImportSource: "npm:react"}).code;
-  } catch (error: any) {
-    throw new SyntaxError(error.message);
-  }
-}
-
-function transformTypeScript(content: string): string {
-  try {
-    return transformSync(content, {loader: "ts"}).code;
+    return transformJavaScriptSync(content, tag);
   } catch (error: any) {
     throw new SyntaxError(error.message);
   }
@@ -82,10 +74,8 @@ function transformTypeScript(content: string): string {
 function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
-    : tag === "jsx" || tag === "tsx"
-    ? transformJsx(content, tag)
-    : tag === "ts"
-    ? transformTypeScript(content)
+    : tag === "ts" || tag === "jsx" || tag === "tsx"
+    ? transpileJavaScript(content, tag)
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"

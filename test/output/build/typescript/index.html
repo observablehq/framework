@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="generator" content="Observable Framework v1.0.0-test">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.00000004.css">
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.00000004.css">
+<link rel="modulepreload" href="./_observablehq/client.00000001.js">
+<link rel="modulepreload" href="./_observablehq/runtime.00000002.js">
+<link rel="modulepreload" href="./_observablehq/stdlib.00000003.js">
+<link rel="modulepreload" href="./_import/sum.fd55756b.js">
+<script type="module">
+
+import {define} from "./_observablehq/client.00000001.js";
+
+define({id: "fe9e095e", outputs: ["add"], body: () => {
+function add(a, b) {
+  return a + b;
+}
+return {add};
+}});
+
+define({id: "b2e42312", inputs: ["add","display"], body: async (add,display) => {
+display(await(
+add(1, 3)
+))
+}});
+
+define({id: "9aa97703", inputs: ["add"], body: (add) => {
+add(1, 3);
+}});
+
+define({id: "5a5e524f", outputs: ["sum"], body: async () => {
+const {sum} = await import("./_import/sum.fd55756b.js");
+
+return {sum};
+}});
+
+define({id: "83afa0a9", inputs: ["sum"], body: (sum) => {
+sum(1, 2);
+}});
+
+</script>
+<aside id="observablehq-toc" data-selector="h1:not(:first-of-type)[id], h2:first-child[id], :not(h1) + h2[id]">
+<nav>
+</nav>
+</aside>
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+<div class="observablehq observablehq--block"><!--:fe9e095e:--></div>
+<pre data-language="ts"><code class="language-ts"><span class="hljs-keyword">function</span> <span class="hljs-title function_">add</span>(<span class="hljs-params"><span class="hljs-attr">a</span>: <span class="hljs-built_in">number</span>, <span class="hljs-attr">b</span>: <span class="hljs-built_in">number</span></span>): <span class="hljs-built_in">number</span> {
+  <span class="hljs-keyword">return</span> a + b;
+}
+</code></pre>
+<div class="observablehq observablehq--block"><observablehq-loading></observablehq-loading><!--:b2e42312:--></div>
+<pre data-language="js"><code class="language-js"><span class="hljs-title function_">add</span>(<span class="hljs-number">1</span>, <span class="hljs-number">3</span>)
+</code></pre>
+<div class="observablehq observablehq--block"><!--:9aa97703:--></div>
+<pre data-language="ts"><code class="language-ts"><span class="hljs-title function_">add</span>(<span class="hljs-number">1</span> <span class="hljs-keyword">as</span> <span class="hljs-built_in">number</span>, <span class="hljs-number">3</span>)
+</code></pre>
+<div class="observablehq observablehq--block"><!--:5a5e524f:--></div>
+<pre data-language="ts"><code class="language-ts"><span class="hljs-keyword">import</span> {sum} <span class="hljs-keyword">from</span> <span class="hljs-string">"./sum.js"</span>;
+</code></pre>
+<div class="observablehq observablehq--block"><!--:83afa0a9:--></div>
+<pre data-language="ts"><code class="language-ts"><span class="hljs-title function_">sum</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
+</code></pre>
+</main>
+<footer id="observablehq-footer">
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
+</footer>
+</div>
