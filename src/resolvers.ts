@@ -123,8 +123,11 @@ export async function getResolvers(
 
   // Add SQL sources.
   if (page.data.sql) {
-    for (const source of Object.values(page.data.sql)) {
-      files.add(String(source));
+    for (const value of Object.values(page.data.sql)) {
+      const source = String(value);
+      if (isAssetPath(source)) {
+        files.add(source);
+      }
     }
   }
 
