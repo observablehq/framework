@@ -151,8 +151,8 @@ export class LoaderResolver {
   // - /[param1]/[param2]/[param3].csv.js
   private findFile(targetPath: string, {useStale}: {useStale: boolean}): Loader | undefined {
     const ext = extname(targetPath);
-    const exts = [ext, ...Array.from(this.interpreters.keys(), (iext) => ext + iext)];
-    const found = route(this.root, targetPath.slice(0, -ext.length), exts);
+    const exts = ext ? [ext, ...Array.from(this.interpreters.keys(), (iext) => ext + iext)] : [ext];
+    const found = route(this.root, ext ? targetPath.slice(0, -ext.length) : targetPath, exts);
     if (!found) return;
     const {path, params, ext: fext} = found;
     if (fext === ext) return new StaticLoader({root: this.root, path, params});
@@ -256,8 +256,11 @@ export class LoaderResolver {
     const exactPath = join(this.root, path);
     if (existsSync(exactPath)) return exactPath;
     if (exactPath.endsWith(".js")) {
-      const jsxPath = exactPath + "x";
-      if (existsSync(jsxPath)) return jsxPath;
+      const basePath = exactPath.slice(0, -".js".length);
+      for (const ext of [".ts", ".jsx", ".tsx"]) {
+        const extPath = basePath + ext;
+        if (existsSync(extPath)) return extPath;
+      }
       return; // loaders aren’t supported for .js
     }
     const foundPath = this.find(path)?.path;

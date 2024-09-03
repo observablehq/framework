@@ -21,7 +21,7 @@ The front matter supports the following options:
 - **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - whether to skip this page during build; drafts are also not listed in the default sidebar
 - **sql** <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" class="observablehq-version-badge" data-version="^1.2.0" title="Added in v1.2.0"></a> - table definitions for [SQL code blocks](./sql)
 
-The front matter can also override the following [project configuration](./config) options:
+The front matter can also override the following [app-level configuration](./config) options:
 
 - **toc** - the [table of contents](./config#toc)
 - **style** - the [custom stylesheet](./config#style)

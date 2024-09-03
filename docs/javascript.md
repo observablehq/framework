@@ -86,7 +86,7 @@ html`<span style=${{color: `hsl(${(now / 10) % 360} 100% 50%)`}}>Rainbow text!</
 
 ## Inline expressions
 
-Inline expressions <code>$\{…}</code> interpolate values into Markdown. They are typically used to display numbers such as metrics, or to arrange visual elements such as charts into rich HTML layouts.
+JavaScript inline expressions <code>$\{…}</code> interpolate values into Markdown. They are typically used to display numbers such as metrics, or to arrange visual elements such as charts into rich HTML layouts.
 
 For example, this paragraph simulates rolling a 20-sided dice:
 
@@ -126,6 +126,22 @@ const number = Generators.input(numberInput);
 ```
 
 Expressions cannot declare top-level reactive variables. To declare a variable, use a code block instead. You can declare a variable in a code block (without displaying it) and then display it somewhere else using an inline expression.
+
+## TypeScript <a href="https://github.com/observablehq/framework/releases/tag/v1.11.0" class="observablehq-version-badge" data-version="^1.11.0" title="Added in 1.11.0"></a>
+
+TypeScript fenced code blocks (<code>```ts</code>) allow TypeScript to be used in place of JavaScript. You can also import TypeScript modules (`.ts`). Use the `.js` file extension when importing TypeScript modules; TypeScript is transpiled to JavaScript during build.
+
+<div class="warning">
+
+Framework does not perform type checking during preview or build. If you want the additional safety of type checks, considering using [`tsc`](https://www.typescriptlang.org/docs/handbook/compiler-options.html).
+
+</div>
+
+<div class="note">
+
+TypeScript fenced code blocks do not currently support [implicit display](#implicit-display), and TypeScript is not currently allowed in [inline expressions](#inline-expressions).
+
+</div>
 
 ## Explicit display
 
@@ -238,13 +254,13 @@ Implicit display also implicitly awaits promises.
 
 ## Responsive display
 
-In Markdown, the built-in [`width` reactive variable](#width) represents the current width of the main element. This variable is implemented by [`Generators.width`](./lib/generators#width(element)) and backed by a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver). The reactive width can be a handy thing to pass, say, as the **width** option to [Observable Plot](./lib/plot).
+In Markdown, the built-in [`width` reactive variable](#width) represents the current width of the main element. This variable is implemented by [`Generators.width`](./lib/generators#width-element) and backed by a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver). The reactive width can be a handy thing to pass, say, as the **width** option to [Observable Plot](./lib/plot).
 
 ```js echo
 Plot.barX([9, 4, 8, 1, 11, 3, 4, 2, 7, 5]).plot({width})
 ```
 
-For non-top-level elements, as when rendering content within an inline expression, use the built-in [`resize` function](#resize(render)) instead. This takes a _render_ function which is called whenever the width or height [changes](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), and the element returned by the render function is inserted into the DOM.
+For non-top-level elements, as when rendering content within an inline expression, use the built-in [`resize` function](#resize-render) instead. This takes a _render_ function which is called whenever the width or height [changes](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), and the element returned by the render function is inserted into the DOM.
 
 ```html echo
 <div class="card">

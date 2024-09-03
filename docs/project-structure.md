@@ -7,7 +7,7 @@ A Framework project consists of a home page (`index.md`) and any of the followin
 - Static data files (`.csv`, `.json`, `.parquet`, _etc._)
 - Other static assets (`.png`, `.css`, _etc._)
 - Shared components (`.js`)
-- A project configuration file (`observablehq.config.js`)
+- An app configuration file (`observablehq.config.js`)
 
 Pages are written in Markdown (`.md`) intermingled with HTML, JavaScript, SQL, and other languages. JavaScript can also be imported from local modules (`.js`) and npm. Data loaders can be written in Python, R, JavaScript, or any other language, and output data snapshots. These snapshots, along with static data files, can be loaded into pages to render charts, tables, and other dynamic content.
 
@@ -27,7 +27,7 @@ And a typical project is structured like this:
 │  └─ quakes.md           # page
 ├─ .gitignore
 ├─ README.md
-├─ observablehq.config.js # project configuration
+├─ observablehq.config.js # app configuration
 ├─ package.json           # node package dependencies
 └─ yarn.lock              # node package lockfile
 ```
@@ -54,15 +54,15 @@ You can put [data loaders](./data-loaders) or static files anywhere in your sour
 
 #### `src/index.md`
 
-This is the home page for your site. You can have as many additional pages as you’d like, but you should always have a home page, too.
+This is the home page for your app. You can have as many additional pages as you’d like, but you should always have a home page, too.
 
 #### `observablehq.config.js`
 
-This is the [project configuration](./config) file, such as the pages and sections in the sidebar navigation, and the project’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`).
+This is the [app configuration](./config) file, such as the pages and sections in the sidebar navigation, and the app’s title. The config file can be written in either TypeScript (`.ts`) or JavaScript (`.js`).
 
 ## Routing
 
-Framework uses file-based routing: each page in your project has a corresponding Markdown file (`.md`) of the same name. For example, here’s a simple project that only has two pages (`hello.md` and `index.md`) in the source root (`src`):
+Framework uses file-based routing: each page in your app has a corresponding Markdown file (`.md`) of the same name. For example, here’s a simple project that only has two pages (`hello.md` and `index.md`) in the source root (`src`):
 
 ```ini
 .
@@ -80,7 +80,7 @@ When the site is built, the output root (`dist`) will contain two corresponding 
 .
 ├─ dist
 │  ├─ _observablehq
-│  │  └─ ⋯ # additional assets for serving the site
+│  │  └─ ⋯ # additional assets
 │  ├─ hello.html
 │  └─ index.html
 └─ ⋯
@@ -101,7 +101,7 @@ For this site, routes map to files as:
 
 This assumes [“clean URLs”](./config#cleanurls) as supported by most static site servers; `/hello` can also be accessed as `/hello.html`, and `/` can be accessed as `/index` and `/index.html`. (Some static site servers automatically redirect to clean URLs, but we recommend being consistent when linking to your site.)
 
-Projects should always have a top-level `index.md`; this is the root page of your project, and it’s what people visit by default.
+Apps should always have a top-level `index.md` in the source root; this is your app’s home page, and it’s what people visit by default.
 
 Pages can live in folders. For example:
 
