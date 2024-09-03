@@ -125,7 +125,7 @@ function registerFile(
     path: resolve(name),
     lastModified: info?.mtimeMs,
     size: info?.size
-  })}, import.meta.url);`;
+  })});`;
 }
 
 async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink}: Resolvers): Promise<Html> {
