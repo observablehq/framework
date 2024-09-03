@@ -127,7 +127,7 @@ const number = Generators.input(numberInput);
 
 Expressions cannot declare top-level reactive variables. To declare a variable, use a code block instead. You can declare a variable in a code block (without displaying it) and then display it somewhere else using an inline expression.
 
-## TypeScript <a href="https://github.com/observablehq/framework/pull/1632" class="observablehq-version-badge" data-version="prerelease" title="Added in #1632"></a>
+## TypeScript <a href="https://github.com/observablehq/framework/releases/tag/v1.11.0" class="observablehq-version-badge" data-version="^1.11.0" title="Added in 1.11.0"></a>
 
 TypeScript fenced code blocks (<code>```ts</code>) allow TypeScript to be used in place of JavaScript. You can also import TypeScript modules (`.ts`). Use the `.js` file extension when importing TypeScript modules; TypeScript is transpiled to JavaScript during build.
 
