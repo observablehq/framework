@@ -86,7 +86,7 @@ html`<span style=${{color: `hsl(${(now / 10) % 360} 100% 50%)`}}>Rainbow text!</
 
 ## Inline expressions
 
-Inline expressions <code>$\{…}</code> interpolate values into Markdown. They are typically used to display numbers such as metrics, or to arrange visual elements such as charts into rich HTML layouts.
+JavaScript inline expressions <code>$\{…}</code> interpolate values into Markdown. They are typically used to display numbers such as metrics, or to arrange visual elements such as charts into rich HTML layouts.
 
 For example, this paragraph simulates rolling a 20-sided dice:
 
