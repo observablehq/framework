@@ -221,34 +221,64 @@ export function findModule(root: string, path: string): RouteResult | undefined 
   const ext = extname(path);
   if (!ext) throw new Error(`empty extension: ${path}`);
   const exts = [ext];
-  if (ext === ".js") exts.push(".jsx");
+  if (ext === ".js") exts.push(".ts", ".jsx", ".tsx");
   return route(root, path.slice(0, -ext.length), exts);
 }
 
 export async function readJavaScript(sourcePath: string): Promise<string> {
   const source = await readFile(sourcePath, "utf-8");
-  if (sourcePath.endsWith(".jsx")) {
-    const {code} = await transform(source, {
-      loader: "jsx",
-      jsx: "automatic",
-      jsxImportSource: "npm:react",
-      sourcefile: sourcePath
-    });
-    return code;
+  switch (extname(sourcePath)) {
+    case ".ts":
+      return (
+        await transform(source, {
+          loader: "ts",
+          sourcefile: sourcePath
+        })
+      ).code;
+    case ".jsx":
+      return (
+        await transform(source, {
+          loader: "jsx",
+          jsx: "automatic",
+          jsxImportSource: "npm:react",
+          sourcefile: sourcePath
+        })
+      ).code;
+    case ".tsx":
+      return (
+        await transform(source, {
+          loader: "tsx",
+          jsx: "automatic",
+          jsxImportSource: "npm:react",
+          sourcefile: sourcePath
+        })
+      ).code;
   }
   return source;
 }
 
 export function readJavaScriptSync(sourcePath: string): string {
   const source = readFileSync(sourcePath, "utf-8");
-  if (sourcePath.endsWith(".jsx")) {
-    const {code} = transformSync(source, {
-      loader: "jsx",
-      jsx: "automatic",
-      jsxImportSource: "npm:react",
-      sourcefile: sourcePath
-    });
-    return code;
+  switch (extname(sourcePath)) {
+    case ".ts":
+      return transformSync(source, {
+        loader: "ts",
+        sourcefile: sourcePath
+      }).code;
+    case ".jsx":
+      return transformSync(source, {
+        loader: "jsx",
+        jsx: "automatic",
+        jsxImportSource: "npm:react",
+        sourcefile: sourcePath
+      }).code;
+    case ".tsx":
+      return transformSync(source, {
+        loader: "tsx",
+        jsx: "automatic",
+        jsxImportSource: "npm:react",
+        sourcefile: sourcePath
+      }).code;
   }
   return source;
 }

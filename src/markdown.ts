@@ -63,9 +63,17 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
-function transformJsx(content: string): string {
+function transformJsx(content: string, tag: "jsx" | "tsx"): string {
   try {
-    return transformSync(content, {loader: "jsx", jsx: "automatic", jsxImportSource: "npm:react"}).code;
+    return transformSync(content, {loader: tag, jsx: "automatic", jsxImportSource: "npm:react"}).code;
+  } catch (error: any) {
+    throw new SyntaxError(error.message);
+  }
+}
+
+function transformTypeScript(content: string): string {
+  try {
+    return transformSync(content, {loader: "ts"}).code;
   } catch (error: any) {
     throw new SyntaxError(error.message);
   }
@@ -74,8 +82,10 @@ function transformJsx(content: string): string {
 function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
-    : tag === "jsx"
-    ? transformJsx(content)
+    : tag === "jsx" || tag === "tsx"
+    ? transformJsx(content, tag)
+    : tag === "ts"
+    ? transformTypeScript(content)
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"
@@ -123,7 +133,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
         const node = parseJavaScript(source, {path, params});
-        context.code.push({id, node, mode: tag === "jsx" ? "jsx" : "block"});
+        context.code.push({id, node, mode: tag === "jsx" || tag === "tsx" ? "jsx" : "block"});
         html += `<div class="observablehq observablehq--block">${
           node.expression ? "<observablehq-loading></observablehq-loading>" : ""
         }<!--:${id}:--></div>\n`;
@@ -188,6 +198,7 @@ function makePlaceholderRenderer(): RenderRule {
     const id = uniqueCodeId(context, token.content);
     try {
       // TODO sourceLine: context.startLine + context.currentLine
+      // TODO allow TypeScript?
       const node = parseJavaScript(token.content, {path, params, inline: true});
       context.code.push({id, node, mode: "inline"});
       return `<observablehq-loading></observablehq-loading><!--:${id}:-->`;
