@@ -13,8 +13,9 @@ export function registerFile(name, info, base = location) {
 
 export function FileAttachment(name, base = location) {
   if (new.target !== undefined) throw new TypeError("FileAttachment is not a constructor");
-  if (typeof name !== "string") registerFile(name.name, name, base), (name = name.name); // XXX
-  const file = files.get(new URL(name, base).href);
+  const href = new URL(name, base).href;
+  if (typeof name !== "string") files.has(href) || registerFile(name.name, name, base), (name = name.name); // TODO safer
+  const file = files.get(href);
   if (!file) throw new Error(`File not found: ${name}`);
   return file;
 }
