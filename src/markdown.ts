@@ -1,7 +1,6 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
 import slugify from "@sindresorhus/slugify";
-import {transformSync} from "esbuild";
 import he from "he";
 import MarkdownIt from "markdown-it";
 import type {Token} from "markdown-it";
@@ -15,6 +14,7 @@ import type {FrontMatter} from "./frontMatter.js";
 import {readFrontMatter} from "./frontMatter.js";
 import {html, rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
+import {transformJavaScriptSync} from "./javascript/module.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
 import {isAssetPath, relativePath} from "./path.js";
@@ -63,9 +63,9 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
-function transformJsx(content: string): string {
+function transpileJavaScript(content: string, tag: "ts" | "jsx" | "tsx"): string {
   try {
-    return transformSync(content, {loader: "jsx", jsx: "automatic", jsxImportSource: "npm:react"}).code;
+    return transformJavaScriptSync(content, tag);
   } catch (error: any) {
     throw new SyntaxError(error.message);
   }
@@ -74,8 +74,8 @@ function transformJsx(content: string): string {
 function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
-    : tag === "jsx"
-    ? transformJsx(content)
+    : tag === "ts" || tag === "jsx" || tag === "tsx"
+    ? transpileJavaScript(content, tag)
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"
@@ -123,7 +123,7 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
         const node = parseJavaScript(source, {path, params});
-        context.code.push({id, node, mode: tag === "jsx" ? "jsx" : "block"});
+        context.code.push({id, node, mode: tag === "jsx" || tag === "tsx" ? "jsx" : "block"});
         html += `<div class="observablehq observablehq--block">${
           node.expression ? "<observablehq-loading></observablehq-loading>" : ""
         }<!--:${id}:--></div>\n`;
@@ -188,6 +188,7 @@ function makePlaceholderRenderer(): RenderRule {
     const id = uniqueCodeId(context, token.content);
     try {
       // TODO sourceLine: context.startLine + context.currentLine
+      // TODO allow TypeScript?
       const node = parseJavaScript(token.content, {path, params, inline: true});
       context.code.push({id, node, mode: "inline"});
       return `<observablehq-loading></observablehq-loading><!--:${id}:-->`;

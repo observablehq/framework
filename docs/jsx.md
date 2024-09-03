@@ -1,6 +1,8 @@
 # JSX <a href="https://github.com/observablehq/framework/releases/tag/v1.9.0" class="observablehq-version-badge" data-version="^1.9.0" title="Added in 1.9.0"></a>
 
-[React](https://react.dev/) is a popular and powerful library for building interactive interfaces. React is typically written in [JSX](https://react.dev/learn/writing-markup-with-jsx), an extension of JavaScript that allows HTML-like markup. To use JSX and React, declare a JSX fenced code block (<code>```jsx</code>). For example, to define a `Greeting` component that accepts a `subject` prop:
+[React](https://react.dev/) is a popular and powerful library for building interactive interfaces. React is typically written in [JSX](https://react.dev/learn/writing-markup-with-jsx), an extension of JavaScript that allows HTML-like markup. To use JSX and React, declare a JSX fenced code block (<code>\```jsx</code>). You can alternatively use a TSX fenced code block (<code>\```tsx</code>) if using JSX with [TypeScript](./javascript#type-script).
+
+For example, to define a `Greeting` component that accepts a `subject` prop:
 
 ````md
 ```jsx
