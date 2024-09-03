@@ -101,7 +101,7 @@ Imports from `node_modules` are cached in `.observablehq/cache/_node` within you
 
 ## Local imports
 
-You can import JavaScript modules from local files. This is useful for organizing your code into modules that can be imported across multiple pages. You can also unit test your code and share code with other web applications.
+You can import [JavaScript](./javascript) and [TypeScript](./javascript#type-script) modules from local files. This is useful for organizing your code into modules that can be imported across multiple pages. You can also unit test your code and share code with other web applications.
 
 For example, if this is `foo.js`:
 
