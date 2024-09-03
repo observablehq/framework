@@ -102,7 +102,7 @@ function registerTable(name: string, source: string, {path}: RenderOptions): str
   });`;
 }
 
-function registerFiles(
+export function registerFiles(
   files: Iterable<string>,
   resolve: (name: string) => string,
   getInfo: (name: string) => FileInfo | undefined
@@ -125,7 +125,7 @@ function registerFile(
     path: resolve(name),
     lastModified: info?.mtimeMs,
     size: info?.size
-  })});`;
+  })}, import.meta.url);`;
 }
 
 async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink}: Resolvers): Promise<Html> {

@@ -16,7 +16,7 @@
 import {define} from "./_observablehq/client.00000001.js";
 import {registerFile} from "./_observablehq/stdlib.00000003.js";
 
-registerFile("./does-not-exist.txt", {"name":"./does-not-exist.txt","mimeType":"text/plain","path":"./does-not-exist.txt"});
+registerFile("./does-not-exist.txt", {"name":"./does-not-exist.txt","mimeType":"text/plain","path":"./does-not-exist.txt"}, import.meta.url);
 
 define({id: "5760fd93", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(

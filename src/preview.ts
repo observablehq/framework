@@ -4,7 +4,7 @@ import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {basename, dirname, join, normalize} from "node:path/posix";
+import {basename, dirname, extname, join, normalize} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
@@ -21,13 +21,13 @@ import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
 import {isComment, isElement, isText, parseHtml, rewriteHtml} from "./html.js";
 import type {FileInfo} from "./javascript/module.js";
-import {findModule, readJavaScript} from "./javascript/module.js";
+import {findModule, getModuleInfo, readJavaScript} from "./javascript/module.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import type {LoaderResolver} from "./loader.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
-import {isPathImport, resolvePath} from "./path.js";
-import {renderPage} from "./render.js";
+import {isPathImport, relativePath, resolvePath} from "./path.js";
+import {registerFiles, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
@@ -116,6 +116,7 @@ export class PreviewServer {
     const {root, loaders} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
     const url = new URL(req.url!, "http://localhost");
+    res.setHeader("Access-Control-Allow-Origin", "*"); // TODO restrict
     let pathname = decodeURI(url.pathname);
     try {
       let match: RegExpExecArray | null;
@@ -168,6 +169,54 @@ export class PreviewServer {
           res.writeHead(302, {Location: normalizedPathname + url.search});
           res.end();
           return;
+        }
+
+        // If there is a JavaScript module that exists for this path, the
+        // request represents a JavaScript embed (such as /chart.js), and takes
+        // precedence over any page (such as /chart.js.md). Generate a wrapper
+        // module that allows this JavaScript module to be embedded remotely.
+        //
+        // TODO Move this to render (renderComponent?)
+        //
+        // TODO Can static imports include non-.js files that shouldn’t be preloaded?
+        //
+        // TODO The registerFile calls here happen too late because we’re using
+        // static imports to load the transitive dependencies: the imported
+        // modules could call FileAttachment before registerFile here has a
+        // chance to run. We might be able to fix that by using a dynamic import
+        // or by pushing the registerFile calls down to the imported modules.
+        if (pathname.endsWith(".js")) {
+          const path = pathname;
+          const module = findModule(root, path);
+          if (module) {
+            const info = getModuleInfo(root, path)!;
+            const input = `import {registerFile} from "observablehq:stdlib";
+${
+  info.files.size
+    ? registerFiles(
+        info.files,
+        (specifier): string => relativePath(path, loaders.resolveFilePath(resolvePath(path, specifier))),
+        (name) => loaders.getSourceInfo(resolvePath(path, name))
+      ) + "\n"
+    : ""
+}${[
+  ...info.globalStaticImports,
+  ...info.localStaticImports
+]
+  .filter((i) => i !== "npm:@observablehq/stdlib")
+  .map((i) => `\nimport ${JSON.stringify(i)};`)
+  .join("")}
+export * from ${JSON.stringify(pathname)};
+`;
+            const output = await transpileModule(input, {
+              root,
+              path: pathname,
+              servePath: pathname,
+              params: module.params
+            });
+            end(req, res, output, "text/javascript");
+            return;
+          }
         }
 
         // If this path ends with a slash, then add an implicit /index to the

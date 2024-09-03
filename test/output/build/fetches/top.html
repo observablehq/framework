@@ -18,10 +18,10 @@
 import {define} from "./_observablehq/client.00000001.js";
 import {registerFile} from "./_observablehq/stdlib.00000003.js";
 
-registerFile("./foo/foo-data.csv", {"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.24ef4634.csv","lastModified":/* ts */1706742000000,"size":72});
-registerFile("./foo/foo-data.json", {"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.67358ed8.json","lastModified":/* ts */1706742000000,"size":10});
-registerFile("./top-data.csv", {"name":"./top-data.csv","mimeType":"text/csv","path":"./_file/top-data.24ef4634.csv","lastModified":/* ts */1706742000000,"size":72});
-registerFile("./top-data.json", {"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.67358ed8.json","lastModified":/* ts */1706742000000,"size":10});
+registerFile("./foo/foo-data.csv", {"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.24ef4634.csv","lastModified":1729072800000,"size":72}, import.meta.url);
+registerFile("./foo/foo-data.json", {"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.67358ed8.json","lastModified":1729072800000,"size":10}, import.meta.url);
+registerFile("./top-data.csv", {"name":"./top-data.csv","mimeType":"text/csv","path":"./_file/top-data.24ef4634.csv","lastModified":1729072800000,"size":72}, import.meta.url);
+registerFile("./top-data.json", {"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.67358ed8.json","lastModified":1729072800000,"size":10}, import.meta.url);
 
 define({id: "cb908c08", inputs: ["display"], outputs: ["fooCsvData","fooJsonData","topCsvData","topJsonData"], body: async (display) => {
 const {fooCsvData, fooJsonData, topCsvData, topJsonData} = await import("./_import/top.d8f5cc36.js");

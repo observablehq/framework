@@ -345,8 +345,11 @@ export async function getResolvers(
  * knowing the transitive imports ahead of time. But it should be consistent
  * with the resolveImport returned by getResolvers (assuming caching).
  */
-export function getModuleResolver(root: string, path: string): (specifier: string) => Promise<string> {
-  const servePath = `/${join("_import", path)}`;
+export function getModuleResolver(
+  root: string,
+  path: string,
+  servePath = `/${join("_import", path)}`
+): (specifier: string) => Promise<string> {
   return async (specifier) => {
     return isPathImport(specifier)
       ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier)))

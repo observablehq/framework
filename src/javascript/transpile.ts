@@ -53,6 +53,7 @@ export function transpileJavaScript(
 export interface TranspileModuleOptions {
   root: string;
   path: string;
+  servePath?: string; // defaults to /_import/${path}
   params?: Params;
   resolveImport?: (specifier: string) => Promise<string>;
 }
@@ -60,9 +61,14 @@ export interface TranspileModuleOptions {
 /** Rewrites import specifiers and FileAttachment calls in the specified ES module. */
 export async function transpileModule(
   input: string,
-  {root, path, params, resolveImport = getModuleResolver(root, path)}: TranspileModuleOptions
+  {
+    root,
+    path,
+    servePath = `/${join("_import", path)}`,
+    params,
+    resolveImport = getModuleResolver(root, path, servePath)
+  }: TranspileModuleOptions
 ): Promise<string> {
-  const servePath = `/${join("_import", path)}`;
   const body = parseProgram(input, params); // TODO ignore syntax error?
   const output = new Sourcemap(input);
   const imports: (ImportNode | ExportNode)[] = [];

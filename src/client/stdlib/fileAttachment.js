@@ -1,13 +1,13 @@
 const files = new Map();
 
-export function registerFile(name, info) {
-  const href = new URL(name, location).href;
+export function registerFile(name, info, base = location) {
+  const href = new URL(name, base).href;
   if (info == null) {
     files.delete(href);
   } else {
     const {path, mimeType, lastModified, size} = info;
     const file = new FileAttachmentImpl(
-      new URL(path, location).href,
+      new URL(path, base).href,
       name.split("/").pop(),
       mimeType,
       lastModified,
