@@ -339,6 +339,44 @@ export async function getResolvers(
   };
 }
 
+/** Returns the set of transitive static imports for the specified module. */
+export async function getModuleStaticImports(root: string, path: string): Promise<string[]> {
+  const localImports = new Set<string>([path]);
+  const globalImports = new Set<string>();
+  const fileMethods = new Set<string>();
+
+  // Collect local and global imports from transitive local imports.
+  for (const i of localImports) {
+    const info = getModuleInfo(root, i);
+    if (!info) continue;
+    for (const o of info.localStaticImports) localImports.add(resolvePath(i, o));
+    for (const o of info.globalStaticImports) globalImports.add(o);
+    for (const m of info.fileMethods) fileMethods.add(m);
+  }
+
+  // Collect implicit imports from file methods.
+  for (const i of getImplicitFileImports(fileMethods)) {
+    globalImports.add(i);
+  }
+
+  // Collect transitive global imports.
+  for (const i of globalImports) {
+    if (i.startsWith("npm:") && !builtins.has(i)) {
+      const p = await resolveNpmImport(root, i.slice("npm:".length));
+      for (const o of await resolveNpmImports(root, p)) {
+        if (o.type === "local") globalImports.add(`npm:${extractNpmSpecifier(resolvePath(p, o.name))}`);
+      }
+    } else if (!/^\w+:/.test(i)) {
+      const p = await resolveNodeImport(root, i);
+      for (const o of await resolveNodeImports(root, p)) {
+        if (o.type === "local") globalImports.add(extractNodeSpecifier(resolvePath(p, o.name)));
+      }
+    }
+  }
+
+  return [...localImports, ...globalImports].filter((i) => i !== path).map((i) => relativePath(path, i));
+}
+
 /**
  * Returns the import resolver used for transpiling local modules. Unlike
  * getResolvers, this is independent of any specific page, and is done without

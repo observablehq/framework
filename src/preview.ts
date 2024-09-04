@@ -21,7 +21,7 @@ import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
 import {isComment, isElement, isText, parseHtml, rewriteHtml} from "./html.js";
 import type {FileInfo} from "./javascript/module.js";
-import {findModule, getModuleInfo, readJavaScript} from "./javascript/module.js";
+import {findModule, readJavaScript} from "./javascript/module.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import type {LoaderResolver} from "./loader.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
@@ -29,7 +29,7 @@ import {populateNpmCache} from "./npm.js";
 import {isPathImport, resolvePath} from "./path.js";
 import {renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {getResolvers} from "./resolvers.js";
+import {getModuleStaticImports, getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import type {Params} from "./route.js";
 import {route} from "./route.js";
@@ -181,22 +181,12 @@ export class PreviewServer {
         // request represents a JavaScript embed (such as /chart.js), and takes
         // precedence over any page (such as /chart.js.md). Generate a wrapper
         // module that allows this JavaScript module to be embedded remotely.
-        //
-        // TODO We need to use getResolvers here (or equivalent) in order to
-        // compute the transitive dependencies of the specified module, rather
-        // than just the direct dependencies.
-        //
         // TODO Move this to render (renderComponent?)
-        //
-        // TODO Can static imports include non-.js files that shouldn’t be
-        // preloaded?
         if (pathname.endsWith(".js")) {
           const path = pathname;
           const module = findModule(root, path);
           if (module) {
-            const info = getModuleInfo(root, path)!;
-            const input = `${[...info.globalStaticImports, ...info.localStaticImports]
-              .filter((i) => i !== "npm:@observablehq/stdlib")
+            const input = `${(await getModuleStaticImports(root, path))
               .map((i) => `import ${JSON.stringify(i)};\n`)
               .join("")}export * from ${JSON.stringify(pathname)};
 `;
