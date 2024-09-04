@@ -8,16 +8,18 @@ export function registerFile(name, info, base = location) {
     const {path, mimeType, lastModified, size} = info;
     const file = new FileAttachmentImpl(new URL(path, base).href, name.split("/").pop(), mimeType, lastModified, size);
     files.set(href, file);
+    return file;
   }
 }
 
 export function FileAttachment(name, base = location) {
   if (new.target !== undefined) throw new TypeError("FileAttachment is not a constructor");
-  const href = new URL(name, base).href;
-  if (typeof name !== "string") files.has(href) || registerFile(name.name, name, base), (name = name.name); // TODO safer
-  const file = files.get(href);
-  if (!file) throw new Error(`File not found: ${name}`);
-  return file;
+  let info;
+  if (name && "name" in name) (info = name), (name = name.name);
+  const file = files.get(new URL(name, base).href);
+  if (file) return file;
+  if (info) return registerFile(name, info, base);
+  throw new Error(`File not found: ${name}`);
 }
 
 async function remote_fetch(file) {
