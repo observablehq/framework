@@ -242,6 +242,7 @@ describe("resolveLink(href) with {cleanUrls: true}", () => {
 });
 
 describe("getModuleStaticImports(root, path)", () => {
+  mockJsDelivr();
   it("returns transitive local static imports", async () => {
     assert.deepStrictEqual(await getModuleStaticImports("test/input/imports", "static-import.js"), ["./bar.js"]);
     assert.deepStrictEqual(await getModuleStaticImports("test/input/imports", "alias-import.js"), ["./bar.js"]);
