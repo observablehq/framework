@@ -15,7 +15,7 @@ export function registerFile(name, info, base = location) {
 export function FileAttachment(name, base = location) {
   if (new.target !== undefined) throw new TypeError("FileAttachment is not a constructor");
   let info;
-  if (name && "name" in name) (info = name), (name = name.name);
+  if (typeof name === "object" && name && "name" in name) (info = name), (name = name.name);
   const file = files.get(new URL(name, base).href);
   if (file) return file;
   if (info) return registerFile(name, info, base);

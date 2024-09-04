@@ -155,7 +155,6 @@ export class PreviewServer {
               root,
               path,
               params: module.params,
-              // TODO resolveFile and resolveFileInfo are needed during build, too
               resolveFile: (name) => loaders.resolveFilePath(resolvePath(path, name)),
               resolveFileInfo: (name) => loaders.getSourceInfo(resolvePath(path, name))
             });

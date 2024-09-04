@@ -113,7 +113,7 @@ export async function transpileModule(
       `${JSON.stringify(
         info
           ? {
-              name,
+              name: p,
               mimeType: mime.getType(name) ?? undefined,
               path: relativePath(servePath, resolveFile(name)),
               lastModified: info.mtimeMs,

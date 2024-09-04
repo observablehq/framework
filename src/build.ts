@@ -242,6 +242,13 @@ export async function build(
       root,
       path,
       params: module.params,
+      resolveFile(name) {
+        const resolution = loaders.resolveFilePath(resolvePath(path, name));
+        return aliases.get(resolution) ?? resolution;
+      },
+      resolveFileInfo(name) {
+        return loaders.getOutputInfo(resolvePath(path, name));
+      },
       async resolveImport(specifier) {
         let resolution: string;
         if (isPathImport(specifier)) {
