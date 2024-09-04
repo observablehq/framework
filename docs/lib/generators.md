@@ -81,9 +81,9 @@ const width = Generators.width(document.querySelector("main"));
 width
 ```
 
-## dark() <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
+## dark(*element*) <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
 
-[Source](https://github.com/observablehq/framework/blob/main/src/client/stdlib/generators/dark.ts) · Returns an async generator that yields a boolean indicating whether the page is currently displayed with a dark [color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme).
+[Source](https://github.com/observablehq/framework/blob/main/src/client/stdlib/generators/dark.ts) · Returns an async generator that yields a boolean indicating whether the given target *element* is currently displayed with a dark [color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme).
 
 If the page supports both light and dark mode (as with the [default theme](../themes)), the value reflects the user’s [preferred color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme). The generator will yield a new value if the preferred color changes — as when the user changes their system settings, or if the user’s system adapts automatically to the diurnal cycle — allowing you to update the display as needed without requiring a page reload.
 
@@ -95,7 +95,7 @@ The current theme is: *${dark ? "dark" : "light"}*.
 The current theme is: *${dark ? "dark" : "light"}*.
 ```
 
-This generator is available by default as `dark` in Markdown. It can be used to pick a [color scheme](https://observablehq.com/plot/features/scales#color-scales) for a chart, or an appropriate [mix-blend-mode](https://developer.mozilla.org/en-US/docs/Web/CSS/mix-blend-mode):
+This generator for the document `body` is available by default as `dark` in Markdown. It can be used to pick a [color scheme](https://observablehq.com/plot/features/scales#color-scales) for a chart, or an appropriate [mix-blend-mode](https://developer.mozilla.org/en-US/docs/Web/CSS/mix-blend-mode):
 
 ```js echo
 Plot.plot({
@@ -118,3 +118,50 @@ Plot.plot({
   ]
 })
 ```
+
+The following card uses a <em>${darkTarget ? "dark" : "light"}</em> color scheme, which slightly varies based on the page’s scheme, but is always <em>${darkTarget ? "dark" : "light"}</em>. This is reflected, for example, in the colors that the browser selects for the inputs.
+
+```js
+const target = display(html`<div id="target" class="card">
+  <div>
+    ${Inputs.range([0, 100], {step: 1, label: "What a scheme!"})}
+  </div>
+</div>`);
+
+const darkTarget = Generators.dark(target.querySelector(".card > div"));
+```
+
+```js
+const toggleCard = view(Inputs.toggle({label: "toggle card scheme"}));
+```
+
+```js
+toggleCard ? html`
+<style>
+
+#target {
+  color: #eee;
+  background-color: light-dark(#444, black);
+}
+#target > div {
+  color-scheme: dark;
+}
+
+</style>`
+: 
+html`
+<style>
+
+#target {
+  color: #333;
+  background-color: light-dark(white, #ddd);
+}
+#target > div {
+  color-scheme: light;
+}
+
+</style>`
+```
+
+
+

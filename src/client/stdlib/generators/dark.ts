@@ -1,18 +1,19 @@
 import {observe} from "./observe.js";
 
 // Watches dark mode based on theme and user preference.
-// TODO: in preview, also watch for changes in the theme meta.
-export function dark() {
+export function dark(target: HTMLElement = document.body) {
   return observe((notify: (dark: boolean) => void) => {
     let dark: boolean | undefined;
-    const media = matchMedia("(prefers-color-scheme: dark)");
+    target.style.setProperty("transition-property", "color");
+    target.style.setProperty("transition-duration", "0.001s");
+    target.style.setProperty("transition-behavior", "allow-discrete"); // TODO: not sure this is necessary
     const changed = () => {
-      const d = getComputedStyle(document.body).getPropertyValue("color-scheme") === "dark";
+      const d = getComputedStyle(target).getPropertyValue("color-scheme") === "dark";
       if (dark === d) return; // only notify if changed
       notify((dark = d));
     };
     changed();
-    media.addEventListener("change", changed);
-    return () => media.removeEventListener("change", changed);
+    target.addEventListener("transitionstart", changed);
+    return () => target.removeEventListener("transitionstart", changed);
   });
 }
