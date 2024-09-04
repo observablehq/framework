@@ -10,6 +10,7 @@ import wrapAnsi from "wrap-ansi";
 import {visitFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
+import {findModule} from "./javascript/module.js";
 import {LoaderResolver} from "./loader.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
 import {getPagePaths} from "./pager.js";
@@ -185,6 +186,8 @@ function readPages(root: string, md: MarkdownIt): Page[] {
   const hash = createHash("sha256");
   for (const file of visitFiles(root, (name) => !isParameterized(name))) {
     if (extname(file) !== ".md" || file === "index.md" || file === "404.md") continue;
+    const path = file.slice(0, -".md".length);
+    if (path.endsWith(".js") && findModule(root, path)) continue;
     const source = readFileSync(join(root, file), "utf8");
     files.push({file, source});
     hash.update(file).update(source);
