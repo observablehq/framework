@@ -8,7 +8,7 @@ You can [opt-out of telemetry](#disabling-telemetry) by setting the `OBSERVABLE_
 
 The following data is collected:
 
-```ts echo
+```ts run=false
 type TelemetryIds = {
   session: uuid; // random, held in memory for the duration of the process
   device: uuid; // persists to ~/.observablehq
