@@ -85,7 +85,7 @@ type DeployTargetInfo =
   | {create: true; workspace: {id: string; login: string}; projectSlug: string; title: string; accessLevel: string}
   | {create: false; workspace: {id: string; login: string}; project: GetProjectResponse};
 
-/** Deploy a project to ObservableHQ */
+/** Deploy a project to Observable */
 export async function deploy(deployOptions: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start", force: deployOptions.force});
   effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
