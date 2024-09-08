@@ -107,9 +107,9 @@ export class LoaderResolver {
    */
   *findPagePaths(): Generator<string> {
     const ext = new RegExp(`\\.md(${["", ...this.interpreters.keys()].map(requote).join("|")})$`);
-    for (const path of visitFiles(this.root, (name) => !isParameterized(name))) {
-      if (!ext.test(path)) continue;
-      yield `/${path.slice(0, path.lastIndexOf(".md"))}`;
+    for (const file of visitFiles(this.root, (name) => !isParameterized(name))) {
+      if (!ext.test(file)) continue;
+      yield `/${file.slice(0, file.lastIndexOf(".md"))}`;
     }
   }
 
