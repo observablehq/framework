@@ -92,13 +92,7 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
 
   const deployer = await new Deployer(deployOptions, effects);
   const deployInfo = await deployer.deploy();
-
-  // Get URL for app settings page
-  const deployConfig = await deployer.getUpdatedDeployConfig();
-  const {deployTarget} = await deployer.getDeployTarget(deployConfig);
-  const {login} = deployTarget.workspace;
-  const slug = deployTarget.create ? deployTarget.projectSlug : deployTarget.project.slug;
-  const settingsUrl = `https://observablehq.com/projects/@${login}/${slug}/settings`;
+  const settingsUrl = await deployer.getSettingsUrl();
 
   effects.clack.outro(
     `Deployed app now visible at ${link(deployInfo.url)}\n   Configure settings at ${link(settingsUrl)}`
@@ -236,7 +230,7 @@ class Deployer {
   }
 
   // Get the deploy config, updating if necessary.
-  async getUpdatedDeployConfig() {
+  private async getUpdatedDeployConfig() {
     const deployConfig = await this.effects.getDeployConfig(
       this.deployOptions.config.root,
       this.deployOptions.deployConfigPath,
@@ -290,7 +284,7 @@ class Deployer {
   }
 
   // Get the deploy target, prompting the user as needed.
-  async getDeployTarget(
+  private async getDeployTarget(
     deployConfig: DeployConfig
   ): Promise<{deployTarget: DeployTargetInfo; projectUpdates: PostEditProjectRequest}> {
     let deployTarget: DeployTargetInfo;
@@ -716,6 +710,14 @@ class Deployer {
     if (!deployTarget.create && typeof projectUpdates?.title === "string") {
       await this.apiClient.postEditProject(deployTarget.project.id, projectUpdates);
     }
+  }
+
+  async getSettingsUrl() {
+    const deployConfig = await this.getUpdatedDeployConfig();
+    const {deployTarget} = await this.getDeployTarget(deployConfig);
+    const {login} = deployTarget.workspace;
+    const slug = deployTarget.create ? deployTarget.projectSlug : deployTarget.project.slug;
+    return `https://observablehq.com/projects/@${login}/${slug}/settings`;
   }
 }
 
