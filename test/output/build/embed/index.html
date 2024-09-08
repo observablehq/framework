@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="generator" content="Observable Framework v1.0.0-test">
+<title>Embeds</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.00000004.css">
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.00000004.css">
+<link rel="modulepreload" href="./_observablehq/client.00000001.js">
+<link rel="modulepreload" href="./_observablehq/runtime.00000002.js">
+<link rel="modulepreload" href="./_observablehq/stdlib.00000003.js">
+<script type="module">
+
+import "./_observablehq/client.00000001.js";
+
+</script>
+<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
+<label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
+<nav id="observablehq-sidebar">
+  <ol>
+    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
+    <li class="observablehq-link observablehq-link-active"><a href="./">Home</a></li>
+  </ol>
+  <ol>
+    <li class="observablehq-link"><a href="./horse.js">Horse.js</a></li>
+  </ol>
+</nav>
+<script>{/* redacted init script */}</script>
+<aside id="observablehq-toc" data-selector="h1:not(:first-of-type)[id], h2:first-child[id], :not(h1) + h2[id]">
+<nav>
+</nav>
+</aside>
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+<h1 id="embeds" tabindex="-1"><a class="observablehq-header-anchor" href="#embeds">Embeds</a></h1>
+<p>This site has:</p>
+<ul>
+<li>an embed module called <code>chart.js</code>, present in <code>embedPaths</code></li>
+<li>a potential embed module called <code>ignore-me.js</code> , that is not in <code>embedPaths</code></li>
+<li>a page that would have the same URL <code>chart.js.md</code></li>
+<li>a legitimate page named <code>horse.js.md</code></li>
+</ul>
+<p><strong>embeds.</strong> <code>chart.js</code> should be built ❌, but not <code>ignore-me.js</code> ❌</p>
+<p><strong>sidebar</strong> The <code>horse.js</code> page should be in the side bar, but there should be no link to <code>chart.js</code>. ✔︎✔</p>
+<p><strong>dependencies</strong> The dependencies of <code>horse.js.md</code> ✔ and <code>chart.js</code> ❌ should be built. The dependencies of <code>chart.js.md</code> (Leaflet) should not be built ❌.</p>
+</main>
+<footer id="observablehq-footer">
+<nav><a rel="next" href="./horse.js"><span>Horse.js</span></a></nav>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
+</footer>
+</div>
