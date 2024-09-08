@@ -12,7 +12,7 @@ import {maybeStat, prepareOutput, visitFiles} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
 import type {FileInfo} from "./javascript/module.js";
-import {getFileInfo} from "./javascript/module.js";
+import {findModule, getFileInfo} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage, ParseOptions} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
@@ -109,7 +109,9 @@ export class LoaderResolver {
     const ext = new RegExp(`\\.md(${["", ...this.interpreters.keys()].map(requote).join("|")})$`);
     for (const file of visitFiles(this.root, (name) => !isParameterized(name))) {
       if (!ext.test(file)) continue;
-      yield `/${file.slice(0, file.lastIndexOf(".md"))}`;
+      const path = `/${file.slice(0, file.lastIndexOf(".md"))}`;
+      if (extname(path) === ".js" && findModule(this.root, path)) continue;
+      yield path;
     }
   }
 
@@ -118,6 +120,7 @@ export class LoaderResolver {
    * root, if the loader exists. If there is no such loader, returns undefined.
    */
   findPage(path: string): Loader | undefined {
+    if (extname(path) === ".js" && findModule(this.root, path)) return;
     return this.find(`${path}.md`);
   }
 
