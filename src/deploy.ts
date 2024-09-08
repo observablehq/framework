@@ -90,9 +90,19 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
   Telemetry.record({event: "deploy", step: "start", force: deployOptions.force});
   effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
 
-  const deployInfo = await new Deployer(deployOptions, effects).deploy();
+  const deployer = await new Deployer(deployOptions, effects);
+  const deployInfo = await deployer.deploy();
 
-  effects.clack.outro(`Deployed app now visible at ${link(deployInfo.url)}`);
+  // Get URL for app settings page
+  const deployConfig = await deployer.getUpdatedDeployConfig();
+  const {deployTarget} = await deployer.getDeployTarget(deployConfig);
+  const {login} = deployTarget.workspace;
+  const slug = deployTarget.create ? deployTarget.projectSlug : deployTarget.project.slug;
+  const settingsUrl = `https://observablehq.com/projects/@${login}/${slug}/settings`;
+
+  effects.clack.outro(
+    `Deployed app now visible at ${link(deployInfo.url)}\n   Configure settings at ${link(settingsUrl)}`
+  );
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
@@ -226,7 +236,7 @@ class Deployer {
   }
 
   // Get the deploy config, updating if necessary.
-  private async getUpdatedDeployConfig() {
+  async getUpdatedDeployConfig() {
     const deployConfig = await this.effects.getDeployConfig(
       this.deployOptions.config.root,
       this.deployOptions.deployConfigPath,
@@ -280,7 +290,7 @@ class Deployer {
   }
 
   // Get the deploy target, prompting the user as needed.
-  private async getDeployTarget(
+  async getDeployTarget(
     deployConfig: DeployConfig
   ): Promise<{deployTarget: DeployTargetInfo; projectUpdates: PostEditProjectRequest}> {
     let deployTarget: DeployTargetInfo;
