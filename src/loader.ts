@@ -97,7 +97,7 @@ export class LoaderResolver {
    * Returns a watcher for the page at the specified path.
    */
   watchPage(path: string, listener: WatchListener<string>): FSWatcher {
-    const loader = this.find(`${path}.md`);
+    const loader = this.findPage(path);
     if (!loader) throw enoent(path);
     return watch(join(this.root, loader.path), listener);
   }
