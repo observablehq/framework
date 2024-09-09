@@ -171,7 +171,7 @@ export async function getModuleResolvers(path: string, config: Omit<ResolversCon
     path,
     hash: getModuleHash(root, path),
     assets: new Set(),
-    ...(await resolveResolvers({localImports: [path]}, {path, ...config}))
+    ...(await resolveResolvers({localImports: [path], staticImports: [path]}, {path, ...config}))
   };
 }
 

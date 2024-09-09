@@ -352,9 +352,8 @@ export async function build(
       );
     } else {
       const [path, {type, resolvers}] = node.data!;
-      if (type !== "page") continue; // TODO
       const resolveOutput = (name: string) => join(config.output, resolvePath(path, name));
-      const pageSize = (await stat(join(config.output, `${path}.html`))).size;
+      const pageSize = (await stat(join(config.output, type === "page" ? `${path}.html` : path))).size;
       const importSize = await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
       const fileSize =
         (await accumulateSize(resolvers.files, resolvers.resolveFile, resolveOutput)) +
