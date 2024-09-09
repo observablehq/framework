@@ -59,10 +59,7 @@ export async function build(
   await effects.prepare();
 
   // Accumulate outputs.
-  const outputs = new Map<
-    string,
-    {type: "page"; page: MarkdownPage; resolvers: Resolvers} | {type: "module"; resolvers: Resolvers}
-  >();
+  const outputs = new Map<string, ({type: "page"; page: MarkdownPage} | {type: "module"}) & {resolvers: Resolvers}>();
   const files = new Set<string>(); // e.g., "/assets/foo.png"
   const localImports = new Set<string>(); // e.g., "/components/foo.js"
   const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
