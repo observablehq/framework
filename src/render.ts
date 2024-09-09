@@ -287,10 +287,5 @@ export async function renderModule(root: string, path: string): Promise<string> 
     .map((i) => `import ${JSON.stringify(i)};\n`)
     .join("")}export * from ${JSON.stringify(path)};
 `;
-  return await transpileModule(input, {
-    root,
-    path,
-    servePath: path,
-    params: module.params
-  });
+  return await transpileModule(input, {root, path, servePath: path, params: module.params});
 }

@@ -10,7 +10,7 @@ import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
 import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
-import {renderPage} from "./render.js";
+import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getResolvers} from "./resolvers.js";
 import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
@@ -306,6 +306,16 @@ export async function build(
     const html = await renderPage(page, {...config, path, resolvers});
     await effects.writeFile(`${path}.html`, html);
     buildManifest.pages.push({path: config.normalizePath(path), title: page.title});
+  }
+
+  // Render embeds!
+  // TODO The resolvers are wrong…
+  // TODO This relies on other pages referencing the same assets…
+  for await (const path of config.embedPaths()) {
+    if (!path.endsWith(".js")) throw new Error(`embed path does not end with .js: ${path}`);
+    effects.output.write(`${faint("render")} ${path} ${faint("→")} `);
+    const source = await renderModule(root, path);
+    await effects.writeFile(path, source);
   }
 
   // Write the build manifest.

@@ -98,6 +98,7 @@ export default {
     ...themes.dark.map((theme) => `/theme/${theme}`),
     ...themes.light.map((theme) => `/theme/${theme}`)
   ],
+  embedPaths: ["/chart.js"],
   base: "/framework",
   globalStylesheets: [
     "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap"

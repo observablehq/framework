@@ -7,7 +7,10 @@ import {LoaderResolver} from "../src/loader.js";
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   it("imports the config file at the specified root", async () => {
-    const {md, loaders, paths, normalizePath, ...config} = await readConfig(undefined, "test/input/build/config");
+    const {md, loaders, paths, embedPaths, normalizePath, ...config} = await readConfig(
+      undefined,
+      "test/input/build/config"
+    );
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
     assert.strictEqual(typeof normalizePath, "function");
@@ -46,7 +49,10 @@ describe("readConfig(undefined, root)", () => {
     });
   });
   it("returns the default config if no config file is found", async () => {
-    const {md, loaders, paths, normalizePath, ...config} = await readConfig(undefined, "test/input/build/simple");
+    const {md, loaders, paths, embedPaths, normalizePath, ...config} = await readConfig(
+      undefined,
+      "test/input/build/simple"
+    );
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
     assert.strictEqual(typeof normalizePath, "function");
