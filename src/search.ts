@@ -1,6 +1,7 @@
 import he from "he";
 import MiniSearch from "minisearch";
 import type {Config, SearchResult} from "./config.js";
+import {findModule} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import {faint, strikethrough} from "./tty.js";
 
@@ -57,7 +58,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
 }
 
 async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIterable<SearchResult> {
-  const {pages, loaders} = config;
+  const {root, pages, loaders} = config;
 
   // Get all the listed pages (which are indexed by default)
   const pagePaths = new Set(["/index"]);
@@ -67,6 +68,7 @@ async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIt
   }
 
   for await (const path of config.paths()) {
+    if (path.endsWith(".js") && findModule(root, path)) continue;
     const {body, title, data} = await loaders.loadPage(path, {...config, path});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless

@@ -1,3 +1,3 @@
 export default {
-  embedPaths: ["/chart.js"]
+  dynamicPaths: ["/chart.js"]
 };

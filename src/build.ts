@@ -68,17 +68,30 @@ export async function build(
   const localImports = new Set<string>(); // e.g., "/components/foo.js"
   const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
   const stylesheets = new Set<string>(); // e.g., "/style.css"
-
   const addFile = (path: string, f: string) => files.add(resolvePath(path, f));
   const addLocalImport = (path: string, i: string) => localImports.add(resolvePath(path, i));
   const addGlobalImport = (path: string, i: string) => isPathImport(i) && globalImports.add(resolvePath(path, i));
   const addStylesheet = (path: string, s: string) => stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
 
-  // Parse .md files, building a list of additional assets as we go.
+  // Load pages, building a list of additional assets as we go.
   for await (const path of config.paths()) {
-    effects.output.write(`${faint("parse")} ${path} `);
+    effects.output.write(`${faint("load")} ${path} `);
     const start = performance.now();
     const options = {path, ...config};
+    if (path.endsWith(".js")) {
+      const module = findModule(root, path);
+      if (module) {
+        const resolvers = await getModuleResolvers({localImports: [path]}, {path, ...config});
+        const elapsed = Math.floor(performance.now() - start);
+        for (const f of resolvers.files) addFile(path, f);
+        for (const i of resolvers.localImports) addLocalImport(path, i);
+        for (const i of resolvers.globalImports) addGlobalImport(path, resolvers.resolveImport(i));
+        for (const s of resolvers.stylesheets) addStylesheet(path, s);
+        effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
+        outputs.set(path, {type: "module", resolvers});
+        continue;
+      }
+    }
     const page = await loaders.loadPage(path, options, effects);
     if (page.data.draft) {
       effects.logger.log(faint("(skipped)"));
@@ -95,23 +108,9 @@ export async function build(
     outputs.set(path, {type: "page", page, resolvers});
   }
 
-  // TODO
-  for await (const path of config.embedPaths()) {
-    effects.output.write(`${faint("parse")} ${path} `);
-    const start = performance.now();
-    const resolvers = await getModuleResolvers({localImports: [path]}, {path, ...config});
-    const elapsed = Math.floor(performance.now() - start);
-    for (const f of resolvers.files) addFile(path, f);
-    for (const i of resolvers.localImports) addLocalImport(path, i);
-    for (const i of resolvers.globalImports) addGlobalImport(path, resolvers.resolveImport(i));
-    for (const s of resolvers.stylesheets) addStylesheet(path, s);
-    effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
-    outputs.set(path, {type: "module", resolvers});
-  }
-
   // Check that there’s at least one output.
   const outputCount = outputs.size;
-  if (!outputCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
+  if (!outputCount) throw new CliError(`Nothing to build: no pages found in your ${root} directory.`);
   effects.logger.log(`${faint("built")} ${outputCount} ${faint(`page${outputCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // For cache-breaking we rename most assets to include content hashes.

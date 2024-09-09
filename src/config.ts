@@ -84,7 +84,6 @@ export interface Config {
   pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
   paths: () => AsyncIterable<string>; // defaults to static Markdown files
-  embedPaths: () => AsyncIterable<string>; // defaults to the empty set
   scripts: Script[]; // deprecated; defaults to empty array
   head: PageFragmentFunction | string | null; // defaults to null
   header: PageFragmentFunction | string | null; // defaults to null
@@ -117,7 +116,6 @@ export interface ConfigSpec {
   pages?: unknown;
   pager?: unknown;
   dynamicPaths?: unknown;
-  embedPaths?: unknown;
   toc?: unknown;
   linkify?: unknown;
   typographer?: unknown;
@@ -249,7 +247,6 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const pages = spec.pages === undefined ? undefined : normalizePages(spec.pages);
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
   const dynamicPaths = normalizeDynamicPaths(spec.dynamicPaths);
-  const embedPaths = normalizeDynamicPaths(spec.embedPaths);
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
@@ -297,7 +294,6 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
         yield* visit(path);
       }
     },
-    embedPaths,
     scripts,
     head,
     header,
