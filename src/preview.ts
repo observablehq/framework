@@ -27,9 +27,9 @@ import type {LoaderResolver} from "./loader.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
 import {isPathImport, resolvePath} from "./path.js";
-import {renderPage} from "./render.js";
+import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {getModuleStaticImports, getResolvers} from "./resolvers.js";
+import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import type {Params} from "./route.js";
 import {route} from "./route.js";
@@ -181,23 +181,12 @@ export class PreviewServer {
         // request represents a JavaScript embed (such as /chart.js), and takes
         // precedence over any page (such as /chart.js.md). Generate a wrapper
         // module that allows this JavaScript module to be embedded remotely.
-        // TODO Move this to render (renderComponent?)
         if (pathname.endsWith(".js")) {
-          const path = pathname;
-          const module = findModule(root, path);
-          if (module) {
-            const input = `${(await getModuleStaticImports(root, path))
-              .map((i) => `import ${JSON.stringify(i)};\n`)
-              .join("")}export * from ${JSON.stringify(pathname)};
-`;
-            const output = await transpileModule(input, {
-              root,
-              path: pathname,
-              servePath: pathname,
-              params: module.params
-            });
-            end(req, res, output, "text/javascript");
+          try {
+            end(req, res, await renderModule(root, pathname), "text/javascript");
             return;
+          } catch (error) {
+            if (!isEnoent(error)) throw error;
           }
         }
 
