@@ -69,6 +69,11 @@ export async function build(
   const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
   const stylesheets = new Set<string>(); // e.g., "/style.css"
 
+  const addFile = (path: string, f: string) => files.add(resolvePath(path, f));
+  const addLocalImport = (path: string, i: string) => localImports.add(resolvePath(path, i));
+  const addGlobalImport = (path: string, i: string) => isPathImport(i) && globalImports.add(resolvePath(path, i));
+  const addStylesheet = (path: string, s: string) => stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
+
   // Parse .md files, building a list of additional assets as we go.
   for await (const path of config.paths()) {
     effects.output.write(`${faint("parse")} ${path} `);
@@ -81,11 +86,11 @@ export async function build(
     }
     const resolvers = await getPageResolvers(page, options);
     const elapsed = Math.floor(performance.now() - start);
-    for (const f of resolvers.assets) files.add(resolvePath(path, f));
-    for (const f of resolvers.files) files.add(resolvePath(path, f));
-    for (const i of resolvers.localImports) localImports.add(resolvePath(path, i));
-    for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(path, i)); // prettier-ignore
-    for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
+    for (const f of resolvers.assets) addFile(path, f);
+    for (const f of resolvers.files) addFile(path, f);
+    for (const i of resolvers.localImports) addLocalImport(path, i);
+    for (const i of resolvers.globalImports) addGlobalImport(path, resolvers.resolveImport(i));
+    for (const s of resolvers.stylesheets) addStylesheet(path, s);
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
     outputs.set(path, {type: "page", page, resolvers});
   }
@@ -94,13 +99,12 @@ export async function build(
   for await (const path of config.embedPaths()) {
     effects.output.write(`${faint("parse")} ${path} `);
     const start = performance.now();
-    const options = {path, ...config};
-    const resolvers = await getModuleResolvers({localImports: [path]}, options);
+    const resolvers = await getModuleResolvers({localImports: [path]}, {path, ...config});
     const elapsed = Math.floor(performance.now() - start);
-    for (const f of resolvers.files) files.add(resolvePath(path, f));
-    for (const i of resolvers.localImports) localImports.add(resolvePath(path, i));
-    for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(path, i)); // prettier-ignore
-    for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
+    for (const f of resolvers.files) addFile(path, f);
+    for (const i of resolvers.localImports) addLocalImport(path, i);
+    for (const i of resolvers.globalImports) addGlobalImport(path, resolvers.resolveImport(i));
+    for (const s of resolvers.stylesheets) addStylesheet(path, s);
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
     outputs.set(path, {type: "module", resolvers});
   }
