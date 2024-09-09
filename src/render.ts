@@ -8,13 +8,14 @@ import {html, parseHtml, rewriteHtml} from "./html.js";
 import {isJavaScript} from "./javascript/imports.js";
 import type {FileInfo} from "./javascript/module.js";
 import {findModule} from "./javascript/module.js";
+import type {TranspileModuleOptions} from "./javascript/transpile.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
 import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
 import {isAssetPath, resolvePath, resolveRelativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
-import {getModuleStaticImports, getResolvers} from "./resolvers.js";
+import {getModuleStaticImports, getPageResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
 
 export interface RenderOptions extends Config {
@@ -30,7 +31,7 @@ type RenderInternalOptions =
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {data, params} = page;
   const {base, path, title, preview} = options;
-  const {loaders, resolvers = await getResolvers(page, options)} = options;
+  const {loaders, resolvers = await getPageResolvers(page, options)} = options;
   const {draft = false, sidebar = options.sidebar} = data;
   const toc = mergeToc(data.toc, options.toc);
   const {files, resolveFile, resolveImport} = resolvers;
@@ -280,12 +281,16 @@ function hasGoogleFonts(stylesheets: Set<string>): boolean {
   return false;
 }
 
-export async function renderModule(root: string, path: string): Promise<string> {
+export async function renderModule(
+  root: string,
+  path: string,
+  options?: Omit<TranspileModuleOptions, "root" | "path" | "servePath" | "params">
+): Promise<string> {
   const module = findModule(root, path);
   if (!module) throw enoent(path);
   const input = `${(await getModuleStaticImports(root, path))
     .map((i) => `import ${JSON.stringify(i)};\n`)
     .join("")}export * from ${JSON.stringify(path)};
 `;
-  return await transpileModule(input, {root, path, servePath: path, params: module.params});
+  return await transpileModule(input, {root, path, servePath: path, params: module.params, ...options});
 }

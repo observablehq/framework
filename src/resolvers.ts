@@ -82,10 +82,8 @@ export const builtins = new Map<string, string>([
  * For files, we collect all FileAttachment calls within local modules, adding
  * them to any files referenced by static HTML.
  */
-export async function getResolvers(
-  page: MarkdownPage,
-  {root, path, normalizePath, globalStylesheets: defaultStylesheets, loaders}: ResolversConfig
-): Promise<Resolvers> {
+export async function getPageResolvers(page: MarkdownPage, config: ResolversConfig): Promise<Resolvers> {
+  const {root, path, globalStylesheets: defaultStylesheets, loaders} = config;
   const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
   const assets = new Set<string>();
   const files = new Set<string>();
@@ -94,7 +92,6 @@ export async function getResolvers(
   const globalImports = new Set<string>(defaultImports);
   const staticImports = new Set<string>(defaultImports);
   const stylesheets = new Set<string>(defaultStylesheets);
-  const resolutions = new Map<string, string>();
 
   // Add assets.
   for (const html of [page.head, page.header, page.body, page.footer]) {
@@ -137,6 +134,62 @@ export async function getResolvers(
   for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
   if (page.style && isPathImport(page.style)) hash.update(loaders.getSourceFileHash(resolvePath(path, page.style)));
 
+  // Add implicit imports for standard library built-ins, such as d3 and Plot.
+  for (const i of getImplicitInputImports(findFreeInputs(page))) {
+    staticImports.add(i);
+    globalImports.add(i);
+  }
+
+  // Add React for JSX blocks.
+  if (page.code.some((c) => c.mode === "jsx")) {
+    staticImports.add("npm:react-dom");
+    globalImports.add("npm:react-dom");
+  }
+
+  return {
+    path,
+    hash: hash.digest("hex"),
+    assets,
+    ...(await getModuleResolvers(
+      {
+        files,
+        fileMethods,
+        localImports,
+        globalImports,
+        staticImports,
+        stylesheets
+      },
+      config
+    ))
+  };
+}
+
+export async function getModuleResolvers(
+  {
+    files: initialFiles,
+    fileMethods: initialFileMethods,
+    localImports: initialLocalImports,
+    globalImports: initialGlobalImports,
+    staticImports: intialStaticImports,
+    stylesheets: initialStylesheets
+  }: {
+    files?: Iterable<string> | null;
+    fileMethods?: Iterable<string> | null;
+    localImports?: Iterable<string> | null;
+    globalImports?: Iterable<string> | null;
+    staticImports?: Iterable<string> | null;
+    stylesheets?: Iterable<string> | null;
+  },
+  {root, path, normalizePath, loaders}: ResolversConfig
+): Promise<Omit<Resolvers, "path" | "hash" | "assets">> {
+  const files = new Set<string>(initialFiles);
+  const fileMethods = new Set<string>(initialFileMethods);
+  const localImports = new Set<string>(initialLocalImports);
+  const globalImports = new Set<string>(initialGlobalImports);
+  const staticImports = new Set<string>(intialStaticImports);
+  const stylesheets = new Set<string>(initialStylesheets);
+  const resolutions = new Map<string, string>();
+
   // Collect transitively-attached files and local imports.
   for (const i of localImports) {
     const p = resolvePath(path, i);
@@ -166,18 +219,6 @@ export async function getResolvers(
   for (const i of getImplicitFileImports(fileMethods)) {
     staticImports.add(i);
     globalImports.add(i);
-  }
-
-  // Add implicit imports for standard library built-ins, such as d3 and Plot.
-  for (const i of getImplicitInputImports(findFreeInputs(page))) {
-    staticImports.add(i);
-    globalImports.add(i);
-  }
-
-  // Add React for JSX blocks.
-  if (page.code.some((c) => c.mode === "jsx")) {
-    staticImports.add("npm:react-dom");
-    globalImports.add("npm:react-dom");
   }
 
   // Add transitive imports for built-in libraries.
@@ -323,9 +364,6 @@ export async function getResolvers(
   }
 
   return {
-    path,
-    hash: hash.digest("hex"),
-    assets,
     files,
     localImports,
     globalImports,

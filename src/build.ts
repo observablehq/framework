@@ -12,7 +12,7 @@ import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {getModuleResolver, getResolvers} from "./resolvers.js";
+import {getModuleResolver, getModuleResolvers, getPageResolvers} from "./resolvers.js";
 import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
@@ -58,12 +58,18 @@ export async function build(
   // Prepare for build (such as by emptying the existing output root).
   await effects.prepare();
 
-  // Parse .md files, building a list of additional assets as we go.
-  const pages = new Map<string, {page: MarkdownPage; resolvers: Resolvers}>();
+  // Accumulate outputs.
+  const outputs = new Map<
+    string,
+    | {type: "page"; page: MarkdownPage; resolvers: Resolvers}
+    | {type: "module"; resolvers: Omit<Resolvers, "path" | "hash" | "assets">}
+  >();
   const files = new Set<string>(); // e.g., "/assets/foo.png"
   const localImports = new Set<string>(); // e.g., "/components/foo.js"
   const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
   const stylesheets = new Set<string>(); // e.g., "/style.css"
+
+  // Parse .md files, building a list of additional assets as we go.
   for await (const path of config.paths()) {
     effects.output.write(`${faint("parse")} ${path} `);
     const start = performance.now();
@@ -73,7 +79,7 @@ export async function build(
       effects.logger.log(faint("(skipped)"));
       continue;
     }
-    const resolvers = await getResolvers(page, options);
+    const resolvers = await getPageResolvers(page, options);
     const elapsed = Math.floor(performance.now() - start);
     for (const f of resolvers.assets) files.add(resolvePath(path, f));
     for (const f of resolvers.files) files.add(resolvePath(path, f));
@@ -81,13 +87,28 @@ export async function build(
     for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(path, i)); // prettier-ignore
     for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
-    pages.set(path, {page, resolvers});
+    outputs.set(path, {type: "page", page, resolvers});
   }
 
-  // Check that there’s at least one page.
-  const pageCount = pages.size;
-  if (!pageCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
-  effects.logger.log(`${faint("built")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`);
+  // TODO
+  for await (const path of config.embedPaths()) {
+    effects.output.write(`${faint("parse")} ${path} `);
+    const start = performance.now();
+    const options = {path, ...config};
+    const resolvers = await getModuleResolvers({localImports: [path]}, options);
+    const elapsed = Math.floor(performance.now() - start);
+    for (const f of resolvers.files) files.add(resolvePath(path, f));
+    for (const i of resolvers.localImports) localImports.add(resolvePath(path, i));
+    for (let i of resolvers.globalImports) if (isPathImport((i = resolvers.resolveImport(i)))) globalImports.add(resolvePath(path, i)); // prettier-ignore
+    for (const s of resolvers.stylesheets) stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
+    effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
+    outputs.set(path, {type: "module", resolvers});
+  }
+
+  // Check that there’s at least one output.
+  const outputCount = outputs.size;
+  if (!outputCount) throw new CliError(`Nothing to build: no page files found in your ${root} directory.`);
+  effects.logger.log(`${faint("built")} ${outputCount} ${faint(`page${outputCount === 1 ? "" : "s"} in`)} ${root}`);
 
   // For cache-breaking we rename most assets to include content hashes.
   const aliases = new Map<string, string>();
@@ -269,12 +290,12 @@ export async function build(
   }
 
   // Wrap the resolvers to apply content-hashed file names.
-  for (const [path, page] of pages) {
+  for (const [path, page] of outputs) {
     const {resolvers} = page;
-    pages.set(path, {
+    outputs.set(path, {
       ...page,
       resolvers: {
-        ...resolvers,
+        ...(resolvers as any), // TODO blargh
         resolveFile(specifier) {
           const r = resolvers.resolveFile(specifier);
           const a = aliases.get(resolvePath(path, r));
@@ -301,21 +322,18 @@ export async function build(
 
   // Render pages!
   const buildManifest: BuildManifest = {pages: []};
-  for (const [path, {page, resolvers}] of pages) {
+  for (const [path, output] of outputs) {
     effects.output.write(`${faint("render")} ${path} ${faint("→")} `);
-    const html = await renderPage(page, {...config, path, resolvers});
-    await effects.writeFile(`${path}.html`, html);
-    buildManifest.pages.push({path: config.normalizePath(path), title: page.title});
-  }
-
-  // Render embeds!
-  // TODO The resolvers are wrong…
-  // TODO This relies on other pages referencing the same assets…
-  for await (const path of config.embedPaths()) {
-    if (!path.endsWith(".js")) throw new Error(`embed path does not end with .js: ${path}`);
-    effects.output.write(`${faint("render")} ${path} ${faint("→")} `);
-    const source = await renderModule(root, path);
-    await effects.writeFile(path, source);
+    if (output.type === "page") {
+      const {page, resolvers} = output;
+      const html = await renderPage(page, {...config, path, resolvers});
+      await effects.writeFile(`${path}.html`, html);
+      buildManifest.pages.push({path: config.normalizePath(path), title: page.title});
+    } else {
+      const {resolvers} = output;
+      const source = await renderModule(root, path, resolvers);
+      await effects.writeFile(path, source);
+    }
   }
 
   // Write the build manifest.
@@ -323,7 +341,7 @@ export async function build(
   // Log page sizes.
   const columnWidth = 12;
   effects.logger.log("");
-  for (const [indent, name, description, node] of tree(pages)) {
+  for (const [indent, name, description, node] of tree(outputs)) {
     if (node.children) {
       effects.logger.log(
         `${faint(indent)}${name}${faint(description)} ${
@@ -331,7 +349,8 @@ export async function build(
         }`
       );
     } else {
-      const [path, {resolvers}] = node.data!;
+      const [path, {type, resolvers}] = node.data!;
+      if (type !== "page") continue; // TODO
       const resolveOutput = (name: string) => join(config.output, resolvePath(path, name));
       const pageSize = (await stat(join(config.output, `${path}.html`))).size;
       const importSize = await accumulateSize(resolvers.staticImports, resolvers.resolveImport, resolveOutput);
@@ -348,7 +367,7 @@ export async function build(
   }
   effects.logger.log("");
 
-  Telemetry.record({event: "build", step: "finish", pageCount});
+  Telemetry.record({event: "build", step: "finish", pageCount: outputCount});
 }
 
 function applyHash(path: string, hash: string): string {

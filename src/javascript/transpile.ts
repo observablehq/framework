@@ -57,7 +57,7 @@ export interface TranspileModuleOptions {
   path: string;
   servePath?: string; // defaults to /_import/${path}
   params?: Params;
-  resolveImport?: (specifier: string) => Promise<string>;
+  resolveImport?: (specifier: string) => string | Promise<string>;
   resolveFile?: (name: string) => string;
   resolveFileInfo?: (name: string) => FileInfo | undefined;
 }

@@ -29,7 +29,7 @@ import {populateNpmCache} from "./npm.js";
 import {isPathImport, resolvePath} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {getResolvers} from "./resolvers.js";
+import {getPageResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import type {Params} from "./route.js";
 import {route} from "./route.js";
@@ -345,7 +345,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
           clearTimeout(emptyTimeout);
           emptyTimeout = null;
         }
-        const resolvers = await getResolvers(page, {path, ...config});
+        const resolvers = await getPageResolvers(page, {path, ...config});
         if (hash === resolvers.hash) break;
         const previousHash = hash!;
         const previousHtml = html!;
@@ -384,7 +384,7 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     config = await configPromise;
     const {root, loaders, normalizePath} = config;
     const page = await loaders.loadPage(path, {path, ...config});
-    const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
+    const resolvers = await getPageResolvers(page, {root, path, loaders, normalizePath});
     if (resolvers.hash === initialHash) send({type: "welcome"});
     else return void send({type: "reload"});
     hash = resolvers.hash;
