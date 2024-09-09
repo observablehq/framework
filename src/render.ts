@@ -15,7 +15,7 @@ import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
 import {isAssetPath, resolvePath, resolveRelativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
-import {getModuleStaticImports, getPageResolvers} from "./resolvers.js";
+import {getModuleStaticImports, getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
 
 export interface RenderOptions extends Config {
@@ -31,7 +31,7 @@ type RenderInternalOptions =
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {data, params} = page;
   const {base, path, title, preview} = options;
-  const {loaders, resolvers = await getPageResolvers(page, options)} = options;
+  const {loaders, resolvers = await getResolvers(page, options)} = options;
   const {draft = false, sidebar = options.sidebar} = data;
   const toc = mergeToc(data.toc, options.toc);
   const {files, resolveFile, resolveImport} = resolvers;

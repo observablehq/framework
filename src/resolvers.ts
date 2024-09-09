@@ -82,7 +82,7 @@ export const builtins = new Map<string, string>([
  * For files, we collect all FileAttachment calls within local modules, adding
  * them to any files referenced by static HTML.
  */
-export async function getPageResolvers(page: MarkdownPage, config: ResolversConfig): Promise<Resolvers> {
+export async function getResolvers(page: MarkdownPage, config: ResolversConfig): Promise<Resolvers> {
   const {root, path, globalStylesheets: defaultStylesheets, loaders} = config;
   const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
   const assets = new Set<string>();
@@ -150,7 +150,7 @@ export async function getPageResolvers(page: MarkdownPage, config: ResolversConf
     path,
     hash: hash.digest("hex"),
     assets,
-    ...(await getModuleResolvers(
+    ...(await resolveResolvers(
       {
         files,
         fileMethods,
@@ -164,7 +164,18 @@ export async function getPageResolvers(page: MarkdownPage, config: ResolversConf
   };
 }
 
-export async function getModuleResolvers(
+/** Like getResolvers, but for JavaScript modules. */
+export async function getModuleResolvers(path: string, config: Omit<ResolversConfig, "path">): Promise<Resolvers> {
+  const {root} = config;
+  return {
+    path,
+    hash: getModuleHash(root, path),
+    assets: new Set(),
+    ...(await resolveResolvers({localImports: [path]}, {path, ...config}))
+  };
+}
+
+async function resolveResolvers(
   {
     files: initialFiles,
     fileMethods: initialFileMethods,

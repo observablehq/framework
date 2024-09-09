@@ -12,7 +12,7 @@ import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {getModuleResolver, getModuleResolvers, getPageResolvers} from "./resolvers.js";
+import {getModuleResolver, getModuleResolvers, getResolvers} from "./resolvers.js";
 import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
@@ -61,8 +61,7 @@ export async function build(
   // Accumulate outputs.
   const outputs = new Map<
     string,
-    | {type: "page"; page: MarkdownPage; resolvers: Resolvers}
-    | {type: "module"; resolvers: Omit<Resolvers, "path" | "hash" | "assets">}
+    {type: "page"; page: MarkdownPage; resolvers: Resolvers} | {type: "module"; resolvers: Resolvers}
   >();
   const files = new Set<string>(); // e.g., "/assets/foo.png"
   const localImports = new Set<string>(); // e.g., "/components/foo.js"
@@ -81,7 +80,7 @@ export async function build(
     if (path.endsWith(".js")) {
       const module = findModule(root, path);
       if (module) {
-        const resolvers = await getModuleResolvers({localImports: [path]}, {path, ...config});
+        const resolvers = await getModuleResolvers(path, config);
         const elapsed = Math.floor(performance.now() - start);
         for (const f of resolvers.files) addFile(path, f);
         for (const i of resolvers.localImports) addLocalImport(path, i);
@@ -97,7 +96,7 @@ export async function build(
       effects.logger.log(faint("(skipped)"));
       continue;
     }
-    const resolvers = await getPageResolvers(page, options);
+    const resolvers = await getResolvers(page, options);
     const elapsed = Math.floor(performance.now() - start);
     for (const f of resolvers.assets) addFile(path, f);
     for (const f of resolvers.files) addFile(path, f);
@@ -293,12 +292,12 @@ export async function build(
   }
 
   // Wrap the resolvers to apply content-hashed file names.
-  for (const [path, page] of outputs) {
-    const {resolvers} = page;
+  for (const [path, output] of outputs) {
+    const {resolvers} = output;
     outputs.set(path, {
-      ...page,
+      ...output,
       resolvers: {
-        ...(resolvers as any), // TODO blargh
+        ...resolvers,
         resolveFile(specifier) {
           const r = resolvers.resolveFile(specifier);
           const a = aliases.get(resolvePath(path, r));
