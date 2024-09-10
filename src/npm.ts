@@ -36,7 +36,11 @@ export function formatNpmSpecifier({name, range, path}: NpmSpecifier): string {
 }
 
 /** Rewrites /npm/ import specifiers to be relative paths to /_npm/. */
-export function rewriteNpmImports(input: string, resolve: (specifier: string) => string = String): string {
+export function rewriteNpmImports(
+  input: string,
+  resolve: (specifier: string) => string = String,
+  href?: string
+): string {
   const body = parseProgram(input);
   const output = new Sourcemap(input);
 
@@ -66,8 +70,9 @@ export function rewriteNpmImports(input: string, resolve: (specifier: string) =>
     if (value !== resolved) output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
   }
 
-  // TODO Preserve the source map, but download it too.
-  return String(output).replace(/^\/\/# sourceMappingURL=.*$\n?/m, "");
+  return String(output).replace(/^(\/\/# sourceMappingURL=)(.*)$\n?/m, (_, _1, _2) =>
+    href ? `${_1}${new URL(_2, href)}` : ""
+  );
 }
 
 const npmRequests = new Map<string, Promise<string>>();
@@ -89,7 +94,7 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
     if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
       const source = await response.text();
       const resolver = await getDependencyResolver(root, path, source);
-      await writeFile(outputPath, rewriteNpmImports(source, resolver), "utf-8");
+      await writeFile(outputPath, rewriteNpmImports(source, resolver, href), "utf-8");
     } else {
       await writeFile(outputPath, Buffer.from(await response.arrayBuffer()));
     }
