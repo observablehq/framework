@@ -1,10 +1,10 @@
 # Deploying
 
-You can host your built Framework app on any static site hosting service, or self-host it with any static site server. This guide covers deploying to [Observable](https://observablehq.com), which is the easiest way to host your Framework app as support is built-in. We’ll also cover setting up automated deploys with GitHub Actions.
+You can host your built Framework app on any static site hosting service, or self-host it with any static site server. This guide covers deploying to [Observable Cloud](https://observablehq.com/platform/cloud), which is the easiest way to host your Framework app as support is built-in. We’ll also cover setting up automated deploys with GitHub Actions.
 
 <div class="tip">
 
-If you don’t already have an app ready to deploy, create one by following our [Getting started guide](./getting-started).
+If you don’t yet have an app ready to deploy, create one by following our [Getting started guide](./getting-started).
 
 </div>
 
@@ -24,9 +24,17 @@ npm run deploy
 
 The first time you deploy an app, you will be prompted to configure the app’s _slug_ (which determines its URL), access level, and other details. If you aren’t yet signed-in to Observable, you will also be prompted to sign-in.
 
-When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed app. If you choose *private* as the access level, that link will only be accessible to members of your Observable workspace. (You can invite people to your workspace by going to observablehq.com.) If you chose *public*, you can share your app link with anyone. You can change the access level of an app later [from your workspace projects <!-- TODO apps --> page](https://observablehq.com/select-workspace?next=projects).
+When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed app. If you choose _private_ as the access level, that link will only be accessible to members of your Observable workspace. (You can invite people to your workspace by going to observablehq.com.) If you choose _public_, you can share your app link with anyone. You can change the access level of an app later [from your Data apps page](https://observablehq.com/select-workspace?next=projects).
 
-<div class="tip">To see more available options when deploying:<pre><code class="language-sh">npm run deploy -- --help</code></pre></div>
+<div class="tip">
+
+To see more available options when deploying:
+
+```sh run=false
+npm run deploy -- --help
+```
+
+</div>
 
 ## Deploy configuration
 
@@ -42,7 +50,11 @@ The contents of the deploy config file look like this:
 }
 ```
 
-A deploy config file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions.
+<div class="note">
+
+A deploy config file is required for automated deploys. You should commit this file to git.
+
+</div>
 
 To store the deploy config file somewhere else, use the `--deploy-config` argument. For example, to create a “staging” deploy to share early versions of your app, you could use a `deploy-staging.json` like so:
 
@@ -54,7 +66,17 @@ If the specified config file does not yet exist, you will again be prompted to c
 
 ## Automated deploys
 
-To set up automatic deploys (also known as *continuous deployment* or *CD*), we recommend [GitHub Actions](https://github.com/features/actions). In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
+Once the app has been set up, you can have Observable build the next deploys for you. You can build automatically _on commit_ (whenever you push a new commit to your project’s default branch) and _on schedule_ (such as daily or weekly).
+
+Automatic deploys — also known as _continuous deployment_ or _CD_ — ensure that your data is up to date, and that any changes you make to your app are immediately reflected in the deployed version.
+
+On your app settings page on Observable, open the **Build settings** tab to set up a link to a GitHub repository hosting your project’s files. Observable will then listen for changes in the repo and deploy the app automatically.
+
+The settings page also allows you to trigger a build manually, add secrets (for data loaders to use private APIs and passwords), view logs, configure sharing, _etc._ For details, see the [Building & deploying](https://observablehq.com/documentation/data-apps/deploys) documentation.
+
+## GitHub Actions
+
+As an alternative to building on Observable Cloud, you can use [GitHub Actions](https://github.com/features/actions) and have GitHub build a new version of your app and deploy it to Observable. In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
 
 ```yaml
 name: Deploy
@@ -88,7 +110,7 @@ jobs:
 
 <div class="tip">As shown above, deploy messages can be set using <code>--message</code>. This is especially useful for continuous deployment from a git repository: the message can include the SHA, author, and message of the latest commit.</div>
 
-When deploying automatically, you can’t sign-in in your browser the way you did for manual deploys; instead, your GitHub action will authenticate using an Observable API key (also known as a *token* and referred to as `OBSERVABLE_TOKEN` above).
+When deploying automatically, you can’t sign-in in your browser the way you did for manual deploys; instead, your GitHub action will authenticate using an Observable API key (also known as a _token_ and referred to as `OBSERVABLE_TOKEN` above).
 
 To create an API key:
 
