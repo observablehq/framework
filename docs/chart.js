@@ -6,9 +6,6 @@ export async function Chart() {
   return Plot.plot({
     y: {grid: true},
     color: {scheme: "burd"},
-    marks: [
-      Plot.dot(gistemp, {x: "Date", y: "Anomaly", stroke: "Anomaly"}),
-      Plot.ruleY([0])
-    ]
+    marks: [Plot.dot(gistemp, {x: "Date", y: "Anomaly", stroke: "Anomaly"}), Plot.ruleY([0])]
   });
 }
