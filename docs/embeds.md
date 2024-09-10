@@ -30,7 +30,7 @@ export default {
 
 Embedded modules are vanilla JavaScript, and will behave identically when embedded in an external application as on a Framework page. As always, you can load data from a [data loader](./data-loaders) using [`FileAttachment`](./files), and you can [import](./imports) [self-hosted](./imports#self-hosting-of-npm-imports) local modules and libraries from npm; file and import resolutions are baked into the generated code at build time so that imported modules “just work”.
 
-Embedded modules are often written as functions that return DOM elements. These functions can take options (or “props”), and  typically load their own data via `FileAttachment`. For example, below is a simple `chart.js` module that exports a `Chart` function that renders a scatterplot.
+Embedded modules are often written as functions that return DOM elements. These functions can take options (or “props”), and typically load their own data via `FileAttachment`. For example, below is a simple `chart.js` module that exports a `Chart` function that renders a scatterplot.
 
 ```js run=false
 import {FileAttachment} from "npm:@observablehq/stdlib";
