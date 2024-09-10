@@ -55,6 +55,7 @@ describe("visitFiles(root)", () => {
       "files.md",
       "observable logo small.png",
       "observable logo.png",
+      "unknown-mime-extension.really",
       "subsection/additional-styles.css",
       "subsection/file-sub.csv",
       "subsection/subfiles.md"

@@ -2,7 +2,7 @@ import {createHash} from "node:crypto";
 import {copyFile, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
-import {CliError, isEnoent} from "./error.js";
+import {CliError} from "./error.js";
 import {getClientPath, prepareOutput} from "./files.js";
 import {findModule, getLocalModuleHash, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
@@ -176,14 +176,7 @@ export async function build(
   // Copy over referenced files, accumulating hashed aliases.
   for (const file of files) {
     effects.output.write(`${faint("copy")} ${join(root, file)} ${faint("→")} `);
-    let sourcePath: string;
-    try {
-      sourcePath = join(root, await loaders.loadFile(join("/", file), {useStale: true}, effects));
-    } catch (error) {
-      if (!isEnoent(error)) throw error;
-      effects.logger.error(red("error: missing referenced file"));
-      continue;
-    }
+    const sourcePath = join(root, await loaders.loadFile(join("/", file), {useStale: true}, effects));
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const alias = applyHash(join("/_file", file), hash);
@@ -242,22 +235,12 @@ export async function build(
   };
   for (const path of localImports) {
     const module = findModule(root, path);
-    if (!module) {
-      effects.logger.error(red(`error: import not found: ${path}`));
-      continue;
-    }
+    if (!module) throw new Error(`import not found: ${path}`);
     const sourcePath = join(root, module.path);
     const importPath = join("_import", module.path);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const resolveImport = getModuleResolver(root, path);
-    let input: string;
-    try {
-      input = await readJavaScript(sourcePath);
-    } catch (error) {
-      if (!isEnoent(error)) throw error;
-      effects.logger.error(red("error: missing referenced import"));
-      continue;
-    }
+    const input = await readJavaScript(sourcePath);
     const contents = await transpileModule(input, {
       root,
       path,

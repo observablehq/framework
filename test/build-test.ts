@@ -25,6 +25,9 @@ function getHashNormalizer() {
   };
 }
 
+/** These tests are intended to fail. */
+const failureTests = ["missing-file", "missing-import"];
+
 describe("build", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   mockJsDelivr();
@@ -48,14 +51,21 @@ describe("build", () => {
       : it)(`${inputRoot}/${name}`, async () => {
       const actualDir = join(outputRoot, `${outname}-changed`);
       const expectedDir = join(outputRoot, outname);
-      const generate = !existsSync(expectedDir) && process.env.CI !== "true";
+      const generate = !existsSync(expectedDir) && !failureTests.includes(outname) && process.env.CI !== "true";
       const outputDir = generate ? expectedDir : actualDir;
       const normalizeHash = getHashNormalizer();
 
       await rm(actualDir, {recursive: true, force: true});
       if (generate) console.warn(`! generating ${expectedDir}`);
       const config = {...(await readConfig(undefined, path)), output: outputDir};
-      await build({config}, new TestEffects(outputDir, join(config.root, ".observablehq", "cache")));
+      try {
+        await build({config}, new TestEffects(outputDir, join(config.root, ".observablehq", "cache")));
+      } catch (error) {
+        if (!failureTests.includes(outname)) throw error;
+        await rm(outputDir, {recursive: true, force: true});
+        return;
+      }
+      if (failureTests.includes(outname)) throw new Error(`expected failure: ${outname}`);
 
       // Replace any hashed files in _observablehq with empty files, and
       // renumber the hashes so they are sequential. This way we don’t have to
