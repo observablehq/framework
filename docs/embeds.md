@@ -75,6 +75,12 @@ The code above assumes the Framework app is called “my-app” and that it’s 
 
 </div>
 
+<div class="note">
+
+If the external (host) application is on a different origin than the Framework app — for example, if the host application is on example.com and the Framework app is on app.example.com — then you will need to [enable CORS](https://enable-cors.org/) on app.example.com or use a proxy to forward requests from example.com to app.example.com for same-origin serving.
+
+</div>
+
 In React, you can do something similar using [dynamic import](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import) and [`useEffect`](https://react.dev/reference/react/useEffect) and [`useRef`](https://react.dev/reference/react/useRef) hooks:
 
 ```jsx run=false
