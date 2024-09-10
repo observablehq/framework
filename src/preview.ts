@@ -27,7 +27,7 @@ import type {LoaderResolver} from "./loader.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
 import {isPathImport, resolvePath} from "./path.js";
-import {renderPage} from "./render.js";
+import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
 import {getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
@@ -43,6 +43,7 @@ export interface PreviewOptions {
   hostname: string;
   open?: boolean;
   port?: number;
+  origins?: string[];
   verbose?: boolean;
 }
 
@@ -53,6 +54,7 @@ export async function preview(options: PreviewOptions): Promise<PreviewServer> {
 export class PreviewServer {
   private readonly _config: string | undefined;
   private readonly _root: string | undefined;
+  private readonly _origins: string[];
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _verbose: boolean;
@@ -60,16 +62,19 @@ export class PreviewServer {
   private constructor({
     config,
     root,
+    origins = [],
     server,
     verbose
   }: {
     config?: string;
     root?: string;
+    origins?: string[];
     server: Server;
     verbose: boolean;
   }) {
     this._config = config;
     this._root = root;
+    this._origins = origins;
     this._verbose = verbose;
     this._server = server;
     this._server.on("request", this._handleRequest);
@@ -116,6 +121,9 @@ export class PreviewServer {
     const {root, loaders} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
     const url = new URL(req.url!, "http://localhost");
+    const {origin} = req.headers;
+    if (this._origins.includes("*")) res.setHeader("Access-Control-Allow-Origin", "*");
+    else if (origin && this._origins.includes(origin)) res.setHeader("Access-Control-Allow-Origin", origin);
     let pathname = decodeURI(url.pathname);
     try {
       let match: RegExpExecArray | null;
@@ -150,7 +158,13 @@ export class PreviewServer {
           const module = findModule(root, path);
           if (module) {
             const input = await readJavaScript(join(root, module.path));
-            const output = await transpileModule(input, {root, path, params: module.params});
+            const output = await transpileModule(input, {
+              root,
+              path,
+              params: module.params,
+              resolveFile: (name) => loaders.resolveFilePath(resolvePath(path, name)),
+              resolveFileInfo: (name) => loaders.getSourceInfo(resolvePath(path, name))
+            });
             end(req, res, output, "text/javascript");
             return;
           }
@@ -168,6 +182,19 @@ export class PreviewServer {
           res.writeHead(302, {Location: normalizedPathname + url.search});
           res.end();
           return;
+        }
+
+        // If there is a JavaScript module that exists for this path, the
+        // request represents a JavaScript embed (such as /chart.js), and takes
+        // precedence over any page (such as /chart.js.md). Generate a wrapper
+        // module that allows this JavaScript module to be embedded remotely.
+        if (pathname.endsWith(".js")) {
+          try {
+            end(req, res, await renderModule(root, pathname), "text/javascript");
+            return;
+          } catch (error) {
+            if (!isEnoent(error)) throw error;
+          }
         }
 
         // If this path ends with a slash, then add an implicit /index to the

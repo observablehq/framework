@@ -82,10 +82,8 @@ export const builtins = new Map<string, string>([
  * For files, we collect all FileAttachment calls within local modules, adding
  * them to any files referenced by static HTML.
  */
-export async function getResolvers(
-  page: MarkdownPage,
-  {root, path, normalizePath, globalStylesheets: defaultStylesheets, loaders}: ResolversConfig
-): Promise<Resolvers> {
+export async function getResolvers(page: MarkdownPage, config: ResolversConfig): Promise<Resolvers> {
+  const {root, path, globalStylesheets: defaultStylesheets, loaders} = config;
   const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
   const assets = new Set<string>();
   const files = new Set<string>();
@@ -94,7 +92,6 @@ export async function getResolvers(
   const globalImports = new Set<string>(defaultImports);
   const staticImports = new Set<string>(defaultImports);
   const stylesheets = new Set<string>(defaultStylesheets);
-  const resolutions = new Map<string, string>();
 
   // Add assets.
   for (const html of [page.head, page.header, page.body, page.footer]) {
@@ -137,6 +134,73 @@ export async function getResolvers(
   for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
   if (page.style && isPathImport(page.style)) hash.update(loaders.getSourceFileHash(resolvePath(path, page.style)));
 
+  // Add implicit imports for standard library built-ins, such as d3 and Plot.
+  for (const i of getImplicitInputImports(findFreeInputs(page))) {
+    staticImports.add(i);
+    globalImports.add(i);
+  }
+
+  // Add React for JSX blocks.
+  if (page.code.some((c) => c.mode === "jsx")) {
+    staticImports.add("npm:react-dom");
+    globalImports.add("npm:react-dom");
+  }
+
+  return {
+    path,
+    hash: hash.digest("hex"),
+    assets,
+    ...(await resolveResolvers(
+      {
+        files,
+        fileMethods,
+        localImports,
+        globalImports,
+        staticImports,
+        stylesheets
+      },
+      config
+    ))
+  };
+}
+
+/** Like getResolvers, but for JavaScript modules. */
+export async function getModuleResolvers(path: string, config: Omit<ResolversConfig, "path">): Promise<Resolvers> {
+  const {root} = config;
+  return {
+    path,
+    hash: getModuleHash(root, path),
+    assets: new Set(),
+    ...(await resolveResolvers({localImports: [path], staticImports: [path]}, {path, ...config}))
+  };
+}
+
+async function resolveResolvers(
+  {
+    files: initialFiles,
+    fileMethods: initialFileMethods,
+    localImports: initialLocalImports,
+    globalImports: initialGlobalImports,
+    staticImports: intialStaticImports,
+    stylesheets: initialStylesheets
+  }: {
+    files?: Iterable<string> | null;
+    fileMethods?: Iterable<string> | null;
+    localImports?: Iterable<string> | null;
+    globalImports?: Iterable<string> | null;
+    staticImports?: Iterable<string> | null;
+    stylesheets?: Iterable<string> | null;
+  },
+  {root, path, normalizePath, loaders}: ResolversConfig
+): Promise<Omit<Resolvers, "path" | "hash" | "assets">> {
+  const files = new Set<string>(initialFiles);
+  const fileMethods = new Set<string>(initialFileMethods);
+  const localImports = new Set<string>(initialLocalImports);
+  const globalImports = new Set<string>(initialGlobalImports);
+  const staticImports = new Set<string>(intialStaticImports);
+  const stylesheets = new Set<string>(initialStylesheets);
+  const resolutions = new Map<string, string>();
+
   // Collect transitively-attached files and local imports.
   for (const i of localImports) {
     const p = resolvePath(path, i);
@@ -166,18 +230,6 @@ export async function getResolvers(
   for (const i of getImplicitFileImports(fileMethods)) {
     staticImports.add(i);
     globalImports.add(i);
-  }
-
-  // Add implicit imports for standard library built-ins, such as d3 and Plot.
-  for (const i of getImplicitInputImports(findFreeInputs(page))) {
-    staticImports.add(i);
-    globalImports.add(i);
-  }
-
-  // Add React for JSX blocks.
-  if (page.code.some((c) => c.mode === "jsx")) {
-    staticImports.add("npm:react-dom");
-    globalImports.add("npm:react-dom");
   }
 
   // Add transitive imports for built-in libraries.
@@ -323,9 +375,6 @@ export async function getResolvers(
   }
 
   return {
-    path,
-    hash: hash.digest("hex"),
-    assets,
     files,
     localImports,
     globalImports,
@@ -339,14 +388,55 @@ export async function getResolvers(
   };
 }
 
+/** Returns the set of transitive static imports for the specified module. */
+export async function getModuleStaticImports(root: string, path: string): Promise<string[]> {
+  const localImports = new Set<string>([path]);
+  const globalImports = new Set<string>();
+  const fileMethods = new Set<string>();
+
+  // Collect local and global imports from transitive local imports.
+  for (const i of localImports) {
+    const info = getModuleInfo(root, i);
+    if (!info) continue;
+    for (const o of info.localStaticImports) localImports.add(resolvePath(i, o));
+    for (const o of info.globalStaticImports) globalImports.add(o);
+    for (const m of info.fileMethods) fileMethods.add(m);
+  }
+
+  // Collect implicit imports from file methods.
+  for (const i of getImplicitFileImports(fileMethods)) {
+    globalImports.add(i);
+  }
+
+  // Collect transitive global imports.
+  for (const i of globalImports) {
+    if (i.startsWith("npm:") && !builtins.has(i)) {
+      const p = await resolveNpmImport(root, i.slice("npm:".length));
+      for (const o of await resolveNpmImports(root, p)) {
+        if (o.type === "local") globalImports.add(`npm:${extractNpmSpecifier(resolvePath(p, o.name))}`);
+      }
+    } else if (!/^\w+:/.test(i)) {
+      const p = await resolveNodeImport(root, i);
+      for (const o of await resolveNodeImports(root, p)) {
+        if (o.type === "local") globalImports.add(extractNodeSpecifier(resolvePath(p, o.name)));
+      }
+    }
+  }
+
+  return [...localImports, ...globalImports].filter((i) => i !== path).map((i) => relativePath(path, i));
+}
+
 /**
  * Returns the import resolver used for transpiling local modules. Unlike
  * getResolvers, this is independent of any specific page, and is done without
  * knowing the transitive imports ahead of time. But it should be consistent
  * with the resolveImport returned by getResolvers (assuming caching).
  */
-export function getModuleResolver(root: string, path: string): (specifier: string) => Promise<string> {
-  const servePath = `/${join("_import", path)}`;
+export function getModuleResolver(
+  root: string,
+  path: string,
+  servePath = `/${join("_import", path)}`
+): (specifier: string) => Promise<string> {
   return async (specifier) => {
     return isPathImport(specifier)
       ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier)))

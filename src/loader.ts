@@ -12,7 +12,7 @@ import {maybeStat, prepareOutput, visitFiles} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
 import type {FileInfo} from "./javascript/module.js";
-import {getFileInfo} from "./javascript/module.js";
+import {findModule, getFileInfo} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage, ParseOptions} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
@@ -48,6 +48,7 @@ const defaultEffects: LoadEffects = {
 };
 
 export interface LoadOptions {
+  /** Whether to use a stale cache; true when building. */
   useStale?: boolean;
 }
 
@@ -56,7 +57,6 @@ export interface LoaderOptions {
   path: string;
   params?: Params;
   targetPath: string;
-  useStale: boolean;
 }
 
 export class LoaderResolver {
@@ -77,9 +77,9 @@ export class LoaderResolver {
    * the (possibly generated) file relative to the source root.
    */
   async loadFile(path: string, options?: LoadOptions, effects?: LoadEffects): Promise<string> {
-    const loader = this.find(path, options);
+    const loader = this.find(path);
     if (!loader) throw enoent(path);
-    return await loader.load(effects);
+    return await loader.load(options, effects);
   }
 
   /**
@@ -87,9 +87,9 @@ export class LoaderResolver {
    * page object.
    */
   async loadPage(path: string, options: LoadOptions & ParseOptions, effects?: LoadEffects): Promise<MarkdownPage> {
-    const loader = this.findPage(path, options);
+    const loader = this.findPage(path);
     if (!loader) throw enoent(path);
-    const source = await readFile(join(this.root, await loader.load(effects)), "utf8");
+    const source = await readFile(join(this.root, await loader.load(options, effects)), "utf8");
     return parseMarkdown(source, {params: loader.params, ...options});
   }
 
@@ -97,7 +97,7 @@ export class LoaderResolver {
    * Returns a watcher for the page at the specified path.
    */
   watchPage(path: string, listener: WatchListener<string>): FSWatcher {
-    const loader = this.find(`${path}.md`);
+    const loader = this.findPage(path);
     if (!loader) throw enoent(path);
     return watch(join(this.root, loader.path), listener);
   }
@@ -107,9 +107,11 @@ export class LoaderResolver {
    */
   *findPagePaths(): Generator<string> {
     const ext = new RegExp(`\\.md(${["", ...this.interpreters.keys()].map(requote).join("|")})$`);
-    for (const path of visitFiles(this.root, (name) => !isParameterized(name))) {
-      if (!ext.test(path)) continue;
-      yield `/${path.slice(0, path.lastIndexOf(".md"))}`;
+    for (const file of visitFiles(this.root, (name) => !isParameterized(name))) {
+      if (!ext.test(file)) continue;
+      const path = `/${file.slice(0, file.lastIndexOf(".md"))}`;
+      if (extname(path) === ".js" && findModule(this.root, path)) continue;
+      yield path;
     }
   }
 
@@ -117,8 +119,9 @@ export class LoaderResolver {
    * Finds the page loader for the specified target path, relative to the source
    * root, if the loader exists. If there is no such loader, returns undefined.
    */
-  findPage(path: string, options?: LoadOptions): Loader | undefined {
-    return this.find(`${path}.md`, options);
+  findPage(path: string): Loader | undefined {
+    if (extname(path) === ".js" && findModule(this.root, path)) return;
+    return this.find(`${path}.md`);
   }
 
   /**
@@ -128,8 +131,8 @@ export class LoaderResolver {
    * abort if we find a matching folder or reach the source root; for example,
    * if src/data exists, we won’t look for a src/data.zip.
    */
-  find(path: string, {useStale = false}: LoadOptions = {}): Loader | undefined {
-    return this.findFile(path, {useStale}) ?? this.findArchive(path, {useStale});
+  find(path: string): Loader | undefined {
+    return this.findFile(path) ?? this.findArchive(path);
   }
 
   // Finding a file:
@@ -149,7 +152,7 @@ export class LoaderResolver {
   // - /[param1]/[param2]/file.csv.js
   // - /[param1]/[param2]/[param3].csv
   // - /[param1]/[param2]/[param3].csv.js
-  private findFile(targetPath: string, {useStale}: {useStale: boolean}): Loader | undefined {
+  private findFile(targetPath: string): Loader | undefined {
     const ext = extname(targetPath);
     const exts = ext ? [ext, ...Array.from(this.interpreters.keys(), (iext) => ext + iext)] : [ext];
     const found = route(this.root, ext ? targetPath.slice(0, -ext.length) : targetPath, exts);
@@ -165,8 +168,7 @@ export class LoaderResolver {
       path,
       params,
       root: this.root,
-      targetPath,
-      useStale
+      targetPath
     });
   }
 
@@ -195,7 +197,7 @@ export class LoaderResolver {
   // - /[param].tgz
   // - /[param].zip.js
   // - /[param].tgz.js
-  private findArchive(targetPath: string, {useStale}: {useStale: boolean}): Loader | undefined {
+  private findArchive(targetPath: string): Loader | undefined {
     const exts = this.getArchiveExtensions();
     for (let dir = dirname(targetPath), parent: string; (parent = dirname(dir)) !== dir; dir = parent) {
       const found = route(this.root, dir, exts);
@@ -210,8 +212,7 @@ export class LoaderResolver {
           path,
           params,
           root: this.root,
-          targetPath, // /path/to/file.jpg
-          useStale
+          targetPath // /path/to/file.jpg
         });
       }
       const iext = extname(fext);
@@ -225,18 +226,16 @@ export class LoaderResolver {
         path,
         params,
         root: this.root,
-        targetPath: dir + eext, // /path/to.zip
-        useStale
+        targetPath: dir + eext // /path/to.zip
       });
       const Extractor = extractors.get(eext)!;
       return new Extractor({
-        preload: async (options) => loader.load(options), // /path/to.zip.js
+        preload: async (options, effects) => loader.load(options, effects), // /path/to.zip.js
         inflatePath,
         path: loader.path,
         params,
         root: this.root,
-        targetPath,
-        useStale
+        targetPath
       });
     }
   }
@@ -351,7 +350,7 @@ export interface Loader {
    * to the source root; this is typically within the .observablehq/cache folder
    * within the source root.
    */
-  load(effects?: LoadEffects): Promise<string>;
+  load(options?: LoadOptions, effects?: LoadEffects): Promise<string>;
 }
 
 /** Used by LoaderResolver.find to represent a static file resolution. */
@@ -360,7 +359,7 @@ class StaticLoader implements Loader {
   readonly path: string;
   readonly params: Params | undefined;
 
-  constructor({root, path, params}: Omit<LoaderOptions, "targetPath" | "useStale">) {
+  constructor({root, path, params}: Omit<LoaderOptions, "targetPath">) {
     this.root = root;
     this.path = path;
     this.params = params;
@@ -383,20 +382,14 @@ abstract class AbstractLoader implements Loader {
    */
   readonly targetPath: string;
 
-  /**
-   * Whether the loader should use a stale cache; true when building.
-   */
-  readonly useStale?: boolean;
-
-  constructor({root, path, params, targetPath, useStale}: LoaderOptions) {
+  constructor({root, path, params, targetPath}: LoaderOptions) {
     this.root = root;
     this.path = path;
     this.params = params;
     this.targetPath = targetPath;
-    this.useStale = useStale;
   }
 
-  async load(effects = defaultEffects): Promise<string> {
+  async load({useStale = true}: LoadOptions = {}, effects = defaultEffects): Promise<string> {
     const loaderPath = join(this.root, this.path);
     const key = join(this.root, this.targetPath);
     let command = runningCommands.get(key);
@@ -408,7 +401,7 @@ abstract class AbstractLoader implements Loader {
         const cacheStat = await maybeStat(cachePath);
         if (!cacheStat) effects.output.write(faint("[missing] "));
         else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) {
-          if (this.useStale) return effects.output.write(faint("[using stale] ")), outputPath;
+          if (useStale) return effects.output.write(faint("[using stale] ")), outputPath;
           else effects.output.write(faint("[stale] "));
         } else return effects.output.write(faint("[fresh] ")), outputPath;
         const tempPath = join(this.root, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
@@ -423,7 +416,7 @@ abstract class AbstractLoader implements Loader {
         await prepareOutput(cachePath);
         const tempFd = await open(tempPath, "w");
         try {
-          await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), effects);
+          await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), {useStale}, effects);
           await rename(tempPath, cachePath);
         } catch (error) {
           await rename(tempPath, errorPath);
@@ -454,7 +447,7 @@ abstract class AbstractLoader implements Loader {
     return command;
   }
 
-  abstract exec(output: WriteStream, effects?: LoadEffects): Promise<void>;
+  abstract exec(output: WriteStream, options?: LoadOptions, effects?: LoadEffects): Promise<void>;
 }
 
 interface CommandLoaderOptions extends LoaderOptions {
@@ -510,8 +503,8 @@ class ZipExtractor extends AbstractLoader {
     this.inflatePath = inflatePath;
   }
 
-  async exec(output: WriteStream, effects?: LoadEffects): Promise<void> {
-    const archivePath = join(this.root, await this.preload(effects));
+  async exec(output: WriteStream, options?: LoadOptions, effects?: LoadEffects): Promise<void> {
+    const archivePath = join(this.root, await this.preload(options, effects));
     const file = (await JSZip.loadAsync(await readFile(archivePath))).file(this.inflatePath);
     if (!file) throw enoent(this.inflatePath);
     const pipe = file.nodeStream().pipe(output);
@@ -535,8 +528,8 @@ class TarExtractor extends AbstractLoader {
     this.gunzip = gunzip;
   }
 
-  async exec(output: WriteStream, effects?: LoadEffects): Promise<void> {
-    const archivePath = join(this.root, await this.preload(effects));
+  async exec(output: WriteStream, options?: LoadOptions, effects?: LoadEffects): Promise<void> {
+    const archivePath = join(this.root, await this.preload(options, effects));
     const tar = extract();
     const input = createReadStream(archivePath);
     (this.gunzip ? input.pipe(createGunzip()) : input).pipe(tar);

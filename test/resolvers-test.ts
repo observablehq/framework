@@ -2,7 +2,7 @@ import assert from "node:assert";
 import type {Config, ConfigSpec} from "../src/config.js";
 import {normalizeConfig} from "../src/config.js";
 import {parseMarkdown} from "../src/markdown.js";
-import {getResolvers} from "../src/resolvers.js";
+import {getModuleStaticImports, getResolvers} from "../src/resolvers.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 function getOptions({path, ...config}: ConfigSpec & {path: string}): Config & {path: string} {
@@ -238,5 +238,18 @@ describe("resolveLink(href) with {cleanUrls: true}", () => {
     assert.strictEqual(normalize("foo.png?bar#baz"), "./foo.png?bar#baz");
     assert.strictEqual(normalize("foo.html?bar#baz"), "./foo?bar#baz");
     assert.strictEqual(normalize("foo?bar#baz"), "./foo?bar#baz");
+  });
+});
+
+describe("getModuleStaticImports(root, path)", () => {
+  mockJsDelivr();
+  it("returns transitive local static imports", async () => {
+    assert.deepStrictEqual(await getModuleStaticImports("test/input/imports", "static-import.js"), ["./bar.js"]);
+    assert.deepStrictEqual(await getModuleStaticImports("test/input/imports", "alias-import.js"), ["./bar.js"]);
+    assert.deepStrictEqual(await getModuleStaticImports("test/input/imports", "transitive-static-import.js"), ["./other/foo.js", "./bar.js"]); // prettier-ignore
+  });
+  it("returns transitive global static imports", async () => {
+    assert.deepStrictEqual(await getModuleStaticImports("test/input/imports", "static-npm-import.js"), ["npm:canvas-confetti"]); // prettier-ignore
+    assert.deepStrictEqual(await getModuleStaticImports("test/input/imports", "local-fetch-from-import.js"), ["./baz.js", "npm:@observablehq/stdlib"]); // prettier-ignore
   });
 });

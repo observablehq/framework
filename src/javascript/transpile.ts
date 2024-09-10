@@ -2,6 +2,7 @@ import {join} from "node:path/posix";
 import type {CallExpression, Node} from "acorn";
 import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier} from "acorn";
 import {simple} from "acorn-walk";
+import mime from "mime";
 import {isPathImport, relativePath, resolvePath, resolveRelativePath} from "../path.js";
 import {getModuleResolver} from "../resolvers.js";
 import type {Params} from "../route.js";
@@ -10,6 +11,7 @@ import type {FileExpression} from "./files.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
 import {hasImportDeclaration, isImportMetaResolve} from "./imports.js";
+import type {FileInfo} from "./module.js";
 import {findParams} from "./params.js";
 import type {JavaScriptNode} from "./parse.js";
 import {parseProgram} from "./parse.js";
@@ -53,16 +55,26 @@ export function transpileJavaScript(
 export interface TranspileModuleOptions {
   root: string;
   path: string;
+  servePath?: string; // defaults to /_import/${path}
   params?: Params;
-  resolveImport?: (specifier: string) => Promise<string>;
+  resolveImport?: (specifier: string) => string | Promise<string>;
+  resolveFile?: (name: string) => string;
+  resolveFileInfo?: (name: string) => FileInfo | undefined;
 }
 
 /** Rewrites import specifiers and FileAttachment calls in the specified ES module. */
 export async function transpileModule(
   input: string,
-  {root, path, params, resolveImport = getModuleResolver(root, path)}: TranspileModuleOptions
+  {
+    root,
+    path,
+    servePath = `/${join("_import", path)}`,
+    params,
+    resolveImport = getModuleResolver(root, path, servePath),
+    resolveFile = (name) => name,
+    resolveFileInfo = () => undefined
+  }: TranspileModuleOptions
 ): Promise<string> {
-  const servePath = `/${join("_import", path)}`;
   const body = parseProgram(input, params); // TODO ignore syntax error?
   const output = new Sourcemap(input);
   const imports: (ImportNode | ExportNode)[] = [];
@@ -94,7 +106,22 @@ export async function transpileModule(
   for (const {name, node} of findFiles(body, path, input)) {
     const source = node.arguments[0];
     const p = relativePath(servePath, resolvePath(path, name));
-    output.replaceLeft(source.start, source.end, `${JSON.stringify(p)}, import.meta.url`);
+    const info = resolveFileInfo(name);
+    output.replaceLeft(
+      source.start,
+      source.end,
+      `${JSON.stringify(
+        info
+          ? {
+              name: p,
+              mimeType: mime.getType(name) ?? undefined,
+              path: relativePath(servePath, resolveFile(name)),
+              lastModified: info.mtimeMs,
+              size: info.size
+            }
+          : p
+      )}, import.meta.url`
+    );
   }
 
   for (const node of imports) {

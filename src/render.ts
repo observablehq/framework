@@ -1,18 +1,21 @@
 import mime from "mime";
 import type {Config, Page, Section} from "./config.js";
 import {mergeToc} from "./config.js";
+import {enoent} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {Html, HtmlResolvers} from "./html.js";
 import {html, parseHtml, rewriteHtml} from "./html.js";
 import {isJavaScript} from "./javascript/imports.js";
 import type {FileInfo} from "./javascript/module.js";
-import {transpileJavaScript} from "./javascript/transpile.js";
+import {findModule} from "./javascript/module.js";
+import type {TranspileModuleOptions} from "./javascript/transpile.js";
+import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
 import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
 import {isAssetPath, resolvePath, resolveRelativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
-import {getResolvers} from "./resolvers.js";
+import {getModuleStaticImports, getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
 
 export interface RenderOptions extends Config {
@@ -276,4 +279,18 @@ function renderRel(page: Page, rel: "prev" | "next", resolveLink: (href: string)
 function hasGoogleFonts(stylesheets: Set<string>): boolean {
   for (const s of stylesheets) if (s.startsWith("https://fonts.googleapis.com/")) return true;
   return false;
+}
+
+export async function renderModule(
+  root: string,
+  path: string,
+  options?: Omit<TranspileModuleOptions, "root" | "path" | "servePath" | "params">
+): Promise<string> {
+  const module = findModule(root, path);
+  if (!module) throw enoent(path);
+  const input = `${(await getModuleStaticImports(root, path))
+    .map((i) => `import ${JSON.stringify(i)};\n`)
+    .join("")}export * from ${JSON.stringify(path)};
+`;
+  return await transpileModule(input, {root, path, servePath: path, params: module.params, ...options});
 }
