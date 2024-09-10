@@ -51,7 +51,7 @@ export async function Chart() {
 
 When Framework builds your app, any transitive static imports needed are preloaded automatically when the module is imported. This can significantly improve performance by avoiding long request chains.
 
-## Importing modules
+## Embedding modules
 
 An embedded component can be imported into a vanilla web application like so:
 
