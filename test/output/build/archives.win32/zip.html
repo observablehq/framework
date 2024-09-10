@@ -17,17 +17,10 @@ import {define} from "./_observablehq/client.00000001.js";
 import {registerFile} from "./_observablehq/stdlib.00000003.js";
 
 registerFile("./static/file.txt", {"name":"./static/file.txt","mimeType":"text/plain","path":"./_file/static/file.d9014c46.txt","lastModified":/* ts */1706742000000,"size":14});
-registerFile("./static/not-found.txt", {"name":"./static/not-found.txt","mimeType":"text/plain","path":"./static/not-found.txt"});
 
 define({id: "d3b9d0ee", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
 display(await(
 await FileAttachment("./static/file.txt").text()
-))
-}});
-
-define({id: "bab54217", inputs: ["FileAttachment","display"], body: async (FileAttachment,display) => {
-display(await(
-await FileAttachment("./static/not-found.txt").text()
 ))
 }});
 
@@ -53,7 +46,6 @@ await FileAttachment("./static/not-found.txt").text()
 <main id="observablehq-main" class="observablehq">
 <h1 id="zip" tabindex="-1"><a class="observablehq-header-anchor" href="#zip">Zip</a></h1>
 <div class="observablehq observablehq--block"><observablehq-loading></observablehq-loading><!--:d3b9d0ee:--></div>
-<div class="observablehq observablehq--block"><observablehq-loading></observablehq-loading><!--:bab54217:--></div>
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="prev" href="./tar"><span>Tar</span></a></nav>
