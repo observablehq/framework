@@ -97,6 +97,12 @@ Since both dynamic import and the imported component are async, the code above i
 
 </div>
 
+<div class="tip">
+
+You can alternatively embed Framework pages using [iframe embeds](https://observablehq.observablehq.cloud/framework-example-responsive-iframe/).
+
+</div>
+
 ## Developing modules
 
 To develop your component, you can import it into a Framework page like normal, giving you instant reactivity as you make changes to the component or its data.
