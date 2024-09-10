@@ -155,21 +155,33 @@ try {
           ...CONFIG_OPTION,
           host: {
             type: "string",
-            default: "127.0.0.1"
+            default: "127.0.0.1",
+            description: "the server host; use 0.0.0.0 to accept external connections"
           },
           port: {
-            type: "string"
+            type: "string",
+            description: "the server port; defaults to 3000 (or higher if unavailable)"
+          },
+          cors: {
+            type: "boolean",
+            description: "allow cross-origin requests on all origins (*)"
+          },
+          "allow-origin": {
+            type: "string",
+            multiple: true,
+            description: "allow cross-origin requests on a specific origin"
           },
           open: {
             type: "boolean",
-            default: true
+            default: true,
+            description: "open browser"
           },
           "no-open": {
             type: "boolean"
           }
         }
       });
-      const {config, root, host, port, open} = values;
+      const {config, root, host, port, open, cors, ["allow-origin"]: origins} = values;
       await readConfig(config, root); // Ensure the config is valid.
       await import("../preview.js").then(async (preview) =>
         preview.preview({
@@ -177,6 +189,7 @@ try {
           root,
           hostname: host!,
           port: port === undefined ? undefined : +port,
+          origins: cors ? ["*"] : origins,
           open
         })
       );

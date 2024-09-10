@@ -43,6 +43,7 @@ export interface PreviewOptions {
   hostname: string;
   open?: boolean;
   port?: number;
+  origins?: string[];
   verbose?: boolean;
 }
 
@@ -53,6 +54,7 @@ export async function preview(options: PreviewOptions): Promise<PreviewServer> {
 export class PreviewServer {
   private readonly _config: string | undefined;
   private readonly _root: string | undefined;
+  private readonly _origins: string[];
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _verbose: boolean;
@@ -60,16 +62,19 @@ export class PreviewServer {
   private constructor({
     config,
     root,
+    origins = [],
     server,
     verbose
   }: {
     config?: string;
     root?: string;
+    origins?: string[];
     server: Server;
     verbose: boolean;
   }) {
     this._config = config;
     this._root = root;
+    this._origins = origins;
     this._verbose = verbose;
     this._server = server;
     this._server.on("request", this._handleRequest);
@@ -116,7 +121,9 @@ export class PreviewServer {
     const {root, loaders} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
     const url = new URL(req.url!, "http://localhost");
-    res.setHeader("Access-Control-Allow-Origin", "*"); // TODO restrict
+    const {origin} = req.headers;
+    if (this._origins.includes("*")) res.setHeader("Access-Control-Allow-Origin", "*");
+    else if (origin && this._origins.includes(origin)) res.setHeader("Access-Control-Allow-Origin", origin);
     let pathname = decodeURI(url.pathname);
     try {
       let match: RegExpExecArray | null;
