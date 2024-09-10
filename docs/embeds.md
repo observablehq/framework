@@ -1,6 +1,6 @@
 # Embedded analytics <a href="https://github.com/observablehq/framework/pull/1637" class="observablehq-version-badge" data-version="prerelease" title="Added in #1637"></a>
 
-In addition to full-page apps, Framework can generate JavaScript modules to embed analytics in external applications. Embedded modules can take full advantage of Framework’s polyglot, baked data architecture for instant page loads.
+In addition to full-page apps, Framework can generate modules to embed analytics in external applications. Embedded modules can take full advantage of Framework’s polyglot, baked data architecture for instant page loads.
 
 To allow a [JavaScript module](./imports#local-imports) to be embedded in an external application, declare the module’s path in your [config file](./config) using the [**dynamicPaths** option](./config#dynamic-paths). For example, to embed a single component named `chart.js`:
 
@@ -48,6 +48,8 @@ export async function Chart() {
   });
 }
 ```
+
+When Framework builds your app, any transitive static imports needed are preloaded automatically when the module is imported. This can significantly improve performance by avoiding long request chains.
 
 ## Importing modules
 
