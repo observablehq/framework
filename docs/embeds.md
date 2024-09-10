@@ -1,8 +1,37 @@
 # Embedded analytics <a href="https://github.com/observablehq/framework/pull/1637" class="observablehq-version-badge" data-version="prerelease" title="Added in #1637"></a>
 
-In addition to full-page apps, Framework can generate modules to embed analytics — such as charts or complete interactive data apps — in external applications. Embedded modules take full advantage of Framework’s polyglot, baked data architecture for instant page loads.
+In addition to generating full-page apps, Framework can generate modules to embed analytics — such as individual charts or tables, or coordinated interactive views — in external applications. Embedded modules take full advantage of Framework’s polyglot, baked data architecture for instant page loads.
 
-To allow a [JavaScript module](./imports#local-imports) to be embedded in an external application, declare the module’s path in your [config file](./config) using the [**dynamicPaths** option](./config#dynamic-paths). For example, to embed a single component named `chart.js`:
+Embedded modules are vanilla JavaScript, and behave identically when embedded in an external application as on a Framework page. As always, you can load data from a [data loader](./data-loaders) using [`FileAttachment`](./files), and you can [import](./imports) [self-hosted](./imports#self-hosting-of-npm-imports) local modules and libraries from npm; file and import resolutions are baked into the generated code at build time so that imported modules “just work”.
+
+Embedded modules are often written as component functions that return DOM elements. These functions can take options (or “props”), and typically load their own data. For example, below is a simple `chart.js` module that exports a `Chart` function that renders a scatterplot of global surface temperature data.
+
+```js run=false
+import {FileAttachment} from "npm:@observablehq/stdlib";
+import * as Plot from "npm:@observablehq/plot";
+
+export async function Chart() {
+  const gistemp = await FileAttachment("./lib/gistemp.csv").csv({typed: true});
+  return Plot.plot({
+    y: {grid: true},
+    color: {scheme: "burd"},
+    marks: [
+      Plot.dot(gistemp, {x: "Date", y: "Anomaly", stroke: "Anomaly"}),
+      Plot.ruleY([0])
+    ]
+  });
+}
+```
+
+<div class="note">
+
+When Framework builds your app, any transitive static imports are preloaded automatically when the embedded module is imported. This ensures optimal performance by avoiding long request chains.
+
+</div>
+
+## Embedding modules
+
+To allow a module to be embedded in an external application, declare the module’s path in your [config file](./config) using the [**dynamicPaths** option](./config#dynamic-paths). For example, to embed a single component named `chart.js`:
 
 ```js run=false
 export default {
@@ -27,31 +56,6 @@ export default {
   }
 };
 ```
-
-Embedded modules are vanilla JavaScript, and will behave identically when embedded in an external application as on a Framework page. As always, you can load data from a [data loader](./data-loaders) using [`FileAttachment`](./files), and you can [import](./imports) [self-hosted](./imports#self-hosting-of-npm-imports) local modules and libraries from npm; file and import resolutions are baked into the generated code at build time so that imported modules “just work”.
-
-Embedded modules are often written as functions that return DOM elements. These functions can take options (or “props”), and typically load their own data via `FileAttachment`. For example, below is a simple `chart.js` module that exports a `Chart` function that renders a scatterplot.
-
-```js run=false
-import {FileAttachment} from "npm:@observablehq/stdlib";
-import * as Plot from "npm:@observablehq/plot";
-
-export async function Chart() {
-  const gistemp = await FileAttachment("./lib/gistemp.csv").csv({typed: true});
-  return Plot.plot({
-    y: {grid: true},
-    color: {scheme: "burd"},
-    marks: [
-      Plot.dot(gistemp, {x: "Date", y: "Anomaly", stroke: "Anomaly"}),
-      Plot.ruleY([0])
-    ]
-  });
-}
-```
-
-When Framework builds your app, any transitive static imports needed are preloaded automatically when the module is imported. This ensures optimal performance by avoiding long request chains.
-
-## Embedding modules
 
 An embedded component can be imported into a vanilla web application like so:
 
