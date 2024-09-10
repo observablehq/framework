@@ -1,6 +1,6 @@
 # Embedded analytics <a href="https://github.com/observablehq/framework/pull/1637" class="observablehq-version-badge" data-version="prerelease" title="Added in #1637"></a>
 
-In addition to full-page apps, Framework can generate modules to embed analytics in external applications. Embedded modules can take full advantage of Framework’s polyglot, baked data architecture for instant page loads.
+In addition to full-page apps, Framework can generate modules to embed analytics — such as charts or complete interactive data apps — in external applications. Embedded modules take full advantage of Framework’s polyglot, baked data architecture for instant page loads.
 
 To allow a [JavaScript module](./imports#local-imports) to be embedded in an external application, declare the module’s path in your [config file](./config) using the [**dynamicPaths** option](./config#dynamic-paths). For example, to embed a single component named `chart.js`:
 
@@ -28,7 +28,7 @@ export default {
 };
 ```
 
-Embedded modules are vanilla JavaScript, and will behave identically when embedded in an external application as on a Framework page. As always, you can load data from a [data loader](./data-loaders) using [`FileAttachment`](./files), and you can [import](./imports) [self-hosted](./imports#self-hosting-of-npm-imports) local modules and libraries from npm; file and import resolutions are baked into the generated code at build time so that imported module “just works”.
+Embedded modules are vanilla JavaScript, and will behave identically when embedded in an external application as on a Framework page. As always, you can load data from a [data loader](./data-loaders) using [`FileAttachment`](./files), and you can [import](./imports) [self-hosted](./imports#self-hosting-of-npm-imports) local modules and libraries from npm; file and import resolutions are baked into the generated code at build time so that imported modules “just work”.
 
 Embedded modules are often written as functions that return DOM elements. These functions can take options (or “props”), and  typically load their own data via `FileAttachment`. For example, below is a simple `chart.js` module that exports a `Chart` function that renders a scatterplot.
 
@@ -49,7 +49,7 @@ export async function Chart() {
 }
 ```
 
-When Framework builds your app, any transitive static imports needed are preloaded automatically when the module is imported. This can significantly improve performance by avoiding long request chains.
+When Framework builds your app, any transitive static imports needed are preloaded automatically when the module is imported. This ensures optimal performance by avoiding long request chains.
 
 ## Embedding modules
 
@@ -117,4 +117,4 @@ To instantiate the imported component, simply call the function:
 Chart()
 ```
 
-A Framework page can serve as live and documentation for your component: you can describe and demonstrate all the states and options for your component, and review the behavior visually.
+A Framework page can serve as live documentation for your component: you can describe and demonstrate all the states and options for your component, and review the behavior visually.
