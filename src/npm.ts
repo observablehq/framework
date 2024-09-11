@@ -181,9 +181,9 @@ export async function getDependencyResolver(
   };
 }
 
-async function initializeNpmVersionCache(root: string): Promise<Map<string, string[]>> {
+export async function initializeNpmVersionCache(root: string, dir = "_npm"): Promise<Map<string, string[]>> {
   const cache = new Map<string, string[]>();
-  const cacheDir = join(root, ".observablehq", "cache", "_npm");
+  const cacheDir = join(root, ".observablehq", "cache", dir);
   try {
     for (const entry of await readdir(cacheDir)) {
       if (entry.startsWith("@")) {
@@ -214,7 +214,7 @@ const npmVersionRequests = new Map<string, Promise<string>>();
 
 function getNpmVersionCache(root: string): Promise<Map<string, string[]>> {
   let cache = npmVersionCaches.get(root);
-  if (!cache) npmVersionCaches.set(root, (cache = initializeNpmVersionCache(root)));
+  if (!cache) npmVersionCaches.set(root, (cache = initializeNpmVersionCache(root, "_npm")));
   return cache;
 }
 

@@ -4,24 +4,49 @@ import {Readable} from "node:stream";
 import {finished} from "node:stream/promises";
 import {satisfies} from "semver";
 import {x} from "tar";
-import {formatNpmSpecifier, parseNpmSpecifier} from "./npm.js";
+import type {NpmSpecifier} from "./npm.js";
+import {formatNpmSpecifier, initializeNpmVersionCache, parseNpmSpecifier} from "./npm.js";
 import {faint} from "./tty.js";
 
+const jsrVersionCaches = new Map<string, Promise<Map<string, string[]>>>();
+const jsrVersionRequests = new Map<string, Promise<string>>();
 const jsrRequests = new Map<string, Promise<Record<string, any>>>();
+
+function getJsrVersionCache(root: string): Promise<Map<string, string[]>> {
+  let cache = jsrVersionCaches.get(root);
+  if (!cache) jsrVersionCaches.set(root, (cache = initializeNpmVersionCache(root, "_jsr")));
+  return cache;
+}
 
 async function getJsrPackage(root: string, specifier: string): Promise<Record<string, any>> {
   let promise = jsrRequests.get(specifier);
   if (promise) return promise;
   promise = (async function () {
-    process.stdout.write(`jsr:${specifier} ${faint("→")} `);
-    const {name, range = "latest"} = parseNpmSpecifier(specifier);
-    const metaHref = `https://npm.jsr.io/@jsr/${name.replace(/^@/, "").replace(/\//, "__")}`;
-    const metaResponse = await fetch(metaHref);
-    if (!metaResponse.ok) throw new Error(`unable to fetch: ${metaHref}`);
+    const {name, range} = parseNpmSpecifier(specifier);
+    const version = await resolveJsrVersion(root, {name, range});
+    const dir = join(root, ".observablehq", "cache", "_jsr", formatNpmSpecifier({name, range: version}));
+    return JSON.parse(await readFile(join(dir, "package.json"), "utf8"));
+  })();
+  jsrRequests.set(specifier, promise);
+  return promise;
+}
+
+async function resolveJsrVersion(root: string, specifier: NpmSpecifier): Promise<string> {
+  const {name, range} = specifier;
+  const cache = await getJsrVersionCache(root);
+  const versions = cache.get(name);
+  if (versions) for (const version of versions) if (!range || satisfies(version, range)) return version;
+  const href = `https://npm.jsr.io/@jsr/${name.replace(/^@/, "").replace(/\//, "__")}`;
+  let promise = jsrVersionRequests.get(href);
+  if (promise) return promise; // coalesce concurrent requests
+  promise = (async function () {
+    process.stdout.write(`jsr:${formatNpmSpecifier(specifier)} ${faint("→")} `);
+    const metaResponse = await fetch(href);
+    if (!metaResponse.ok) throw new Error(`unable to fetch: ${href}`);
     const meta = await metaResponse.json();
     let version: {version: string; dist: {tarball: string}} | undefined;
-    if (meta["dist-tags"][range]) {
-      version = meta["versions"][meta["dist-tags"][range]];
+    if (meta["dist-tags"][range ?? "latest"]) {
+      version = meta["versions"][meta["dist-tags"][range ?? "latest"]];
     } else if (range) {
       if (meta.versions[range]) {
         version = meta.versions[range]; // exact match; ignore yanked
@@ -33,16 +58,17 @@ async function getJsrPackage(root: string, specifier: string): Promise<Record<st
         }
       }
     }
-    if (!version) throw new Error(`unable to resolve version: ${specifier}`);
+    if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier(specifier)}`);
     const tarballResponse = await fetch(version.dist.tarball);
     if (!tarballResponse.ok) throw new Error(`unable to fetch: ${version.dist.tarball}`);
     const dir = join(root, ".observablehq", "cache", "_jsr", formatNpmSpecifier({name, range: version.version}));
     await mkdir(dir, {recursive: true});
     await finished(Readable.fromWeb(tarballResponse.body as any).pipe(x({strip: 1, C: dir})));
     process.stdout.write(`${version.version}\n`);
-    return JSON.parse(await readFile(join(dir, "package.json"), "utf8"));
+    return version.version;
   })();
-  jsrRequests.set(specifier, promise);
+  promise.catch(console.error).then(() => jsrVersionRequests.delete(href));
+  jsrVersionRequests.set(href, promise);
   return promise;
 }
 
