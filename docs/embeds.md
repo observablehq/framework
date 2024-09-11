@@ -81,7 +81,7 @@ If the external (host) application is on a different origin than the Framework a
 
 </div>
 
-In React, you can do something similar using [dynamic import](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import) and [`useEffect`](https://react.dev/reference/react/useEffect) and [`useRef`](https://react.dev/reference/react/useRef) hooks:
+In React, you can do something similar using [dynamic import](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import) and [`useEffect`](https://react.dev/reference/react/useEffect) and [`useRef`](https://react.dev/reference/react/useRef) hooks (see this example live on [StackBlitz](https://stackblitz.com/edit/observable-framework-embed-react?file=src%2FApp.tsx)):
 
 ```jsx run=false
 import {useEffect, useRef} from "react";
