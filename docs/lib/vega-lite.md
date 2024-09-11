@@ -38,4 +38,4 @@ vl.render({
 })
 ```
 
-<div class="tip">When loading data from a file as above, use <a href="../javascript/files"><code>FileAttachment</code></a> so that referenced files are included on <a href="../getting-started#build">build</a>.</div>
+<div class="tip">When loading data from a file as above, use <a href="../files"><code>FileAttachment</code></a> so that referenced files are included on <a href="../getting-started#build">build</a>.</div>

@@ -1,3 +1,7 @@
+---
+keywords: [dark, width]
+---
+
 # Observable Generators
 
 The Observable standard library includes several generator utilities. These are available by default in Markdown as `Generators`, but you can import them explicitly:
@@ -8,7 +12,7 @@ import {Generators} from "npm:@observablehq/stdlib";
 
 ## input(*element*)
 
-Returns an async generator that yields whenever the given *element* emits an *input* event, with the given *element*’s current value. (It’s a bit fancier than that because we special-case a few element types.) The built-in [`view` function](<../javascript/inputs#view(element)>) uses this.
+[Source](https://github.com/observablehq/framework/blob/main/src/client/stdlib/generators/input.js) · Returns an async generator that yields whenever the given *element* emits an *input* event, with the given *element*’s current value. (It’s a bit fancier than that because we special-case a few element types.) The built-in [`view` function](<../reactivity#inputs>) uses this.
 
 ```js echo
 const nameInput = display(document.createElement("input"));
@@ -19,9 +23,9 @@ const name = Generators.input(nameInput);
 name
 ```
 
-## observe(*change*)
+## observe(*initialize*)
 
-Returns an async generator that yields whenever the callback function *change* is called, with the value passed.
+[Source](https://github.com/observablehq/framework/blob/main/src/client/stdlib/generators/observe.js) · Returns an async generator that immediately invokes the specified *initialize* function, being passed a *change* callback function, and yields the passed value whenever *change* is called. The *initialize* function may optionally return a *dispose* function that will be called when the generator is terminated.
 
 ```js echo
 const hash = Generators.observe((change) => {
@@ -37,7 +41,9 @@ hash
 
 ## queue(*change*)
 
-Returns an async generator that yields whenever the callback function *change* is called, with the value passed. This is identical to Generators.observe, except that if *change* is called multiple times before the consumer has a chance to process the yielded result, values will not be dropped; use this if you require that the consumer not miss a yielded value.
+[Source](https://github.com/observablehq/framework/blob/main/src/client/stdlib/generators/queue.js) · Returns an async generator that immediately invokes the specified *initialize* function, being passed a *change* callback function, and yields the passed value whenever *change* is called. The *initialize* function may optionally return a *dispose* function that will be called when the generator is terminated.
+
+This is identical to `Generators.observe` except that if *change* is called multiple times before the consumer has a chance to process the yielded result, values will not be dropped; use this if you require that the consumer not miss a yielded value.
 
 ```js run=false
 const hash = Generators.queue((change) => {
@@ -53,7 +59,7 @@ hash
 
 ## now()
 
-Returns a generator that repeatedly yields `Date.now()`, forever. This generator is available by default as `now` in Markdown.
+[Source](https://github.com/observablehq/framework/blob/main/src/client/stdlib/generators/now.js) · Returns a generator that repeatedly yields `Date.now()`, forever. This generator is available by default as `now` in Markdown.
 
 ```js run=false
 const now = Generators.now();
@@ -65,7 +71,7 @@ now
 
 ## width(*element*)
 
-Returns an async generator that yields the width of the given target *element*. Using a [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), the generator will yield whenever the width of the *element* changes. This generator for the `main` element is available by default as `width` in Markdown.
+[Source](https://github.com/observablehq/framework/blob/main/src/client/stdlib/generators/width.ts) · Returns an async generator that yields the width of the given target *element*. Using a [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver), the generator will yield whenever the width of the *element* changes. This generator for the `main` element is available by default as `width` in Markdown.
 
 ```js run=false
 const width = Generators.width(document.querySelector("main"));
@@ -75,9 +81,9 @@ const width = Generators.width(document.querySelector("main"));
 width
 ```
 
-## dark() <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" target="_blank" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
+## dark() <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
 
-Returns an async generator that yields a boolean indicating whether the page is currently displayed with a dark [color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme).
+[Source](https://github.com/observablehq/framework/blob/main/src/client/stdlib/generators/dark.ts) · Returns an async generator that yields a boolean indicating whether the page is currently displayed with a dark [color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme).
 
 If the page supports both light and dark mode (as with the [default theme](../themes)), the value reflects the user’s [preferred color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme). The generator will yield a new value if the preferred color changes — as when the user changes their system settings, or if the user’s system adapts automatically to the diurnal cycle — allowing you to update the display as needed without requiring a page reload.
 

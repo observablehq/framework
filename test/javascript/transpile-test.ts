@@ -6,6 +6,7 @@ import {isEnoent} from "../../src/error.js";
 import {parseJavaScript} from "../../src/javascript/parse.js";
 import type {TranspileModuleOptions} from "../../src/javascript/transpile.js";
 import {transpileJavaScript, transpileModule} from "../../src/javascript/transpile.js";
+import {mockJsDelivr} from "../mocks/jsdelivr.js";
 
 function isJsFile(inputRoot: string, fileName: string) {
   if (!fileName.endsWith(".js")) return false;
@@ -82,7 +83,7 @@ describe("transpileJavaScript(input, options)", () => {
 
 async function testFile(target: string, path: string): Promise<string> {
   const input = `import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment(${JSON.stringify(target)})`;
-  const output = await transpileModule(input, {root: "docs", path});
+  const output = await transpileModule(input, {root: "src", path});
   return output.split("\n").pop()!;
 }
 
@@ -106,7 +107,8 @@ describe("transpileModule(input, root, path, sourcePath)", () => {
 });
 
 describe("transpileModule(input, root, path)", () => {
-  const options: TranspileModuleOptions = {root: "docs", path: "test.js"};
+  mockJsDelivr();
+  const options: TranspileModuleOptions = {root: "src", path: "test.js"};
   it("rewrites relative files with import.meta.resolve", async () => {
     assert.strictEqual(await testFile("./test.txt", "test.js"), 'FileAttachment("../test.txt", import.meta.url)'); // prettier-ignore
     assert.strictEqual(await testFile("./sub/test.txt", "test.js"), 'FileAttachment("../sub/test.txt", import.meta.url)'); // prettier-ignore
@@ -139,7 +141,7 @@ describe("transpileModule(input, root, path)", () => {
     assert.strictEqual(output, '(1, FileAttachment)("./test.txt")');
   });
   it("ignores FileAttachment if not imported from @observablehq/stdlib", async () => {
-    const input = 'import {FileAttachment} from "@observablehq/not-stdlib";\nFileAttachment("./test.txt")';
+    const input = 'import {FileAttachment} from "npm:@observablehq/inputs";\nFileAttachment("./test.txt")';
     const output = (await transpileModule(input, options)).split("\n").pop()!;
     assert.strictEqual(output, 'FileAttachment("./test.txt")');
   });
@@ -174,7 +176,7 @@ describe("transpileModule(input, root, path)", () => {
     assert.strictEqual(output, 'FileAttachment("../test.txt", import.meta.url)');
   });
   it("throws a syntax error with non-literal calls", async () => {
-    const input = "import {FileAttachment} from \"npm:@observablehq/stdlib\";\nFileAttachment(`./${'test'}.txt`)";
+    const input = 'import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment(`./${test}.txt`)';
     await assert.rejects(() => transpileModule(input, options), /FileAttachment requires a single literal string/); // prettier-ignore
   });
   it("throws a syntax error with URL fetches", async () => {
@@ -190,5 +192,15 @@ describe("transpileModule(input, root, path)", () => {
     await assert.rejects(() => transpileModule(input2, options), /non-local file path/); // prettier-ignore
     await assert.rejects(() => transpileModule(input3, {...options, path: "sub/test.js"}), /non-local file path/); // prettier-ignore
     await assert.rejects(() => transpileModule(input4, {...options, path: "sub/test.js"}), /non-local file path/); // prettier-ignore
+  });
+  it("rewrites npm imports", async () => {
+    const input = 'import "npm:d3-array";';
+    const output = (await transpileModule(input, options)).split("\n").pop()!;
+    assert.strictEqual(output, 'import "../_npm/d3-array@3.2.4/_esm.js";');
+  });
+  it("rewrites node imports", async () => {
+    const input = 'import "d3-array";';
+    const output = (await transpileModule(input, options)).split("\n").pop()!;
+    assert.strictEqual(output, 'import "../_node/d3-array@3.2.4/index.js";');
   });
 });

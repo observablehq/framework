@@ -1,6 +1,6 @@
 # Form input
 
-<a href="https://github.com/observablehq/inputs/blob/main/README.md#inputsforminputs-options" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/form.js" target="_blank">Source</a> · The form input combines a number of inputs into a single compound input. It’s intended for a more compact display of closely-related inputs, say for a color’s red, green, and blue channels.
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#inputsforminputs-options">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/form.js">Source</a> · The form input combines a number of inputs into a single compound input. It’s intended for a more compact display of closely-related inputs, say for a color’s red, green, and blue channels.
 
 ```js echo
 const rgb = view(Inputs.form([

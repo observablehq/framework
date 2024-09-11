@@ -2,13 +2,17 @@ import {join} from "node:path/posix";
 import type {CallExpression, Node} from "acorn";
 import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier} from "acorn";
 import {simple} from "acorn-walk";
+import mime from "mime";
 import {isPathImport, relativePath, resolvePath, resolveRelativePath} from "../path.js";
 import {getModuleResolver} from "../resolvers.js";
+import type {Params} from "../route.js";
 import {Sourcemap} from "../sourcemap.js";
 import type {FileExpression} from "./files.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
 import {hasImportDeclaration, isImportMetaResolve} from "./imports.js";
+import type {FileInfo} from "./module.js";
+import {findParams} from "./params.js";
 import type {JavaScriptNode} from "./parse.js";
 import {parseProgram} from "./parse.js";
 import type {StringLiteral} from "./source.js";
@@ -17,10 +21,15 @@ import {getStringLiteralValue, isStringLiteral} from "./source.js";
 export interface TranspileOptions {
   id: string;
   path: string;
+  params?: Params;
+  mode?: string;
   resolveImport?: (specifier: string) => string;
 }
 
-export function transpileJavaScript(node: JavaScriptNode, {id, path, resolveImport}: TranspileOptions): string {
+export function transpileJavaScript(
+  node: JavaScriptNode,
+  {id, path, params, mode, resolveImport}: TranspileOptions
+): string {
   let async = node.async;
   const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
   const outputs = Array.from(new Set<string>(node.declarations?.map((r) => r.name)));
@@ -28,6 +37,7 @@ export function transpileJavaScript(node: JavaScriptNode, {id, path, resolveImpo
   if (display) inputs.push("display"), (async = true);
   if (hasImportDeclaration(node.body)) async = true;
   const output = new Sourcemap(node.input).trim();
+  if (params) rewriteParams(output, node.body, params, node.input);
   rewriteImportDeclarations(output, node.body, resolveImport);
   rewriteImportExpressions(output, node.body, resolveImport);
   rewriteFileExpressions(output, node.files, path);
@@ -35,7 +45,7 @@ export function transpileJavaScript(node: JavaScriptNode, {id, path, resolveImpo
   output.insertLeft(0, `, body: ${async ? "async " : ""}(${inputs}) => {\n`);
   if (outputs.length) output.insertLeft(0, `, outputs: ${JSON.stringify(outputs)}`);
   if (inputs.length) output.insertLeft(0, `, inputs: ${JSON.stringify(inputs)}`);
-  if (node.inline) output.insertLeft(0, ", inline: true");
+  if (mode && mode !== "block") output.insertLeft(0, `, mode: ${JSON.stringify(mode)}`);
   output.insertLeft(0, `define({id: ${JSON.stringify(id)}`);
   if (outputs.length) output.insertRight(node.input.length, `\nreturn {${outputs}};`);
   output.insertRight(node.input.length, "\n}});\n");
@@ -45,19 +55,32 @@ export function transpileJavaScript(node: JavaScriptNode, {id, path, resolveImpo
 export interface TranspileModuleOptions {
   root: string;
   path: string;
-  resolveImport?: (specifier: string) => Promise<string>;
+  servePath?: string; // defaults to /_import/${path}
+  params?: Params;
+  resolveImport?: (specifier: string) => string | Promise<string>;
+  resolveFile?: (name: string) => string;
+  resolveFileInfo?: (name: string) => FileInfo | undefined;
 }
 
 /** Rewrites import specifiers and FileAttachment calls in the specified ES module. */
 export async function transpileModule(
   input: string,
-  {root, path, resolveImport = getModuleResolver(root, path)}: TranspileModuleOptions
+  {
+    root,
+    path,
+    servePath = `/${join("_import", path)}`,
+    params,
+    resolveImport = getModuleResolver(root, path, servePath),
+    resolveFile = (name) => name,
+    resolveFileInfo = () => undefined
+  }: TranspileModuleOptions
 ): Promise<string> {
-  const servePath = `/${join("_import", path)}`;
-  const body = parseProgram(input); // TODO ignore syntax error?
+  const body = parseProgram(input, params); // TODO ignore syntax error?
   const output = new Sourcemap(input);
   const imports: (ImportNode | ExportNode)[] = [];
   const calls: CallExpression[] = [];
+
+  if (params) rewriteParams(output, body, params, input);
 
   simple(body, {
     ImportDeclaration: rewriteImport,
@@ -83,7 +106,22 @@ export async function transpileModule(
   for (const {name, node} of findFiles(body, path, input)) {
     const source = node.arguments[0];
     const p = relativePath(servePath, resolvePath(path, name));
-    output.replaceLeft(source.start, source.end, `${JSON.stringify(p)}, import.meta.url`);
+    const info = resolveFileInfo(name);
+    output.replaceLeft(
+      source.start,
+      source.end,
+      `${JSON.stringify(
+        info
+          ? {
+              name: p,
+              mimeType: mime.getType(name) ?? undefined,
+              path: relativePath(servePath, resolveFile(name)),
+              lastModified: info.mtimeMs,
+              size: info.size
+            }
+          : p
+      )}, import.meta.url`
+    );
   }
 
   for (const node of imports) {
@@ -209,4 +247,10 @@ function isNotNamespaceSpecifier(
   node: ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier
 ): node is ImportSpecifier | ImportDefaultSpecifier {
   return node.type !== "ImportNamespaceSpecifier";
+}
+
+export function rewriteParams(output: Sourcemap, body: Node, params: Params, input: string): void {
+  for (const [name, node] of findParams(body, params, input)) {
+    output.replaceLeft(node.start, node.end, JSON.stringify(params[name]));
+  }
 }

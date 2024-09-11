@@ -3,11 +3,11 @@ sql:
   trips: nyc-taxi.parquet
 ---
 
-# Mosaic vgplot <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" target="_blank" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
+# Mosaic vgplot <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
 
 [Mosaic](https://uwdata.github.io/mosaic/) is a system for linking data visualizations, tables, and inputs, leveraging [DuckDB](./duckdb) for scalable processing. Mosaic includes an interactive grammar of graphics, [Mosaic vgplot](https://uwdata.github.io/mosaic/vgplot/), built on [Observable Plot](./plot). With vgplot, you can interactively visualize and explore millions — even billions — of data points.
 
-The example below shows the pickup and dropoff locations of one million taxi rides in New York City from Jan 1–3, 2010. The dataset is stored in a 8MB [Apache Parquet](./arrow#apache-parquet) file, generated with a [data loader](../loaders).
+The example below shows the pickup and dropoff locations of one million taxi rides in New York City from Jan 1–3, 2010. The dataset is stored in a 8MB [Apache Parquet](./arrow#apache-parquet) file, generated with a [data loader](../data-loaders).
 
 ${maps}
 

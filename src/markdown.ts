@@ -1,20 +1,25 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
-import {extname} from "node:path/posix";
-import matter from "gray-matter";
+import slugify from "@sindresorhus/slugify";
 import he from "he";
 import MarkdownIt from "markdown-it";
+import type {Token} from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.js";
 import type {RuleInline} from "markdown-it/lib/parser_inline.js";
 import type {RenderRule} from "markdown-it/lib/renderer.js";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
-import {rewriteHtmlPaths} from "./html.js";
+import type {FrontMatter} from "./frontMatter.js";
+import {readFrontMatter} from "./frontMatter.js";
+import {html, rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
+import {transformJavaScriptSync} from "./javascript/module.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
-import {relativePath} from "./path.js";
+import {isAssetPath, relativePath} from "./path.js";
+import {parsePlaceholder} from "./placeholder.js";
+import type {Params} from "./route.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
@@ -23,6 +28,7 @@ import {red} from "./tty.js";
 export interface MarkdownCode {
   id: string;
   node: JavaScriptNode;
+  mode: "inline" | "block" | "jsx";
 }
 
 export interface MarkdownPage {
@@ -31,16 +37,18 @@ export interface MarkdownPage {
   header: string | null;
   body: string;
   footer: string | null;
-  data: {[key: string]: any} | null;
+  data: FrontMatter;
   style: string | null;
   code: MarkdownCode[];
+  params?: Params;
 }
 
-export interface ParseContext {
+interface ParseContext {
   code: MarkdownCode[];
   startLine: number;
   currentLine: number;
   path: string;
+  params?: Params;
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
@@ -55,9 +63,19 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
+function transpileJavaScript(content: string, tag: "ts" | "jsx" | "tsx"): string {
+  try {
+    return transformJavaScriptSync(content, tag);
+  } catch (error: any) {
+    throw new SyntaxError(error.message);
+  }
+}
+
 function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
+    : tag === "ts" || tag === "jsx" || tag === "tsx"
+    ? transpileJavaScript(content, tag)
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"
@@ -93,7 +111,7 @@ function getLiveSource(content: string, tag: string, attributes: Record<string, 
 
 function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
-    const {path} = context;
+    const {path, params} = context;
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
@@ -104,11 +122,11 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
       if (source != null) {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
-        const node = parseJavaScript(source, {path});
-        context.code.push({id, node});
-        html += `<div id="cell-${id}" class="observablehq observablehq--block${
-          node.expression ? " observablehq--loading" : ""
-        }"></div>\n`;
+        const node = parseJavaScript(source, {path, params});
+        context.code.push({id, node, mode: tag === "jsx" || tag === "tsx" ? "jsx" : "block"});
+        html += `<div class="observablehq observablehq--block">${
+          node.expression ? "<observablehq-loading></observablehq-loading>" : ""
+        }<!--:${id}:--></div>\n`;
       }
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
@@ -125,150 +143,60 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
 
 const CODE_DOLLAR = 36;
 const CODE_BRACEL = 123;
-const CODE_BRACER = 125;
-const CODE_BACKSLASH = 92;
-const CODE_QUOTE = 34;
-const CODE_SINGLE_QUOTE = 39;
-const CODE_BACKTICK = 96;
-
-function parsePlaceholder(content: string, replacer: (i: number, j: number) => void) {
-  let afterDollar = false;
-  for (let j = 0, n = content.length; j < n; ++j) {
-    const cj = content.charCodeAt(j);
-    if (cj === CODE_BACKSLASH) {
-      ++j; // skip next character
-      continue;
-    }
-    if (cj === CODE_DOLLAR) {
-      afterDollar = true;
-      continue;
-    }
-    if (afterDollar) {
-      if (cj === CODE_BRACEL) {
-        let quote = 0; // TODO detect comments, too
-        let braces = 0;
-        let k = j + 1;
-        inner: for (; k < n; ++k) {
-          const ck = content.charCodeAt(k);
-          if (ck === CODE_BACKSLASH) {
-            ++k;
-            continue;
-          }
-          if (quote) {
-            if (ck === quote) quote = 0;
-            continue;
-          }
-          switch (ck) {
-            case CODE_QUOTE:
-            case CODE_SINGLE_QUOTE:
-            case CODE_BACKTICK:
-              quote = ck;
-              break;
-            case CODE_BRACEL:
-              ++braces;
-              break;
-            case CODE_BRACER:
-              if (--braces < 0) {
-                replacer(j - 1, k + 1);
-                break inner;
-              }
-              break;
-          }
-        }
-        j = k;
-      }
-      afterDollar = false;
-    }
-  }
-}
-
-function transformPlaceholderBlock(token) {
-  const input = token.content;
-  if (/^\s*<script[\s>]/.test(input)) return [token]; // ignore <script> elements
-  const output: any[] = [];
-  let i = 0;
-  parsePlaceholder(input, (j, k) => {
-    output.push({...token, level: i > 0 ? token.level + 1 : token.level, content: input.slice(i, j)});
-    output.push({type: "placeholder", level: token.level + 1, content: input.slice(j + 2, k - 1)});
-    i = k;
-  });
-  if (i === 0) return [token];
-  else if (i < input.length) output.push({...token, content: input.slice(i), nesting: -1});
-  return output;
-}
 
 const transformPlaceholderInline: RuleInline = (state, silent) => {
   if (silent || state.pos + 2 > state.posMax) return false;
   const marker1 = state.src.charCodeAt(state.pos);
   const marker2 = state.src.charCodeAt(state.pos + 1);
-  if (!(marker1 === CODE_DOLLAR && marker2 === CODE_BRACEL)) return false;
-  let quote = 0;
-  let braces = 0;
-  for (let pos = state.pos + 2; pos < state.posMax; ++pos) {
-    const code = state.src.charCodeAt(pos);
-    if (code === CODE_BACKSLASH) {
-      ++pos; // skip next character
-      continue;
-    }
-    if (quote) {
-      if (code === quote) quote = 0;
-      continue;
-    }
-    switch (code) {
-      case CODE_QUOTE:
-      case CODE_SINGLE_QUOTE:
-      case CODE_BACKTICK:
-        quote = code;
-        break;
-      case CODE_BRACEL:
-        ++braces;
-        break;
-      case CODE_BRACER:
-        if (--braces < 0) {
-          const token = state.push("placeholder", "", 0);
-          token.content = state.src.slice(state.pos + 2, pos);
-          state.pos = pos + 1;
-          return true;
-        }
-        break;
-    }
+  if (marker1 !== CODE_DOLLAR || marker2 !== CODE_BRACEL) return false;
+  for (const {type, content, pos} of parsePlaceholder(state.src, state.pos, state.posMax)) {
+    if (type !== "placeholder") break;
+    const token = state.push(type, "", 0);
+    token.content = content;
+    state.pos = pos;
+    return true;
   }
   return false;
 };
 
 const transformPlaceholderCore: RuleCore = (state) => {
-  const input = state.tokens;
-  const output: any[] = [];
-  for (const token of input) {
-    switch (token.type) {
-      case "html_block":
-        output.push(...transformPlaceholderBlock(token));
-        break;
-      default:
-        output.push(token);
-        break;
+  const {tokens} = state;
+  for (let i = 0, n = tokens.length; i < n; ++i) {
+    const token = tokens[i];
+    if (token.type === "html_block") {
+      const children: Token[] = [];
+      for (const {type, content} of parsePlaceholder(token.content)) {
+        const child = new state.Token(type, "", 0);
+        child.content = content;
+        children.push(child);
+      }
+      if (children.length === 1 && children[0].type === "html_block") {
+        tokens[i].content = children[0].content;
+      } else {
+        const inline = new state.Token("inline", "", 0);
+        inline.children = children;
+        tokens[i] = inline;
+      }
     }
   }
-  state.tokens = output;
 };
 
 function makePlaceholderRenderer(): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
-    const {path} = context;
+    const {path, params} = context;
     const token = tokens[idx];
     const id = uniqueCodeId(context, token.content);
     try {
       // TODO sourceLine: context.startLine + context.currentLine
-      const node = parseJavaScript(token.content, {path, inline: true});
-      context.code.push({id, node});
-      return `<span id="cell-${id}" class="observablehq--loading"></span>`;
+      // TODO allow TypeScript?
+      const node = parseJavaScript(token.content, {path, params, inline: true});
+      context.code.push({id, node, mode: "inline"});
+      return `<observablehq-loading></observablehq-loading><!--:${id}:-->`;
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
-      return `<span id="cell-${id}">
-  <span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
-    error.message
-  )}</span>
-</span>`;
+      return `<span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
+        error.message
+      )}</span>`;
     }
   };
 }
@@ -280,96 +208,107 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-export function parseRelativeUrl(url: string): {pathname: string; search: string; hash: string} {
-  let search: string;
-  let hash: string;
-  const i = url.indexOf("#");
-  if (i < 0) hash = "";
-  else (hash = url.slice(i)), (url = url.slice(0, i));
-  const j = url.indexOf("?");
-  if (j < 0) search = "";
-  else (search = url.slice(j)), (url = url.slice(0, j));
-  return {pathname: url, search, hash};
-}
-
-export function makeLinkNormalizer(baseNormalize: (url: string) => string, clean: boolean): (url: string) => string {
-  return (url) => {
-    // Only clean relative links; ignore e.g. "https:" links.
-    if (!/^\w+:/.test(url)) {
-      const u = parseRelativeUrl(url);
-      let {pathname} = u;
-      if (pathname && !pathname.endsWith("/") && !extname(pathname)) pathname += ".html";
-      if (pathname === "index.html") pathname = ".";
-      else if (pathname.endsWith("/index.html")) pathname = pathname.slice(0, -"index.html".length);
-      else if (clean) pathname = pathname.replace(/\.html$/, "");
-      url = pathname + u.search + u.hash;
-    }
-    return baseNormalize(url);
-  };
-}
-
 export interface ParseOptions {
   md: MarkdownIt;
   path: string;
   style?: Config["style"];
+  scripts?: Config["scripts"];
   head?: Config["head"];
   header?: Config["header"];
   footer?: Config["footer"];
+  params?: Params;
 }
 
 export function createMarkdownIt({
   markdownIt,
-  cleanUrls = true
+  linkify = true,
+  quotes = "“”‘’",
+  typographer = false
 }: {
   markdownIt?: (md: MarkdownIt) => MarkdownIt;
-  cleanUrls?: boolean;
+  linkify?: boolean;
+  quotes?: string | string[];
+  typographer?: boolean;
 } = {}): MarkdownIt {
-  const md = MarkdownIt({html: true, linkify: true});
-  md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
-  md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
+  const md = MarkdownIt({html: true, linkify, typographer, quotes});
+  if (linkify) md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
+  md.use(MarkdownItAnchor, {slugify: (s) => slugify(s)});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
-  md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
+  md.core.ruler.after("inline", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer();
   md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
-  md.normalizeLink = makeLinkNormalizer(md.normalizeLink, cleanUrls);
   return markdownIt === undefined ? md : markdownIt(md);
 }
 
 export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
-  const {md, path} = options;
-  const {content, data} = matter(input, {});
+  const {md, path, params} = options;
+  const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
+  const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params};
   const tokens = md.parse(content, context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
+  const title = data.title !== undefined ? data.title : findTitle(tokens);
   return {
-    head: getHtml("head", data, options),
-    header: getHtml("header", data, options),
+    head: getHead(title, data, options),
+    header: getHeader(title, data, options),
     body,
-    footer: getHtml("footer", data, options),
-    data: isEmpty(data) ? null : data,
-    title: data.title ?? findTitle(tokens) ?? null,
+    footer: getFooter(title, data, options),
+    data,
+    title,
     style: getStyle(data, options),
-    code
+    code,
+    params
   };
+}
+
+/** Like parseMarkdown, but optimized to return only metadata. */
+export function parseMarkdownMetadata(input: string, options: ParseOptions): Pick<MarkdownPage, "data" | "title"> {
+  const {md, path} = options;
+  const {content, data} = readFrontMatter(input);
+  return {
+    data,
+    title:
+      data.title !== undefined
+        ? data.title
+        : findTitle(md.parse(content, {code: [], startLine: 0, currentLine: 0, path}))
+  };
+}
+
+function getHead(title: string | null, data: FrontMatter, options: ParseOptions): string | null {
+  const {scripts, path} = options;
+  let head = getHtml("head", title, data, options);
+  if (scripts?.length) {
+    head ??= "";
+    for (const {type, async, src} of scripts) {
+      head += html`${head ? "\n" : ""}<script${type ? html` type="${type}"` : null}${
+        async ? html` async` : null
+      } src="${isAssetPath(src) ? relativePath(path, src) : src}"></script>`;
+    }
+  }
+  return head;
+}
+
+function getHeader(title: string | null, data: FrontMatter, options: ParseOptions): string | null {
+  return getHtml("header", title, data, options);
+}
+
+function getFooter(title: string | null, data: FrontMatter, options: ParseOptions): string | null {
+  return getHtml("footer", title, data, options);
 }
 
 function getHtml(
   key: "head" | "header" | "footer",
-  data: Record<string, any>,
+  title: string | null,
+  data: FrontMatter,
   {path, [key]: defaultValue}: ParseOptions
 ): string | null {
-  return data[key] !== undefined
-    ? data[key]
-      ? String(data[key])
-      : null
-    : defaultValue != null
-    ? rewriteHtmlPaths(defaultValue, path)
-    : null;
+  if (data[key] !== undefined) return data[key] != null ? String(data[key]) : null;
+  const value = typeof defaultValue === "function" ? defaultValue({title, data, path}) : defaultValue;
+  return value != null ? rewriteHtmlPaths(value, path) : null;
 }
 
-function getStyle(data: Record<string, any>, {path, style = null}: ParseOptions): string | null {
+function getStyle(data: FrontMatter, {path, style = null}: ParseOptions): string | null {
   try {
     style = mergeStyle(path, data.style, data.theme, style);
   } catch (error) {
@@ -384,14 +323,8 @@ function getStyle(data: Record<string, any>, {path, style = null}: ParseOptions)
     : `observablehq:theme-${style.theme.join(",")}.css`;
 }
 
-// TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
-function isEmpty(object) {
-  for (const key in object) return false;
-  return true;
-}
-
 // TODO Make this smarter.
-function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined {
+function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | null {
   for (const [i, token] of tokens.entries()) {
     if (token.type === "heading_open" && token.tag === "h1") {
       const next = tokens[i + 1];
@@ -406,4 +339,5 @@ function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined 
       }
     }
   }
+  return null;
 }

@@ -1,6 +1,6 @@
 # Checkbox input
 
-<a href="https://github.com/observablehq/inputs/blob/main/README.md#checkbox" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/checkbox.js" target="_blank">Source</a> · The checkbox input allows the user to choose any of a given set of values. (See the [radio](./radio) input for single-choice.) A checkbox is recommended over a [select](./select) input when the number of values to choose from is small — say, seven or fewer — because all choices will be visible up-front, improving usability. For zero or one choice, see the [toggle](./toggle) input.
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#checkbox">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/checkbox.js">Source</a> · The checkbox input allows the user to choose any of a given set of values. (See the [radio](./radio) input for single-choice.) A checkbox is recommended over a [select](./select) input when the number of values to choose from is small — say, seven or fewer — because all choices will be visible up-front, improving usability. For zero or one choice, see the [toggle](./toggle) input.
 
 The initial value of a checkbox defaults to an empty array. You can override this by specifying the *value* option, which should also be an array (or iterable).
 

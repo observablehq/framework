@@ -1,6 +1,6 @@
 # File input
 
-<a href="https://github.com/observablehq/inputs/blob/main/README.md#file" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/file.js" target="_blank">Source</a> · The file input specifies a local file and is intended for prompting the user to select a file from their own machine. The exposed value provides the same interface as [`FileAttachment`](../javascript/files) for convenient parsing in various formats such as text, image, JSON, CSV, ZIP, and XLSX.
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#file">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/file.js">Source</a> · The file input specifies a local file and is intended for prompting the user to select a file from their own machine. The exposed value provides the same interface as [`FileAttachment`](../files) for convenient parsing in various formats such as text, image, JSON, CSV, ZIP, and XLSX.
 
 By default, any file is allowed, and the value of the input resolves to null.
 

@@ -1,57 +1,82 @@
-import {readFile} from "node:fs/promises";
-import {basename, dirname, join} from "node:path/posix";
 import he from "he";
 import MiniSearch from "minisearch";
-import type {Config} from "./config.js";
-import {visitMarkdownFiles} from "./files.js";
-import type {Logger} from "./logger.js";
-import {parseMarkdown} from "./markdown.js";
+import type {Config, SearchResult} from "./config.js";
+import {findModule} from "./javascript/module.js";
+import type {Logger, Writer} from "./logger.js";
 import {faint, strikethrough} from "./tty.js";
 
 // Avoid reindexing too often in preview.
-const indexCache = new WeakMap();
-const reindexingDelay = 10 * 60 * 1000; // 10 minutes
+const indexCache = new WeakMap<Config["pages"], {json: string; freshUntil: number}>();
+const reindexDelay = 10 * 60 * 1000; // 10 minutes
 
 export interface SearchIndexEffects {
   logger: Logger;
+  output: Writer;
 }
 
-const defaultEffects: SearchIndexEffects = {logger: console};
+const defaultEffects: SearchIndexEffects = {
+  logger: console,
+  output: process.stdout
+};
 
 const indexOptions = {
-  fields: ["title", "text", "keywords"],
+  fields: ["title", "text", "keywords"], // fields to return with search results
   storeFields: ["title"],
-  processTerm(term) {
-    return term.match(/\p{N}/gu)?.length > 6 ? null : term.slice(0, 15).toLowerCase(); // fields to return with search results
+  processTerm(term: string) {
+    return (term.match(/\p{N}/gu)?.length ?? 0) > 6 ? null : term.slice(0, 15).toLowerCase();
   }
 };
 
+type MiniSearchResult = Omit<SearchResult, "path" | "keywords"> & {id: string; keywords: string};
+
 export async function searchIndex(config: Config, effects = defaultEffects): Promise<string> {
-  const {root, pages, search, md} = config;
+  const {pages, search, normalizePath} = config;
   if (!search) return "{}";
-  if (indexCache.has(config) && indexCache.get(config).freshUntil > +new Date()) return indexCache.get(config).json;
+  const cached = indexCache.get(pages);
+  if (cached && cached.freshUntil > Date.now()) return cached.json;
+
+  // Index the pages
+  const index = new MiniSearch<MiniSearchResult>(indexOptions);
+  for await (const result of indexPages(config, effects)) index.add(normalizeResult(result, normalizePath));
+  if (search.index) for await (const result of search.index()) index.add(normalizeResult(result, normalizePath));
+
+  // Pass the serializable index options to the client.
+  const json = JSON.stringify(
+    Object.assign(
+      {
+        options: {
+          fields: indexOptions.fields,
+          storeFields: indexOptions.storeFields
+        }
+      },
+      index.toJSON()
+    )
+  );
+
+  indexCache.set(pages, {json, freshUntil: Date.now() + reindexDelay});
+  return json;
+}
+
+async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIterable<SearchResult> {
+  const {root, pages, loaders} = config;
 
   // Get all the listed pages (which are indexed by default)
   const pagePaths = new Set(["/index"]);
   for (const p of pages) {
-    if ("path" in p) pagePaths.add(p.path);
-    else for (const {path} of p.pages) pagePaths.add(path);
+    if (p.path !== null) pagePaths.add(p.path);
+    if ("pages" in p) for (const {path} of p.pages) pagePaths.add(path);
   }
 
-  // Index the pages
-  const index = new MiniSearch(indexOptions);
-  for await (const file of visitMarkdownFiles(root)) {
-    const sourcePath = join(root, file);
-    const source = await readFile(sourcePath, "utf8");
-    const path = `/${join(dirname(file), basename(file, ".md"))}`;
-    const {body, title, data} = parseMarkdown(source, {...config, path});
+  for await (const path of config.paths()) {
+    if (path.endsWith(".js") && findModule(root, path)) continue;
+    const {body, title, data} = await loaders.loadPage(path, {...config, path});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
     // opted-in. We only log the first case.
     const listed = pagePaths.has(path);
     const indexed = data?.index === undefined ? listed : Boolean(data.index);
     if (!indexed) {
-      if (listed) effects.logger.log(`${faint("index")} ${strikethrough(sourcePath)} ${faint("(skipped)")}`);
+      if (listed) effects.logger.log(`${faint("index")} ${strikethrough(path)} ${faint("(skipped)")}`);
       continue;
     }
 
@@ -67,25 +92,16 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
       .replaceAll(/[\u0300-\u036f]/g, "")
       .replace(/[^\p{L}\p{N}]/gu, " "); // keep letters & numbers
 
-    effects.logger.log(`${faint("index")} ${sourcePath}`);
-    index.add({id: md.normalizeLink(path).slice("/".length), title, text, keywords: normalizeKeywords(data?.keywords)});
+    effects.logger.log(`${faint("index")} ${path}`);
+    yield {path, title, text, keywords: normalizeKeywords(data?.keywords)};
   }
+}
 
-  // Pass the serializable index options to the client.
-  const json = JSON.stringify(
-    Object.assign(
-      {
-        options: {
-          fields: indexOptions.fields,
-          storeFields: indexOptions.storeFields
-        }
-      },
-      index.toJSON()
-    )
-  );
-
-  indexCache.set(config, {json, freshUntil: +new Date() + reindexingDelay});
-  return json;
+function normalizeResult(
+  {path, keywords, ...rest}: SearchResult,
+  normalizePath: Config["normalizePath"]
+): MiniSearchResult {
+  return {id: normalizePath(path), keywords: keywords ?? "", ...rest};
 }
 
 function normalizeKeywords(keywords: any): string {

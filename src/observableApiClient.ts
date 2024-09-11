@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import type {ClackEffects} from "./clack.js";
 import {CliError, HttpError, isApiError} from "./error.js";
+import {formatByteSize} from "./format.js";
 import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
 
@@ -87,9 +88,11 @@ export class ObservableApiClient {
       } catch (error) {
         // that's ok
       }
-      const error = new HttpError(`Unexpected response status ${JSON.stringify(response.status)}`, response.status, {
-        details
-      });
+      const error = new HttpError(
+        `Unexpected response status ${JSON.stringify(response.status)} for ${options.method ?? "GET"} ${url.href}`,
+        response.status,
+        {details}
+      );
 
       // check for version mismatch
       if (
@@ -183,14 +186,29 @@ export class ObservableApiClient {
     const blob = new Blob([contents]);
     body.append("file", blob);
     body.append("client_name", relativePath);
-    await this._fetch(url, {method: "POST", body});
+    try {
+      await this._fetch(url, {method: "POST", body});
+    } catch (error) {
+      const message = error instanceof Error ? error.message : `${error}`;
+      throw new CliError(`While uploading ${relativePath} (${formatByteSize(contents.length)}): ${message}`, {
+        cause: error
+      });
+    }
   }
 
-  async postDeployUploaded(deployId: string): Promise<DeployInfo> {
+  async postDeployManifest(deployId: string, files: DeployManifestFile[]): Promise<PostDeployManifestResponse> {
+    return await this._fetch<PostDeployManifestResponse>(new URL(`/cli/deploy/${deployId}/manifest`, this._apiOrigin), {
+      method: "POST",
+      headers: {"content-type": "application/json"},
+      body: JSON.stringify({files})
+    });
+  }
+
+  async postDeployUploaded(deployId: string, buildManifest: PostDeployUploadedRequest | null): Promise<DeployInfo> {
     return await this._fetch<DeployInfo>(new URL(`/cli/deploy/${deployId}/uploaded`, this._apiOrigin), {
       method: "POST",
       headers: {"content-type": "application/json"},
-      body: "{}"
+      body: JSON.stringify(buildManifest)
     });
   }
 
@@ -294,4 +312,27 @@ export interface GetDeployResponse {
   id: string;
   status: string;
   url: string;
+}
+
+export interface DeployManifestFile {
+  path: string;
+  size: number;
+  hash: string;
+}
+
+export interface PostDeployManifestResponse {
+  status: "ok" | "error";
+  detail: string | null;
+  files: {
+    path: string;
+    status: "upload" | "skip" | "error";
+    detail: string | null;
+  }[];
+}
+
+export interface PostDeployUploadedRequest {
+  pages: {
+    path: string;
+    title: string | null;
+  }[];
 }

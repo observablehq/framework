@@ -1,10 +1,10 @@
 # Configuration
 
-A `observablehq.config.js` (or `observablehq.config.ts`) file located in the project root allows configuration of your project. For example, a site might use a config file to set the project’s title and the sidebar contents:
+A `observablehq.config.js` (or `observablehq.config.ts`) file located in the project root allows configuration of your app. For example, you might use a config file to set the app’s title and sidebar contents:
 
 ```js run=false
 export default {
-  title: "My awesome project",
+  title: "My awesome app",
   pages: [
     {name: "Getting ever more awesome", path: "/getting-awesome"},
     {name: "Being totally awesome", path: "/being-awesome"},
@@ -21,7 +21,7 @@ The following options are supported.
 
 ## root
 
-The path to the source root; defaults to `docs`.
+The path to the source root; defaults to `src`. (Prior to <a href="https://github.com/observablehq/framework/releases/tag/v1.7.0" class="observablehq-version-badge" data-version="^1.7.0" title="Added in 1.7.0"></a>, the default was `docs`.)
 
 ## output
 
@@ -67,9 +67,9 @@ See the [list of available themes](./themes) for more.
 
 ## style
 
-The path to a custom stylesheet, relative to the source root. This option takes precedence over the [theme option](#theme) (if any), providing more control by allowing you to remove or alter the default stylesheet and define a custom theme.
+The path to a custom stylesheet, relative to the source root (typically `src`). This option takes precedence over the [theme option](#theme) (if any), providing more control by allowing you to remove or alter the default stylesheet and define a custom theme.
 
-The custom stylesheet should typically import `observablehq:default.css` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the `air` theme, create a `custom-style.css` file in the `docs` folder, then set the style option to `custom-style.css`:
+The custom stylesheet should typically import `observablehq:default.css` to build on the default styles. You can also import any of the built-in themes. For example, to create a stylesheet that builds up on the `air` theme, create a `custom-style.css` file in the source root, then set the style option to `custom-style.css`:
 
 ```css
 @import url("observablehq:default.css");
@@ -104,7 +104,7 @@ In this case, the path to the stylesheet is resolved relative to the page’s Ma
 
 ## title
 
-The project’s title. If specified, this text is used for the link to the home page in the sidebar, and to complement the titles of the webpages. For instance, a page titled “Sales” in a project titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. If not specified, the home page link will appear as “Home” in the sidebar, and page titles will be shown as-is.
+The app’s title. If specified, this text is used for the link to the home page in the sidebar, and to complement the titles of the webpages. For instance, a page titled “Sales” in an app titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. If not specified, the home page link will appear as “Home” in the sidebar, and page titles will be shown as-is.
 
 ## sidebar
 
@@ -112,62 +112,76 @@ Whether to show the sidebar. Defaults to true if **pages** is not empty.
 
 ## pages
 
-An array containing pages and/or sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
+An array containing pages and sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
 
-The following TypeScript interfaces describe pages and sections:
+Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. Sections are used to group related pages; each section must specify an array of **pages**. (Sections can only contain pages; nested sections are not currently supported.)
 
-```ts run=false
-export interface Page {
-  name: string;
-  path: string;
-}
-```
+Clicking on a page in the sidebar navigates to the corresponding **path**, which should start with a leading slash and be relative to the root; the path can also be specified as a full URL to navigate to an external site. A section may specify a **path** <a href="https://github.com/observablehq/framework/releases/tag/v1.8.0" class="observablehq-version-badge" data-version="^1.8.0" title="Added in 1.8.0"></a> to navigate to when the section header is clicked; if a section does not specify a **path**, then clicking the section header toggles the section (if **collapsible**; see below).
 
-```ts run=false
-export interface Section {
-  name: string;
-  pages: Page[];
-  open?: boolean;
-}
-```
-
-If a section’s **open** option is not set, it defaults to true.
-
-Projects can have “unlisted” pages that are not included in the pages list. These pages will still be accessible if linked from other pages or visited directly, but they won’t be listed in the sidebar or linked to via the previous & next footer.
-
-The pages list should _not_ include the root page, `index.md`. Also, we don’t recommend using query strings or anchor fragments, as these will prevent the previous & next footer links from navigating.
-
-## pager
-
-Whether to show the previous & next footer links; defaults to true.
-
-## head
-
-An HTML fragment to add to the head. Defaults to the empty string.
-
-## header
-
-An HTML fragment to add to the header. Defaults to the empty string.
-
-## footer
-
-An HTML fragment to add to the footer. Defaults to “Built with Observable.”
-
-## scripts
-
-Additional scripts to add to the head, such as for analytics. Unlike the **head** option, this allows you to reference a local script in the source root.
+For example, here **pages** specifies two sections and a total of five pages:
 
 ```js run=false
 export default {
-  scripts: [{type: "module", async: true, src: "analytics.js"}]
-};
+  pages: [
+    {
+      name: "Section 1",
+      path: "/s01/",
+      pages: [
+        {name: "Page 1", path: "/s01/page1"},
+        {name: "Page 2", path: "/s01/page2"}
+      ]
+    },
+    {
+      name: "Section 2",
+      open: false,
+      pages: [
+        {name: "Page 3", path: "/s02/page3"},
+        {name: "Page 4", path: "/s02/page4"}
+      ]
+    }
+  ]
+}
+```
+
+Sections may be **collapsible**. <a href="https://github.com/observablehq/framework/releases/tag/v1.6.0" class="observablehq-version-badge" data-version="^1.6.0" title="Added in 1.6.0"></a> If the **open** option is set, the **collapsible** option defaults to true; otherwise it defaults to false. If the section is not collapsible, the **open** option is ignored and the section is always open; otherwise, the **open** option defaults to true. A section will open automatically if the current page belongs to that section.
+
+Pages and sections may also have a **pager** field <a href="https://github.com/observablehq/framework/releases/tag/v1.8.0" class="observablehq-version-badge" data-version="^1.8.0" title="Added in 1.8.0"></a> which specifies the name of the page group; this determines which pages are linked to via the previous and next pager buttons. If the **pager** field is not specified, it defaults the current section’s **pager** field, or to `main` for top-level pages and sections. (The home page is always in the `main` pager group.) The **pager** field can be also set to `null` to disable the pager on a specific page or section, causing adjacent pages to skip the page.
+
+Apps can have “unlisted” pages that are not referenced in **pages**. These pages can still be linked from other pages or visited directly, but they won’t be listed in the sidebar or linked to via the previous & next pager links.
+
+The pages list should _not_ include the home page (`/`) as this is automatically linked at the top of the sidebar. We also do not recommend listing the same page multiple times (say with different query parameters or anchor fragments), as this causes the previous & next pager links to cycle.
+
+## pager
+
+Whether to show the previous & next links in the footer; defaults to true. The pages are linked in the same order as they appear in the sidebar.
+
+## dynamicPaths <a href="https://github.com/observablehq/framework/releases/tag/v1.11.0" class="observablehq-version-badge" data-version="^1.11.0" title="Added in 1.11.0"></a>
+
+The list of [parameterized pages](./params), [dynamic pages](./page-loaders), and [embedded modules](./embeds) to generate, either as a (synchronous) iterable of strings, or a function that returns an async iterable of strings if you wish to load the list of dynamic pages asynchronously.
+
+## head
+
+An HTML fragment to add to the head. Defaults to the empty string. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
+
+## header
+
+An HTML fragment to add to the header. Defaults to the empty string. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
+
+## footer
+
+An HTML fragment to add to the footer. Defaults to “Built with Observable.” If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
+
+For example, the following adds a link to the bottom of each page:
+
+```js run=false
+footer: ({path}) => `<a href="https://github.com/example/test/blob/main/src${path}.md?plain=1">view source</a>`,
 ```
 
 ## base
 
 The base path when serving the site. Currently this only affects the custom 404 page, if any.
 
-## cleanUrls <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" target="_blank" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
+## cleanUrls <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
 
 Whether page links should be “clean”, _i.e._, formatted without a `.html` extension. Defaults to true. If true, a link to `config.html` will be formatted as `config`. Regardless of this setting, a link to an index page will drop the implied `index.html`; for example `foo/index.html` will be formatted as `foo/`.
 
@@ -188,7 +202,7 @@ If **show** is not set, it defaults to true. If **label** is not set, it default
 
 If shown, the table of contents enumerates the second-level headings (H2 elements, such as `## Section name`) on the right-hand side of the page. The currently-shown section is highlighted in the table of contents.
 
-The table of contents configuration can also be set in the page’s YAML front matter. The page-level configuration takes precedence over the project-level configuration. For example, to disable the table of contents on a particular page:
+The table of contents configuration can also be set in the page’s YAML front matter. The page-level configuration takes precedence over the app-level configuration. For example, to disable the table of contents on a particular page:
 
 ```yaml
 ---
@@ -198,11 +212,36 @@ toc: false
 
 ## search
 
-Whether to enable [search](./search) on the project; defaults to false.
+If true, enable [search](./search); defaults to false. The **search** option may also be specified as an object with an **index** method <a href="https://github.com/observablehq/framework/releases/tag/v1.9.0" class="observablehq-version-badge" data-version="^1.9.0" title="Added in 1.9.0"></a>, in which case additional results can be added to the search index. Each result is specified as:
 
-## interpreters <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" target="_blank" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
+```ts run=false
+interface SearchResult {
+  path: string;
+  title: string | null;
+  text: string;
+  keywords?: string;
+}
+```
 
-The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter. (See [loader routing](./loaders#routing) for more.) The default list of interpreters is:
+These additional results may also point to external links if the **path** is specified as an absolute URL. For example:
+
+```js run=false
+export default {
+  search: {
+    async *index() {
+      yield {
+        path: "https://example.com",
+        title: "Example",
+        text: "This is an example of an external link."
+      };
+    }
+  }
+};
+```
+
+## interpreters <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
+
+The **interpreters** option specifies additional interpreted languages for data loaders, indicating the file extension and associated interpreter. (See [loader routing](./data-loaders#routing) for more.) The default list of interpreters is:
 
 ```js run=false
 {
@@ -242,15 +281,30 @@ export default {
 };
 ```
 
-## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" target="_blank" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
+## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
 
-A hook for registering additional [markdown-it](https://github.com/markdown-it/markdown-it) plugins. For example, to use [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote):
+A hook for registering additional [markdown-it](https://github.com/markdown-it/markdown-it) plugins. For example, to use [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote), first install the plugin with either `npm add markdown-it-footnote` or `yarn add markdown-it-footnote`, then register it like so:
 
 ```js run=false
-import type MarkdownIt from "markdown-it";
 import MarkdownItFootnote from "markdown-it-footnote";
 
 export default {
-  markdownIt: (md: MarkdownIt) => md.use(MarkdownItFootnote);
+  markdownIt: (md) => md.use(MarkdownItFootnote)
 };
 ```
+
+## typographer <a href="https://github.com/observablehq/framework/releases/tag/v1.7.0" class="observablehq-version-badge" data-version="^1.7.0" title="Added in 1.7.0"></a>
+
+If true, enables simple typographic replacements in Markdown, such as replacing `(c)` with `©` and converting straight quotes to curly quotes. See also the [quotes](#quotes) option, which should be set for non-English languages if the **typographer** option is enabled. For the full list of replacements, see [markdown-it](https://github.com/markdown-it/markdown-it/blob/master/lib/rules_core/replacements.mjs). Defaults to false.
+
+## quotes <a href="https://github.com/observablehq/framework/releases/tag/v1.7.0" class="observablehq-version-badge" data-version="^1.7.0" title="Added in 1.7.0"></a>
+
+The set of replacements for straight double and single quotes used when the [**typographer** option](#typographer) is enabled. Defaults to `["“", "”", "‘", "’"]` which is suitable for English. For example, you can use `["«", "»", "„", "“"]` for Russian, `["„", "“", "‚", "‘"]` for German, and `["«\xa0", "\xa0»", "‹\xa0", "\xa0›"]` for French.
+
+## linkify <a href="https://github.com/observablehq/framework/releases/tag/v1.7.0" class="observablehq-version-badge" data-version="^1.7.0" title="Added in 1.7.0"></a>
+
+If true (the default), automatically convert URL-like text to links in Markdown.
+
+## globalStylesheets <a href="https://github.com/observablehq/framework/releases/tag/v1.11.0" class="observablehq-version-badge" data-version="^1.11.0" title="Added in 1.11.0"></a>
+
+An array of links to global stylesheets to add to every page’s head, in addition to the [page stylesheet](#style). Defaults to loading [Source Serif 4](https://fonts.google.com/specimen/Source+Serif+4) from Google Fonts.

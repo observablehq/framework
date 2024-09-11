@@ -4,6 +4,8 @@ on:
   workflow_dispatch: {}
   push:
     branches: [main]
+  schedule:
+    - cron: "15 10 * * *"
 
 jobs:
   deploy:
@@ -19,63 +21,16 @@ jobs:
         with:
           node-version: 20
           cache: 'yarn'
-          cache-dependency-path: |
-            yarn.lock
-            'examples/*/yarn.lock'
       - run: yarn --frozen-lockfile
       - id: date
         run: echo "date=$(TZ=America/Los_Angeles date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - id: cache-data
         uses: actions/cache@v4
         with:
-          path: |
-            docs/.observablehq/cache
-            examples/*/docs/.observablehq/cache
-          key: data-${{ hashFiles('docs/data/*', 'examples/*/docs/data/*') }}-${{ steps.date.outputs.date }}
-      - if: steps.cache-data.outputs.cache-hit == 'true'
-        run: find docs/.observablehq/cache examples/*/docs/.observablehq/cache -type f -exec touch {} +
+          path: docs/.observablehq/cache
+          key: data-${{ hashFiles('docs/data/*') }}-${{ steps.date.outputs.date }}
       - run: yarn build
       - run: yarn docs:build
-      - name: Build example "api"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/api
-      - name: Build example "chess"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/chess
-      - name: Build example "eia"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/eia
+      - run: yarn docs:deploy
         env:
-          EIA_KEY: ${{ secrets.EIA_KEY }}
-      - name: Build example "google-analytics"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/google-analytics
-        env:
-          GA_PROPERTY_ID: ${{ vars.GA_PROPERTY_ID }}
-          GA_CLIENT_EMAIL: ${{ secrets.GA_CLIENT_EMAIL }}
-          GA_PRIVATE_KEY: ${{ secrets.GA_PRIVATE_KEY }}
-      - name: Build example "hello-world"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/hello-world
-      - name: Build example "mortgage-rates"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/mortgage-rates
-      - name: Build example "penguin-classification"
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          yarn --frozen-lockfile && yarn build
-        working-directory: examples/penguin-classification
-      - name: Build example "plot"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/plot
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: mkdir docs/.observablehq/dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist docs/.observablehq/dist/examples/$(basename $i); fi; done
-      - uses: cloudflare/pages-action@1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: framework
-          directory: docs/.observablehq/dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}

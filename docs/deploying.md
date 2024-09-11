@@ -1,16 +1,16 @@
 # Deploying
 
-You can host your built Framework project on any static site hosting service, or self-host it with any static site server. This guide covers deploying to [Observable](https://observablehq.com), which is the easiest way to host your Framework project as support is built-in. We’ll also cover setting up automated deploys with GitHub Actions.
+You can host your built Framework app on any static site hosting service, or self-host it with any static site server. This guide covers deploying to [Observable Cloud](https://observablehq.com/platform/cloud), which is the easiest way to host your Framework app as support is built-in. We’ll also cover setting up automated deploys with GitHub Actions.
 
 <div class="tip">
 
-If you don’t already have a project ready to deploy, create one by following our [Getting started guide](./getting-started).
+If you don’t yet have an app ready to deploy, create one by following our [Getting started guide](./getting-started).
 
 </div>
 
 ## Manual deploys
 
-First, make sure that your project builds without error:
+First, make sure that your app builds without error:
 
 ```sh
 npm run build
@@ -22,15 +22,61 @@ Once that is done you can deploy to Observable:
 npm run deploy
 ```
 
-The first time you deploy a project, you will be prompted to configure the project’s _slug_ (which determines its URL), access level, and other details. If you don’t yet have an Observable account or aren’t signed-in, you will also be prompted to sign-up or sign-in.
+The first time you deploy an app, you will be prompted to configure the app’s _slug_ (which determines its URL), access level, and other details. If you aren’t yet signed-in to Observable, you will also be prompted to sign-in.
 
-When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed project. If you choose *private* as the access level, that link will only be accessible to members of your Observable workspace. (You can invite people to your workspace by going to observablehq.com.) If you chose *public*, you can share your project link with anyone.
+When the deploy command finishes, it prints a link to observablehq.cloud where you can view your deployed app. If you choose _private_ as the access level, that link will only be accessible to members of your Observable workspace. (You can invite people to your workspace by going to observablehq.com.) If you choose _public_, you can share your app link with anyone. You can change the access level of an app later [from your Data apps page](https://observablehq.com/select-workspace?next=projects).
 
-<div class="note">The deploy command creates a file at <code>docs/.observablehq/deploy.json</code> with information on where to deploy the project. This file is required for automated deploys. You will need to commit this file to git to deploy via GitHub Actions. (If you have configured a source root besides <code>docs</code>, the file will be placed there instead.)</div>
+<div class="tip">
+
+To see more available options when deploying:
+
+```sh run=false
+npm run deploy -- --help
+```
+
+</div>
+
+## Deploy configuration
+
+The deploy command creates a file at <code>.observablehq/deploy.json</code> under the source root (typically <code>src</code>) with information on where to deploy the app. This file allows you to re-deploy an app without having to repeat where you want the app to live on Observable.
+
+The contents of the deploy config file look like this:
+
+```json run=false
+{
+  "projectId": "0123456789abcdef",
+  "projectSlug": "hello-framework",
+  "workspaceLogin": "acme"
+}
+```
+
+<div class="note">
+
+A deploy config file is required for automated deploys. You should commit this file to git.
+
+</div>
+
+To store the deploy config file somewhere else, use the `--deploy-config` argument. For example, to create a “staging” deploy to share early versions of your app, you could use a `deploy-staging.json` like so:
+
+```sh
+npm run deploy -- --deploy-config=src/.observablehq/deploy-staging.json
+```
+
+If the specified config file does not yet exist, you will again be prompted to choose or create a new app; the resulting configuration will then be saved to the specified file. You can re-deploy to staging by passing the same `--deploy-config` argument; or you can deploy to “production” by not specifying the `--deploy-config` argument to use the default deploy config.
 
 ## Automated deploys
 
-To set up automatic deploys (also known as *continuous deployment* or *CD*), we recommend [GitHub Actions](https://github.com/features/actions). In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
+Once the app has been set up, you can have Observable build the next deploys for you. You can build automatically _on commit_ (whenever you push a new commit to your project’s default branch) and _on schedule_ (such as daily or weekly).
+
+Automatic deploys — also known as _continuous deployment_ or _CD_ — ensure that your data is up to date, and that any changes you make to your app are immediately reflected in the deployed version.
+
+On your app settings page on Observable, open the **Build settings** tab to set up a link to a GitHub repository hosting your project’s files. Observable will then listen for changes in the repo and deploy the app automatically.
+
+The settings page also allows you to trigger a build manually, add secrets (for data loaders to use private APIs and passwords), view logs, configure sharing, _etc._ For details, see the [Building & deploying](https://observablehq.com/documentation/data-apps/deploys) documentation.
+
+## GitHub Actions
+
+As an alternative to building on Observable Cloud, you can use [GitHub Actions](https://github.com/features/actions) and have GitHub build a new version of your app and deploy it to Observable. In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
 
 ```yaml
 name: Deploy
@@ -62,21 +108,21 @@ jobs:
           OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_TOKEN }}
 ```
 
-When deploying automatically, you can’t sign-in in your browser the way you did for manual deploys; instead, your GitHub action will authenticate using an Observable API key (also known as a *token* and referred to as `OBSERVABLE_TOKEN` above).
+<div class="tip">As shown above, deploy messages can be set using <code>--message</code>. This is especially useful for continuous deployment from a git repository: the message can include the SHA, author, and message of the latest commit.</div>
+
+When deploying automatically, you can’t sign-in in your browser the way you did for manual deploys; instead, your GitHub action will authenticate using an Observable API key (also known as a _token_ and referred to as `OBSERVABLE_TOKEN` above).
 
 To create an API key:
 
-1. Go to [observablehq.com](https://observablehq.com).
-2. In the left sidebar, click **Settings**.
-3. In the right sidebar, click **API / Notebook Keys**.
-4. Click **New API Key**.
-5. Check the **Deploy new versions of projects** checkbox.
-6. Give your key a description, such as “Deploy via GitHub Actions”.
-7. Click **Create API Key**.
+1. Open the [API Key settings](https://observablehq.com/select-workspace?next=api-keys-settings) for your Observable workspace.
+2. Click **New API Key**.
+3. Check the **Deploy new versions of projects** checkbox. <!-- TODO apps -->
+4. Give your key a description, such as “Deploy via GitHub Actions”.
+5. Click **Create API Key**.
 
 <div class="caution">
 
-The token you create is the equivalent of a password giving write access to your hosted project. **Do not commit it to git** or share it with anyone you don’t trust. If you accidentally expose your key, you can go back to your settings to immediately revoke it (and create a new key).
+The token you create is the equivalent of a password giving write access to your hosted app. **Do not commit it to git** or share it with anyone you don’t trust. If you accidentally expose your key, you can go back to your settings to immediately revoke it (and create a new key).
 
 </div>
 
@@ -94,7 +140,7 @@ To create a GitHub secret, in a new window:
 6. In the **Secret** field, paste the API key you created on Observable.
 7. Click **Add secret**.
 
-After you’ve performed these steps, the `deploy.yml` above will automatically build and deploy your project once per day (to keep your data up-to-date), as well as whenever you push a new version of the code to your repository (so you can make changes at any time).
+After you’ve performed these steps, the `deploy.yml` above will automatically build and deploy your app once per day (to keep your data up-to-date), as well as whenever you push a new version of the code to your repository (so you can make changes at any time).
 
 ### Caching
 
@@ -104,26 +150,24 @@ If some of your data loaders take a long time to run, or simply don’t need to 
 jobs:
   deploy:
     steps:
-      # ...
+      # …
       - id: date
         run: echo "date=$(TZ=America/Los_Angeles date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - id: cache-data
         uses: actions/cache@v4
         with:
-          path: docs/.observablehq/cache
-          key: data-${{ hashFiles('docs/data/*') }}-${{ steps.date.outputs.date }}
-      - if: steps.cache-data.outputs.cache-hit == 'true'
-        run: find docs/.observablehq/cache -type f -exec touch {} +
-      # ...
+          path: src/.observablehq/cache
+          key: data-${{ hashFiles('src/data/*') }}-${{ steps.date.outputs.date }}
+      # …
 ```
 
-This uses one cache per calendar day (in the `America/Los_Angeles` time zone). If you deploy multiple times in a day, the results of your data loaders will be reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H` to cache it for only an hour.
+This uses one cache per calendar day (in the `America/Los_Angeles` time zone). If you deploy multiple times in a day, the results of your data loaders will be reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H'` to cache it for only an hour.
 
-<div class="note">You’ll need to edit the paths above if you’ve configured a source root other than <code>docs</code>.</div>
+<div class="note">You’ll need to edit the paths above if you’ve configured a source root other than <code>src</code>.</div>
 
 ## Other hosting services
 
-Observable Framework builds a set of static files that can be hosted by any static site hosting services. To build your project, run:
+Observable Framework builds a set of static files that can be hosted by any static site hosting services. To build your app, run:
 
 ```sh
 npm run build

@@ -1,6 +1,5 @@
 import chai, {assert, expect} from "chai";
 import chaiHttp from "chai-http";
-import {normalizeConfig} from "../../src/config.js";
 import {preview} from "../../src/preview.js";
 import type {PreviewOptions, PreviewServer} from "../../src/preview.js";
 import {mockJsDelivr} from "../mocks/jsdelivr.js";
@@ -19,7 +18,7 @@ describe("preview server", () => {
 
   before(async () => {
     const testServerOptions: PreviewOptions = {
-      config: await normalizeConfig({root: testHostRoot}),
+      root: testHostRoot,
       hostname: testHostName,
       port: testPort,
       verbose: false
@@ -60,7 +59,7 @@ describe("preview server", () => {
   it("handles missing imports", async () => {
     const res = await chai.request(testServerUrl).get("/_import/idontexist.js");
     expect(res).to.have.status(404);
-    expect(res.text).to.have.string("404 page");
+    expect(res.text).to.have.string("File not found");
   });
 
   it("serves local files", async () => {
@@ -72,6 +71,6 @@ describe("preview server", () => {
   it("handles missing files", async () => {
     const res = await chai.request(testServerUrl).get("/_file/idontexist.csv");
     expect(res).to.have.status(404);
-    expect(res.text).to.have.string("404 page");
+    expect(res.text).to.have.string("File not found");
   });
 });

@@ -1,6 +1,6 @@
 # Search input
 
-<a href="https://github.com/observablehq/inputs/blob/main/README.md#search" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/search.js" target="_blank">Source</a> · The search input allows freeform, full-text search of a tabular dataset (or a single column of values) using a simple query parser. It is often paired with a [table input](./table).
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#search">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/search.js">Source</a> · The search input allows freeform, full-text search of a tabular dataset (or a single column of values) using a simple query parser. It is often paired with a [table input](./table).
 
 By default, the query is split into terms separated by spaces; each term is then prefix-matched against the property values (the fields) of each row in the data. Try searching for “gen” below to find Gentoo penguins.
 

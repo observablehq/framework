@@ -22,6 +22,5 @@
   "files": [],
   "imports": [],
   "expression": true,
-  "async": true,
-  "inline": false
+  "async": true
 }

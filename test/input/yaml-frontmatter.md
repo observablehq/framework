@@ -1,6 +1,7 @@
 ---
 title: YAML
-style:
+style: custom.css
+keywords:
   - one
   - two
 ---

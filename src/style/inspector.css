@@ -1,4 +1,4 @@
-.observablehq--block:not(.observablehq--loading):empty {
+.observablehq--block:empty {
   margin: 0;
 }
 
@@ -11,8 +11,7 @@
   }
 }
 
-.observablehq--loading::before {
-  content: "↻";
+observablehq-loading {
   font: var(--monospace-font);
   color: var(--theme-foreground-muted);
   display: inline-block;
@@ -23,7 +22,11 @@
   animation-iteration-count: infinite;
 }
 
-.observablehq--block.observablehq--loading::before {
+observablehq-loading::before {
+  content: "↻";
+}
+
+.observablehq--block observablehq-loading {
   display: block;
 }
 

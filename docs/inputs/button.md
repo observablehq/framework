@@ -1,6 +1,6 @@
 # Button input
 
-<a href="https://github.com/observablehq/inputs/blob/main/README.md#button" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/button.js" target="_blank">Source</a> · The button input emits an *input* event when you click it. Buttons may be used to trigger the evaluation of cells, say to restart an animation. For example, below is an animation that progressively hides a bar. Clicking the button will restart the animation.
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#button">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/button.js">Source</a> · The button input emits an *input* event when you click it. Buttons may be used to trigger the evaluation of cells, say to restart an animation. For example, below is an animation that progressively hides a bar. Clicking the button will restart the animation.
 
 <canvas id="canvas" width="360" height="20" style="max-width: 100%; color: var(--theme-foreground-focus); border: solid 1px var(--theme-foreground);"></canvas>
 
@@ -27,7 +27,7 @@ const progress = (function* () {
 })();
 ```
 
-<div class="note">The <code>progress</code> top-level variable is declared as a <a href="../javascript/generators">generator</a>. This causes the Observable runtime to automatically advance the generator on each animation frame. If you prefer, you could write this animation using a standard <code>requestAnimationFrame</code> loop, but generators are nice because the animation will automatically be interrupted when the code is <a href="../javascript/reactivity#invalidation">invalidated</a>.</div>
+<div class="note">The <code>progress</code> top-level variable is declared as a <a href="../reactivity#generators">generator</a>. This causes the Observable runtime to automatically advance the generator on each animation frame. If you prefer, you could write this animation using a standard <code>requestAnimationFrame</code> loop, but generators are nice because the animation will automatically be interrupted when the code is <a href="../reactivity#invalidation">invalidated</a>.</div>
 
 You can also use buttons to count clicks. While the value of a button is often not needed, it defaults to zero and is incremented each time the button is clicked.
 
@@ -92,10 +92,10 @@ const confirm = view(Inputs.button("OK", {label: "Continue?"}));
 You can change the rendered text in Markdown based on whether a button is clicked. Try clicking the `OK` button with the  `Continue?` label.
 
 ```md echo run=false
-confirm ? "Confirmed!" : "Awaiting confirmation..."
+confirm ? "Confirmed!" : "Awaiting confirmation…"
 ```
 
-${confirm ? "Confirmed!" : "Awaiting confirmation..."}
+${confirm ? "Confirmed!" : "Awaiting confirmation…"}
 
 You can also use a button to copy something to the clipboard.
 

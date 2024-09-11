@@ -105,7 +105,8 @@
 }
 
 #observablehq-sidebar > ol,
-#observablehq-sidebar > details {
+#observablehq-sidebar > details,
+#observablehq-sidebar > section {
   position: relative;
   padding-bottom: 0.5rem;
   margin: 0.5rem 0;
@@ -127,7 +128,8 @@
 }
 
 #observablehq-sidebar > ol:last-child,
-#observablehq-sidebar > details:last-child {
+#observablehq-sidebar > details:last-child,
+#observablehq-sidebar > section:last-child {
   border-bottom: none;
 }
 
@@ -142,21 +144,26 @@
   display: none;
 }
 
-#observablehq-sidebar summary::after {
+#observablehq-sidebar details summary::after {
   position: absolute;
-  right: 0.5rem;
+  right: 0;
   width: 1rem;
   height: 1rem;
   background: var(--theme-foreground-muted);
   content: "";
   -webkit-mask: var(--theme-caret);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
   mask: var(--theme-caret);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  padding: 0.5rem;
   transition: transform 250ms ease;
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
 }
 
-#observablehq-sidebar summary:hover::after {
+#observablehq-sidebar details summary:hover::after {
   color: var(--theme-foreground);
 }
 
@@ -217,7 +224,17 @@
   align-items: center;
 }
 
-#observablehq-sidebar summary:hover,
+#observablehq-sidebar summary a {
+  flex-grow: 1;
+  color: inherit;
+}
+
+#observablehq-sidebar summary.observablehq-link {
+  padding: 0;
+  margin-left: 0;
+}
+
+#observablehq-sidebar details summary:hover,
 .observablehq-link-active a,
 .observablehq-link a:hover {
   background: var(--theme-background);
@@ -297,7 +314,7 @@
     left 150ms 0ms ease;
 }
 
-.observablehq-sidebar-open ~ #observablehq-sidebar,
+#observablehq-sidebar:focus-within,
 #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar {
   left: 0;
   visibility: initial;
@@ -317,12 +334,13 @@
   z-index: 2;
 }
 
-.observablehq-sidebar-open ~ #observablehq-sidebar-backdrop,
+#observablehq-sidebar-backdrop:has(~ #observablehq-sidebar:focus-within),
 #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar-backdrop {
   display: initial;
 }
 
 @media (prefers-color-scheme: dark) {
+  #observablehq-sidebar:focus-within,
   #observablehq-sidebar-toggle:checked ~ #observablehq-sidebar {
     box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.5);
   }
@@ -467,7 +485,8 @@
 }
 
 #observablehq-sidebar.observablehq-search-results > ol:not(:first-child),
-#observablehq-sidebar.observablehq-search-results > details {
+#observablehq-sidebar.observablehq-search-results > details,
+#observablehq-sidebar.observablehq-search-results > section {
   display: none;
 }
 
@@ -549,11 +568,12 @@
 }
 
 #observablehq-search-results li:after,
-#observablehq-search-results a:after {
+#observablehq-search-results a span:after {
   content: "";
   width: var(--relevance-width);
   height: 4px;
   position: absolute;
+  top: 14px;
   right: 0.5em;
   border-radius: 2px;
   background: var(--theme-foreground-muted);
@@ -563,7 +583,7 @@
   background: var(--theme-foreground-focus);
 }
 
-#observablehq-search-results a:after {
+#observablehq-search-results a span:after {
   background: var(--theme-foreground-faintest);
 }
 

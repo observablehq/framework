@@ -1,7 +1,9 @@
 import assert from "node:assert";
 import {stat} from "node:fs/promises";
 import os from "node:os";
-import {getClientPath, getStylePath, maybeStat, prepareOutput, visitFiles, visitMarkdownFiles} from "../src/files.js";
+import {extname} from "node:path/posix";
+import {getClientPath, getStylePath, maybeStat, prepareOutput, visitFiles} from "../src/files.js";
+import {isParameterized} from "../src/route.js";
 
 describe("getClientPath(entry)", () => {
   it("returns the relative path to the specified source", () => {
@@ -46,36 +48,43 @@ describe("maybeStat(path)", () => {
 });
 
 describe("visitFiles(root)", () => {
-  it("visits all files in a directory, return the relative path from the root", async () => {
-    assert.deepStrictEqual(await collect(visitFiles("test/input/build/files")), [
+  it("visits all files in a directory, return the relative path from the root", () => {
+    assert.deepStrictEqual(collect(visitFiles("test/input/build/files")), [
       "custom-styles.css",
       "file-top.csv",
       "files.md",
       "observable logo small.png",
       "observable logo.png",
+      "unknown-mime-extension.really",
       "subsection/additional-styles.css",
       "subsection/file-sub.csv",
       "subsection/subfiles.md"
     ]);
   });
-  it("handles circular symlinks, visiting files only once", async function () {
+  it("handles circular symlinks, visiting files only once", function () {
     if (os.platform() === "win32") this.skip(); // symlinks are not the same on Windows
-    assert.deepStrictEqual(await collect(visitFiles("test/input/circular-files")), ["a/a.txt", "b/b.txt"]);
+    assert.deepStrictEqual(collect(visitFiles("test/input/circular-files")), ["a/a.txt", "b/b.txt"]);
+  });
+  it("ignores .observablehq at any level", function () {
+    assert.deepStrictEqual(collect(visitFiles("test/files")), ["visible.txt", "sub/visible.txt"]);
   });
 });
 
-describe("visitMarkdownFiles(root)", () => {
-  it("visits all Markdown files in a directory, return the relative path from the root", async () => {
-    assert.deepStrictEqual(await collect(visitMarkdownFiles("test/input/build/files")), [
-      "files.md",
-      "subsection/subfiles.md"
+describe("visitFiles(root, test)", () => {
+  it("skips directories and files that don’t pass the specified test", () => {
+    assert.deepStrictEqual(
+      collect(visitFiles("test/input/build/params", (name) => isParameterized(name) || extname(name) !== "")),
+      ["observablehq.config.js", "[dir]/index.md", "[dir]/loaded.md.js"]
+    );
+    assert.deepStrictEqual(collect(visitFiles("test/input/build/params", (name) => !isParameterized(name))), [
+      "observablehq.config.js"
     ]);
   });
 });
 
-async function collect(generator: AsyncGenerator<string>): Promise<string[]> {
+function collect(generator: Generator<string>): string[] {
   const values: string[] = [];
-  for await (const value of generator) {
+  for (const value of generator) {
     if (value.startsWith(".observablehq/cache/")) continue;
     values.push(value);
   }

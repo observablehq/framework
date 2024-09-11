@@ -4,7 +4,7 @@ keywords: dropdown
 
 # Select input
 
-<a href="https://github.com/observablehq/inputs/blob/main/README.md#select" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/select.js" target="_blank">Source</a> · The select input allows the user to choose from a given set of values. A select is recommended over a [radio](./radio) or [checkbox](./checkbox) input when the number of values to choose from is large — say, eight or more — to save space.
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#select">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/select.js">Source</a> · The select input allows the user to choose from a given set of values. A select is recommended over a [radio](./radio) or [checkbox](./checkbox) input when the number of values to choose from is large — say, eight or more — to save space.
 
 The default appearance of a select is a drop-down menu that allows you to choose a single value. The initial value is the first of the allowed values, but you can override this by specifying the *value* option.
 

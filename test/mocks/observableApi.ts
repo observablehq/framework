@@ -1,17 +1,16 @@
 import type {MockAgent} from "undici";
-import {type Interceptable} from "undici";
+import type {Interceptable} from "undici";
 import PendingInterceptorsFormatter from "undici/lib/mock/pending-interceptors-formatter.js";
+import type {BuildManifest} from "../../src/build.js";
 import type {
   GetCurrentUserResponse,
+  GetProjectResponse,
+  PaginatedList,
   PostAuthRequestPollResponse,
-  PostAuthRequestResponse
+  PostAuthRequestResponse,
+  PostDeployManifestResponse
 } from "../../src/observableApiClient.js";
-import {
-  type GetProjectResponse,
-  type PaginatedList,
-  getObservableApiOrigin,
-  getObservableUiOrigin
-} from "../../src/observableApiClient.js";
+import {getObservableApiOrigin, getObservableUiOrigin} from "../../src/observableApiClient.js";
 import {getCurrentAgent, mockAgent} from "./undici.js";
 
 export const validApiKey = "MOCK-VALID-KEY";
@@ -30,7 +29,7 @@ export function mockObservableApi() {
     agent.get(getOrigin());
   });
 
-  afterEach(() => {
+  afterEach(function () {
     apiMock.after();
   });
 }
@@ -44,14 +43,28 @@ function getOrigin() {
   return getObservableApiOrigin().toString().replace(/\/$/, "");
 }
 
+type ExpectedFile = {
+  path: string;
+  deployId: string;
+  action: "skip" | "upload";
+};
+
+type ExpectedFileSpec = {
+  path: string;
+  deployId: string;
+  action?: "skip" | "upload";
+};
+
 class ObservableApiMock {
   private _agent: MockAgent | null = null;
   private _handlers: ((pool: Interceptable) => void)[] = [];
+  private _expectedFiles: ExpectedFile[] = [];
 
   public start(): ObservableApiMock {
     this._agent = getCurrentAgent();
     const mockPool = this._agent.get(getOrigin());
     for (const handler of this._handlers) handler(mockPool);
+    this.handleExpectedFiles(mockPool);
     return this;
   }
 
@@ -76,6 +89,46 @@ class ObservableApiMock {
     return this;
   }
 
+  private handleExpectedFiles(mockPool: Interceptable) {
+    if (this._expectedFiles.length > 0) {
+      const headers = authorizationHeader(true);
+      for (const {path, deployId, action} of this._expectedFiles) {
+        if (action === "upload") {
+          mockPool
+            .intercept({
+              path: `/cli/deploy/${deployId}/file`,
+              method: "POST",
+              headers: headersMatcher(headers),
+              body: formDataMatcher({client_name: path})
+            })
+            .reply(204, "");
+        }
+      }
+
+      const byDeployId: Record<string, ExpectedFile[]> = this._expectedFiles.reduce((acc, file) => {
+        (acc[file.deployId] ??= []).push(file);
+        return acc;
+      }, {});
+      for (const [deployId, files] of Object.entries(byDeployId)) {
+        mockPool
+          .intercept({
+            path: `/cli/deploy/${deployId}/manifest`,
+            method: "POST",
+            headers: headersMatcher(headers)
+          })
+          .reply(
+            200,
+            JSON.stringify({
+              status: "ok",
+              detail: null,
+              files: files.map((f) => ({path: f.path, detail: null, status: f.action}))
+            } satisfies PostDeployManifestResponse),
+            {headers: {"content-type": "application/json"}}
+          );
+      }
+    }
+  }
+
   handleGetCurrentUser({
     user = userWithOneWorkspace,
     status = 200
@@ -94,7 +147,7 @@ class ObservableApiMock {
     workspaceLogin,
     projectSlug,
     projectId = "project123",
-    title = "Mock BI",
+    title = "Build test case",
     accessLevel = "private",
     status = 200
   }: {
@@ -229,6 +282,45 @@ class ObservableApiMock {
     return this;
   }
 
+  expectStandardFiles(options: Omit<ExpectedFileSpec, "path">) {
+    return this.expectFileUpload({...options, path: "index.html"})
+      .expectFileUpload({...options, path: "_observablehq/client.00000001.js"})
+      .expectFileUpload({...options, path: "_observablehq/runtime.00000002.js"})
+      .expectFileUpload({...options, path: "_observablehq/stdlib.00000003.js"})
+      .expectFileUpload({...options, path: "_observablehq/theme-air,near-midnight.00000004.css"});
+  }
+
+  /** Register a file that is expected to be uploaded. Also includes that file in
+   * an automatic interceptor to `/deploy/:deployId/manifest`. If the action is
+   * "upload", an interceptor for `/deploy/:deployId/file` will be registered.
+   * If it is set to "skip", that interceptor will not be registered. */
+  expectFileUpload({deployId, path, action = "upload"}: ExpectedFileSpec): ObservableApiMock {
+    this._expectedFiles.push({deployId, path, action});
+    return this;
+  }
+
+  handlePostDeployManifest({
+    deployId,
+    status = 200,
+    files = []
+  }: {deployId?: string; status?: number; files?: ExpectedFile[]} = {}): ObservableApiMock {
+    const response =
+      status == 200
+        ? JSON.stringify({
+            status: "ok",
+            detail: null,
+            files: files.map((f) => ({path: f.path, detail: null, status: f.action}))
+          } satisfies PostDeployManifestResponse)
+        : emptyErrorBody;
+    const headers = authorizationHeader(status !== 403);
+    this.addHandler((pool) =>
+      pool
+        .intercept({path: `/cli/deploy/${deployId}/manifest`, method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
   handlePostDeployFile({
     deployId,
     clientName,
@@ -251,7 +343,15 @@ class ObservableApiMock {
     return this;
   }
 
-  handlePostDeployUploaded({deployId, status = 200}: {deployId?: string; status?: number} = {}): ObservableApiMock {
+  handlePostDeployUploaded({
+    deployId,
+    status = 200,
+    pageMatch = null
+  }: {
+    deployId?: string;
+    status?: number;
+    pageMatch?: null | ((pages: BuildManifest["pages"]) => boolean);
+  } = {}): ObservableApiMock {
     const response =
       status == 200
         ? JSON.stringify({
@@ -263,7 +363,19 @@ class ObservableApiMock {
     const headers = authorizationHeader(status !== 403);
     this.addHandler((pool) =>
       pool
-        .intercept({path: `/cli/deploy/${deployId}/uploaded`, method: "POST", headers: headersMatcher(headers)})
+        .intercept({
+          path: `/cli/deploy/${deployId}/uploaded`,
+          method: "POST",
+          headers: headersMatcher(headers),
+          body: (body: string) => {
+            if (pageMatch) {
+              const pages = JSON.parse(body)?.pages;
+              if (!pages) return false;
+              return pageMatch(pages);
+            }
+            return true;
+          }
+        })
         .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;

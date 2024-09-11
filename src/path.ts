@@ -1,4 +1,4 @@
-import {dirname, join} from "node:path/posix";
+import {dirname, isAbsolute, join, normalize, relative, resolve} from "node:path/posix";
 
 /**
  * Returns the normalized relative path from "/file/path/to/a" to
@@ -31,7 +31,7 @@ export function resolvePath(source: string, target: string): string;
 export function resolvePath(root: string, source: string, target: string): string;
 export function resolvePath(root: string, source: string, target?: string): string {
   if (target === undefined) (target = source), (source = root), (root = ".");
-  const path = join(root, target.startsWith("/") ? "." : dirname(source), target);
+  const path = join(root, target === "" ? source : target.startsWith("/") ? "." : dirname(source), target);
   return path.startsWith("../") ? path : `/${path}`;
 }
 
@@ -71,4 +71,21 @@ export function isAssetPath(specifier: string): boolean {
  */
 export function resolveRelativePath(source: string, target: string): string {
   return relativePath(source, resolvePath(source, target));
+}
+
+export function parseRelativeUrl(url: string): {pathname: string; search: string; hash: string} {
+  let search: string;
+  let hash: string;
+  const i = url.indexOf("#");
+  if (i < 0) hash = "";
+  else (hash = url.slice(i)), (url = url.slice(0, i));
+  const j = url.indexOf("?");
+  if (j < 0) search = "";
+  else (search = url.slice(j)), (url = url.slice(0, j));
+  return {pathname: url, search, hash};
+}
+
+export function within(root: string, path: string): boolean {
+  path = relative(normalize(resolve(root)), normalize(resolve(path)));
+  return !path.startsWith("..") && !isAbsolute(path);
 }

@@ -17,8 +17,8 @@ describe("getModuleHash(root, path)", () => {
   it("returns the empty hash if the specified module does not exist", () => {
     assert.strictEqual(getModuleHash("test/input/build/imports", "does-not-exist.js"), emptyHash);
   });
-  it("returns the empty hash if the specified module is invalid", () => {
-    assert.strictEqual(getModuleHash("test/input/build/imports", "foo/foo.md"), emptyHash);
+  it("returns the file hash if the specified path is not a module", () => {
+    assert.strictEqual(getModuleHash("test/input/build/imports", "foo/foo.md"), "1df6958fdef208d873474d91da45d08277944f4a1400e7ab0e6934c07d5670ed"); // prettier-ignore
   });
 });
 
@@ -116,9 +116,9 @@ describe("getFileHash(root, path)", () => {
 
 describe("getFileInfo(root, path)", () => {
   it("returns the info for the specified file", () => {
-    assert.deepStrictEqual(redactFileInfo("test/input/build/files", "file-top.csv"), {hash: "01a7ce0aea79f9cddb22e772b2cc9a9f3229a64a5fd941eec8d8ddc41fb07c34"}); // prettier-ignore
-    assert.deepStrictEqual(redactFileInfo("test/input/build/archives.posix", "dynamic.zip.sh"), {hash: "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"}); // prettier-ignore
-    assert.deepStrictEqual(redactFileInfo("test/input/build/archives.posix", "static.zip"), {hash: "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"}); // prettier-ignore
+    assert.deepStrictEqual(redactFileInfo("test/input/build/files", "file-top.csv"), {hash: "01a7ce0aea79f9cddb22e772b2cc9a9f3229a64a5fd941eec8d8ddc41fb07c34", size: 16}); // prettier-ignore
+    assert.deepStrictEqual(redactFileInfo("test/input/build/archives.posix", "dynamic.zip.sh"), {hash: "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10", size: 51}); // prettier-ignore
+    assert.deepStrictEqual(redactFileInfo("test/input/build/archives.posix", "static.zip"), {hash: "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429", size: 180}); // prettier-ignore
   });
   it("returns undefined if the specified file is created by a data loader", () => {
     assert.strictEqual(getFileInfo("test/input/build/archives.posix", "dynamic.zip"), undefined);

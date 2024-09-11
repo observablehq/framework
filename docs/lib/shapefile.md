@@ -19,7 +19,7 @@ const collection = shapefile.read(
 
 (You can omit the `.dbf` file if you only need the geometry.)
 
-The resulting `collection` is a [promise](../javascript/promises) to a GeoJSON `FeatureCollection`:
+The resulting `collection` is a promise to a GeoJSON `FeatureCollection`:
 
 ```js echo
 collection

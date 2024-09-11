@@ -1,0 +1,38 @@
+{
+  "data": {},
+  "title": null,
+  "style": null,
+  "code": [
+    {
+      "id": "14381611",
+      "node": {
+        "body": {
+          "type": "TemplateLiteral",
+          "start": 0,
+          "end": 3,
+          "expressions": [],
+          "quasis": [
+            {
+              "type": "TemplateElement",
+              "start": 1,
+              "end": 2,
+              "value": {
+                "raw": "1",
+                "cooked": "1"
+              },
+              "tail": true
+            }
+          ]
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "input": "`1`"
+      },
+      "mode": "inline"
+    }
+  ]
+}

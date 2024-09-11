@@ -1,18 +1,18 @@
 import {existsSync} from "node:fs";
 import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
-import {dirname, join} from "node:path/posix";
+import {dirname, extname, join} from "node:path/posix";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {rsort, satisfies} from "semver";
 import {isEnoent} from "./error.js";
 import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
-import {findImports, isImportMetaResolve} from "./javascript/imports.js";
+import {isImportMetaResolve, parseImports} from "./javascript/imports.js";
 import {parseProgram} from "./javascript/parse.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
 import {relativePath} from "./path.js";
 import {Sourcemap} from "./sourcemap.js";
-import {faint} from "./tty.js";
+import {faint, yellow} from "./tty.js";
 
 export interface NpmSpecifier {
   name: string;
@@ -35,7 +35,10 @@ export function formatNpmSpecifier({name, range, path}: NpmSpecifier): string {
   return `${name}${range ? `@${range}` : ""}${path ? `/${path}` : ""}`;
 }
 
-/** Rewrites /npm/ import specifiers to be relative paths to /_npm/. */
+/**
+ * Rewrites /npm/ import specifiers to be relative paths to /_npm/.
+ * TODO This isn’t specific to npm imports; it’ll resolve any static import?
+ */
 export function rewriteNpmImports(input: string, resolve: (specifier: string) => string = String): string {
   const body = parseProgram(input);
   const output = new Sourcemap(input);
@@ -75,29 +78,28 @@ const npmRequests = new Map<string, Promise<string>>();
 /** Note: path must start with "/_npm/". */
 export async function populateNpmCache(root: string, path: string): Promise<string> {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
-  const filePath = join(root, ".observablehq", "cache", path);
-  if (existsSync(filePath)) return filePath;
-  let promise = npmRequests.get(path);
+  const outputPath = join(root, ".observablehq", "cache", path);
+  if (existsSync(outputPath)) return outputPath;
+  let promise = npmRequests.get(outputPath);
   if (promise) return promise; // coalesce concurrent requests
-  promise = (async function () {
+  promise = (async () => {
     const specifier = extractNpmSpecifier(path);
     const href = `https://cdn.jsdelivr.net/npm/${specifier}`;
-    process.stdout.write(`npm:${specifier} ${faint("→")} `);
+    console.log(`npm:${specifier} ${faint("→")} ${outputPath}`);
     const response = await fetch(href);
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
-    process.stdout.write(`${filePath}\n`);
-    await mkdir(dirname(filePath), {recursive: true});
+    await mkdir(dirname(outputPath), {recursive: true});
     if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
       const source = await response.text();
       const resolver = await getDependencyResolver(root, path, source);
-      await writeFile(filePath, rewriteNpmImports(source, resolver), "utf-8");
+      await writeFile(outputPath, rewriteNpmImports(source, resolver), "utf-8");
     } else {
-      await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
+      await writeFile(outputPath, Buffer.from(await response.arrayBuffer()));
     }
-    return filePath;
+    return outputPath;
   })();
-  promise.catch(() => {}).then(() => npmRequests.delete(path));
-  npmRequests.set(path, promise);
+  promise.catch(console.error).then(() => npmRequests.delete(outputPath));
+  npmRequests.set(outputPath, promise);
   return promise;
 }
 
@@ -144,7 +146,7 @@ export async function getDependencyResolver(
     if (value.startsWith("/npm/")) {
       const {name: depName, range: depRange} = parseNpmSpecifier(value.slice("/npm/".length));
       if (depName === name) return; // ignore self-references, e.g. mermaid plugin
-      if (existsSync(join(root, ".observablehq", "cache", "_npm", `${depName}@${depRange}`))) return; // already resolved
+      if (depRange && existsSync(join(root, ".observablehq", "cache", "_npm", `${depName}@${depRange}`))) return; // already resolved
       dependencies.add(value);
     }
   }
@@ -163,9 +165,11 @@ export async function getDependencyResolver(
           ? "latest" // force Arquero, Mosaic & DuckDB-Wasm to use the (same) latest version of Arrow
           : name === "@uwdata/mosaic-core" && depName === "@duckdb/duckdb-wasm"
           ? "1.28.0" // force Mosaic to use the latest (stable) version of DuckDB-Wasm
-          : pkg.dependencies?.[depName] ?? pkg.devDependencies?.[depName] ?? pkg.peerDependencies?.[depName];
-      if (range === undefined) continue; // only resolve if we find a range
-      resolutions.set(dependency, await resolveNpmImport(root, `${depName}@${range}/${depPath}`));
+          : pkg.dependencies?.[depName] ??
+            pkg.devDependencies?.[depName] ??
+            pkg.peerDependencies?.[depName] ??
+            void console.warn(yellow(`${depName} is an undeclared dependency of ${name}; resolving latest version`));
+      resolutions.set(dependency, await resolveNpmImport(root, `${depName}${range ? `@${range}` : ""}/${depPath}`));
     }
   }
 
@@ -177,9 +181,7 @@ export async function getDependencyResolver(
   };
 }
 
-let npmVersionCache: Promise<Map<string, string[]>>;
-
-async function initializeNpmVersionCache(root: string): typeof npmVersionCache {
+async function initializeNpmVersionCache(root: string): Promise<Map<string, string[]>> {
   const cache = new Map<string, string[]>();
   const cacheDir = join(root, ".observablehq", "cache", "_npm");
   try {
@@ -207,30 +209,37 @@ async function initializeNpmVersionCache(root: string): typeof npmVersionCache {
   return cache;
 }
 
+const npmVersionCaches = new Map<string, Promise<Map<string, string[]>>>();
 const npmVersionRequests = new Map<string, Promise<string>>();
 
-async function resolveNpmVersion(root: string, specifier: NpmSpecifier): Promise<string> {
-  const {name, range} = specifier;
+function getNpmVersionCache(root: string): Promise<Map<string, string[]>> {
+  let cache = npmVersionCaches.get(root);
+  if (!cache) npmVersionCaches.set(root, (cache = initializeNpmVersionCache(root)));
+  return cache;
+}
+
+async function resolveNpmVersion(root: string, {name, range}: NpmSpecifier): Promise<string> {
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
-  const cache = await (npmVersionCache ??= initializeNpmVersionCache(root));
-  const versions = cache.get(specifier.name);
+  const cache = await getNpmVersionCache(root);
+  const versions = cache.get(name);
   if (versions) for (const version of versions) if (!range || satisfies(version, range)) return version;
   const href = `https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${range ? `?specifier=${range}` : ""}`;
   let promise = npmVersionRequests.get(href);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async function () {
-    process.stdout.write(`npm:${formatNpmSpecifier(specifier)} ${faint("→")} `);
+    const input = formatNpmSpecifier({name, range});
+    process.stdout.write(`npm:${input} ${faint("→")} `);
     const response = await fetch(href);
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
     const {version} = await response.json();
-    if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier({name, range})}`);
-    const spec = formatNpmSpecifier({name, range: version});
-    process.stdout.write(`npm:${spec}\n`);
-    cache.set(specifier.name, versions ? rsort(versions.concat(version)) : [version]);
-    mkdir(join(root, ".observablehq", "cache", "_npm", spec), {recursive: true}); // disk cache
+    if (!version) throw new Error(`unable to resolve version: ${input}`);
+    const output = formatNpmSpecifier({name, range: version});
+    process.stdout.write(`npm:${output}\n`);
+    cache.set(name, versions ? rsort(versions.concat(version)) : [version]);
+    mkdir(join(root, ".observablehq", "cache", "_npm", output), {recursive: true}); // disk cache
     return version;
   })();
-  promise.catch(() => {}).then(() => npmVersionRequests.delete(href));
+  promise.catch(console.error).then(() => npmVersionRequests.delete(href));
   npmVersionRequests.set(href, promise);
   return promise;
 }
@@ -240,19 +249,28 @@ export async function resolveNpmImport(root: string, specifier: string): Promise
     name,
     range = name === "@duckdb/duckdb-wasm"
       ? "1.28.0" // https://github.com/duckdb/duckdb-wasm/issues/1561
-      : name === "parquet-wasm"
-      ? "0.5.0" // https://github.com/observablehq/framework/issues/733
       : undefined,
     path = name === "mermaid"
       ? "dist/mermaid.esm.min.mjs/+esm"
       : name === "echarts"
-      ? "dist/echarts.esm.min.js"
+      ? "dist/echarts.esm.min.js/+esm"
+      : name === "jquery-ui"
+      ? "dist/jquery-ui.js/+esm"
+      : name === "deck.gl"
+      ? "dist.min.js/+esm"
       : "+esm"
   } = parseNpmSpecifier(specifier);
-  return `/_npm/${name}@${await resolveNpmVersion(root, {name, range})}/${path.replace(/\+esm$/, "_esm.js")}`;
+  const version = await resolveNpmVersion(root, {name, range});
+  return `/_npm/${name}@${version}/${
+    extname(path) || // npm:foo/bar.js or npm:foo/bar.css
+    path === "" || // npm:foo/
+    path.endsWith("/") // npm:foo/bar/
+      ? path
+      : path === "+esm" // npm:foo/+esm
+      ? "_esm.js"
+      : path.replace(/(?:\/\+esm)?$/, "._esm.js") // npm:foo/bar or npm:foo/bar/+esm
+  }`;
 }
-
-const npmImportsCache = new Map<string, Promise<ImportReference[]>>();
 
 /**
  * Resolves the direct dependencies of the specified npm path, such as
@@ -260,38 +278,40 @@ const npmImportsCache = new Map<string, Promise<ImportReference[]>>();
  */
 export async function resolveNpmImports(root: string, path: string): Promise<ImportReference[]> {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
-  let promise = npmImportsCache.get(path);
-  if (promise) return promise;
-  promise = (async function () {
-    try {
-      const filePath = await populateNpmCache(root, path);
-      if (!/\.(m|c)?js$/i.test(path)) return []; // not JavaScript; TODO traverse CSS, too
-      const source = await readFile(filePath, "utf-8");
-      const body = parseProgram(source);
-      return findImports(body, path, source);
-    } catch (error: any) {
-      console.warn(`unable to fetch or parse ${path}: ${error.message}`);
-      return [];
-    }
-  })();
-  npmImportsCache.set(path, promise);
-  return promise;
+  await populateNpmCache(root, path);
+  return parseImports(join(root, ".observablehq", "cache"), path);
 }
 
 /**
  * Given a local npm path such as "/_npm/d3@7.8.5/_esm.js", returns the
- * corresponding npm specifier such as "d3@7.8.5".
+ * corresponding npm specifier such as "d3@7.8.5/+esm". For example:
+ *
+ * /_npm/mime@4.0.1/_esm.js         → mime@4.0.1/+esm
+ * /_npm/mime@4.0.1/lite._esm.js    → mime@4.0.1/lite/+esm
+ * /_npm/mime@4.0.1/lite.js._esm.js → mime@4.0.1/lite.js/+esm
  */
 export function extractNpmSpecifier(path: string): string {
   if (!path.startsWith("/_npm/")) throw new Error(`invalid npm path: ${path}`);
-  return path.replace(/^\/_npm\//, "").replace(/\/_esm\.js$/, "/+esm");
+  const parts = path.split("/"); // ["", "_npm", "mime@4.0.1", "lite.js._esm.js"]
+  const i = parts[2].startsWith("@") ? 4 : 3; // test for scoped package
+  const namever = parts.slice(2, i).join("/"); // "mime@4.0.1" or "@observablehq/inputs@0.10.6"
+  const subpath = parts.slice(i).join("/"); // "_esm.js" or "lite._esm.js" or "lite.js._esm.js"
+  return `${namever}/${subpath === "_esm.js" ? "+esm" : subpath.replace(/\._esm\.js$/, "/+esm")}`;
 }
 
 /**
  * Given a jsDelivr path such as "/npm/d3@7.8.5/+esm", returns the corresponding
- * local path such as "/_npm/d3@7.8.5/_esm.js".
+ * local path such as "/_npm/d3@7.8.5/_esm.js". For example:
+ *
+ * /npm/mime@4.0.1/+esm         → /_npm/mime@4.0.1/_esm.js
+ * /npm/mime@4.0.1/lite/+esm    → /_npm/mime@4.0.1/lite._esm.js
+ * /npm/mime@4.0.1/lite.js/+esm → /_npm/mime@4.0.1/lite.js._esm.js
  */
 export function fromJsDelivrPath(path: string): string {
   if (!path.startsWith("/npm/")) throw new Error(`invalid jsDelivr path: ${path}`);
-  return path.replace(/^\/npm\//, "/_npm/").replace(/\/\+esm$/, "/_esm.js");
+  const parts = path.split("/"); // e.g. ["", "npm", "mime@4.0.1", "lite", "+esm"]
+  const i = parts[2].startsWith("@") ? 4 : 3; // test for scoped package
+  const namever = parts.slice(2, i).join("/"); // "mime@4.0.1" or "@observablehq/inputs@0.10.6"
+  const subpath = parts.slice(i).join("/"); // "+esm" or "lite/+esm" or "lite.js/+esm"
+  return `/_npm/${namever}/${subpath === "+esm" ? "_esm.js" : subpath.replace(/\/\+esm$/, "._esm.js")}`;
 }

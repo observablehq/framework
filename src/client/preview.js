@@ -1,10 +1,17 @@
 import {FileAttachment, registerFile} from "npm:@observablehq/stdlib";
 import {main, runtime, undefine} from "./main.js";
+import {findLoading, findRoots, registerRoot} from "./main.js";
 import {enableCopyButtons} from "./pre.js";
 
 export * from "./index.js";
 
+let minReopenDelay = 1000;
+let maxReopenDelay = 30000;
+let reopenDelay = minReopenDelay;
+let reopenDecay = 1.5; // exponential backoff factor
+
 export function open({hash, eval: compile} = {}) {
+  let opened = false;
   const socket = new WebSocket(
     Object.assign(new URL("/_observablehq", location.href), {
       protocol: location.protocol === "https:" ? "wss" : "ws"
@@ -13,6 +20,7 @@ export function open({hash, eval: compile} = {}) {
 
   socket.onopen = () => {
     console.info("socket open");
+    opened = true;
     send({type: "hello", path: location.pathname, hash});
   };
 
@@ -20,6 +28,10 @@ export function open({hash, eval: compile} = {}) {
     const message = JSON.parse(event.data);
     console.info("↓", message);
     switch (message.type) {
+      case "welcome": {
+        reopenDelay = minReopenDelay; // reset on successful connection
+        break;
+      }
       case "reload": {
         location.reload();
         break;
@@ -40,12 +52,30 @@ export function open({hash, eval: compile} = {}) {
             case "add": {
               for (const item of items) {
                 const pos = oldPos + offset;
-                if (pos < root.children.length) {
-                  root.children[pos].insertAdjacentHTML("beforebegin", item);
+                if (pos < root.childNodes.length) {
+                  const child = root.childNodes[pos];
+                  if (item.type === 1) {
+                    if (child.nodeType === 1) {
+                      child.insertAdjacentHTML("beforebegin", item.value);
+                    } else {
+                      root.insertAdjacentHTML("beforeend", item.value);
+                      root.insertBefore(root.lastChild, child);
+                    }
+                  } else if (item.type === 3) {
+                    root.insertBefore(document.createTextNode(item.value), child);
+                  } else if (item.type === 8) {
+                    root.insertBefore(document.createComment(item.value), child);
+                  }
                 } else {
-                  root.insertAdjacentHTML("beforeend", item);
+                  if (item.type === 1) {
+                    root.insertAdjacentHTML("beforeend", item.value);
+                  } else if (item.type === 3) {
+                    root.appendChild(document.createTextNode(item.value));
+                  } else if (item.type === 8) {
+                    root.appendChild(document.createComment(item.value));
+                  }
                 }
-                indexCells(addedCells, root.children[pos]);
+                indexCells(addedCells, root.childNodes[pos]);
                 ++offset;
               }
               break;
@@ -54,13 +84,13 @@ export function open({hash, eval: compile} = {}) {
               let removes = 0;
               for (let i = 0; i < items.length; ++i) {
                 const pos = oldPos + offset;
-                if (pos < root.children.length) {
-                  const child = root.children[pos];
+                if (pos < root.childNodes.length) {
+                  const child = root.childNodes[pos];
                   indexCells(removedCells, child);
                   child.remove();
                   ++removes;
                 } else {
-                  console.error(`remove out of range: ${pos} ≮ ${root.children.length}`);
+                  console.error(`remove out of range: ${pos} ≮ ${root.childNodes.length}`);
                 }
               }
               offset -= removes;
@@ -68,11 +98,20 @@ export function open({hash, eval: compile} = {}) {
             }
           }
         }
-        for (const [id, removed] of removedCells) {
-          addedCells.get(id)?.replaceWith(removed);
-        }
         for (const id of message.code.removed) {
           undefine(id);
+        }
+        for (const [id, removed] of removedCells) {
+          if (!addedCells.has(id)) {
+            registerRoot(id, null);
+          } else {
+            replaceRoot(addedCells.get(id), removed);
+          }
+        }
+        for (const [id, root] of addedCells) {
+          if (!removedCells.has(id)) {
+            registerRoot(id, root);
+          }
         }
         for (const body of message.code.added) {
           compile(body);
@@ -123,25 +162,28 @@ export function open({hash, eval: compile} = {}) {
     }
   };
 
-  socket.onerror = (error) => {
-    console.error(error);
-  };
-
   socket.onclose = () => {
-    console.info("socket close");
+    if (opened) console.info("socket close");
+    reopenDelay = Math.min(maxReopenDelay, reopenDelay * reopenDecay); // exponential backoff
+    setTimeout(() => open({hash, eval: compile}), reopenDelay);
   };
 
   function indexCells(map, node) {
-    if (node.id.startsWith("cell-")) {
-      map.set(node.id, node);
-    }
-    for (const cell of node.querySelectorAll("[id^=cell-]")) {
-      map.set(cell.id, cell);
+    for (const [id, root] of findRoots(node)) {
+      map.set(id, root);
     }
   }
 
   function send(message) {
     console.info("↑", message);
     socket.send(JSON.stringify(message));
+  }
+}
+
+export function replaceRoot(added, removed) {
+  findLoading(added)?.remove();
+  added.replaceWith(removed);
+  for (const n of removed._nodes) {
+    removed.parentNode.insertBefore(n, removed);
   }
 }

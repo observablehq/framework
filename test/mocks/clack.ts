@@ -5,6 +5,7 @@ import type {ClackEffects} from "../../src/clack.js";
 export class TestClackEffects implements ClackEffects {
   static cancelSymbol = Symbol("cancel");
   inputs: any[] = [];
+  spinners: TestClackSpinner[] = [];
   intro() {}
   outro() {}
   note() {}
@@ -31,11 +32,9 @@ export class TestClackEffects implements ClackEffects {
     return this.inputs.shift();
   }
   spinner() {
-    return {
-      start() {},
-      stop() {},
-      message() {}
-    };
+    const spinner = new TestClackSpinner();
+    this.spinners.push(spinner);
+    return spinner;
   }
   log = new TestClackLogs();
   isCancel(value: unknown): value is symbol {
@@ -82,5 +81,23 @@ class TestClackLogs implements ClackLogs {
         .map((d) => d.message)
         .join("\n          * ")}`
     );
+  }
+}
+
+type ClackSpinnerEvent =
+  | {method: "start"; message?: string}
+  | {method: "stop"; message?: string; code?: number}
+  | {method: "message"; message?: string};
+
+class TestClackSpinner {
+  _events: ClackSpinnerEvent[] = [];
+  start(message?: string | undefined) {
+    this._events.push({method: "start", message});
+  }
+  stop(message?: string | undefined, code?: number) {
+    this._events.push({method: "stop", message, code});
+  }
+  message(message?: string | undefined) {
+    this._events.push({method: "message", message});
   }
 }

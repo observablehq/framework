@@ -1,20 +1,18 @@
 import os from "node:os";
-import * as clack from "@clack/prompts";
 import type {ClackEffects} from "./clack.js";
 import {commandInstruction, commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import {CliError, isHttpError} from "./error.js";
 import type {GetCurrentUserResponse, PostAuthRequestPollResponse} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
-import type {ConfigEffects} from "./observableApiConfig.js";
+import type {ApiKey, ConfigEffects} from "./observableApiConfig.js";
 import {
-  type ApiKey,
   defaultEffects as defaultConfigEffects,
   getObservableApiKey,
   setObservableApiKey
 } from "./observableApiConfig.js";
 import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
-import {bold, defaultEffects as defaultTtyEffects, inverse, link, yellow} from "./tty.js";
+import {bold, defaultEffects as defaultTtyEffects, faint, inverse, link, yellow} from "./tty.js";
 
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
@@ -31,7 +29,6 @@ export interface AuthEffects extends ConfigEffects, TtyEffects {
 export const defaultEffects: AuthEffects = {
   ...defaultConfigEffects,
   ...defaultTtyEffects,
-  clack,
   getObservableApiKey,
   setObservableApiKey,
   exitSuccess: () => process.exit(0)
@@ -40,7 +37,7 @@ export const defaultEffects: AuthEffects = {
 export async function login(effects: AuthEffects = defaultEffects, overrides = {}) {
   const {clack} = effects;
   Telemetry.record({event: "login", step: "start"});
-  clack.intro(inverse(" observable login "));
+  clack.intro(`${inverse(" observable login ")} ${faint(`v${process.env.npm_package_version}`)}`);
 
   const {currentUser} = await loginInner(effects, overrides);
 
@@ -118,7 +115,9 @@ export async function loginInner(
 }
 
 export async function logout(effects = defaultEffects) {
+  const {logger} = effects;
   await effects.setObservableApiKey(null);
+  logger.log(`You are now logged out of ${OBSERVABLE_UI_ORIGIN.hostname}.`);
 }
 
 export async function whoami(effects = defaultEffects) {

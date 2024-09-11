@@ -1,5 +1,5 @@
 {
-  "data": null,
+  "data": {},
   "title": "Parent dir",
   "style": null,
   "code": [
@@ -120,9 +120,9 @@
         "imports": [],
         "expression": false,
         "async": false,
-        "inline": false,
         "input": "const fail3 = FileAttachment(\"./NOENT.md\").text()\n"
-      }
+      },
+      "mode": "block"
     },
     {
       "id": "d306f60f",
@@ -241,9 +241,9 @@
         "imports": [],
         "expression": false,
         "async": false,
-        "inline": false,
         "input": "const ok1 = FileAttachment(\"./tex-expression.md\").text()\n"
-      }
+      },
+      "mode": "block"
     }
   ]
 }

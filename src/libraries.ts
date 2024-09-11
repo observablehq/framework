@@ -2,8 +2,10 @@ export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
   const set = setof(methods);
   const implicits = new Set<string>();
   if (set.has("arrow")) implicits.add("npm:apache-arrow");
+  if (set.has("arquero")) implicits.add("npm:apache-arrow").add("npm:arquero");
+  if (set.has("arquero-parquet")) implicits.add("npm:apache-arrow").add("npm:arquero").add("npm:parquet-wasm");
   if (set.has("csv") || set.has("tsv")) implicits.add("npm:d3-dsv");
-  if (set.has("parquet")) implicits.add("npm:apache-arrow").add("npm:parquet-wasm/esm/arrow1.js");
+  if (set.has("parquet")) implicits.add("npm:apache-arrow").add("npm:parquet-wasm");
   if (set.has("sqlite")) implicits.add("npm:@observablehq/sqlite");
   if (set.has("xlsx")) implicits.add("npm:@observablehq/xlsx");
   if (set.has("zip")) implicits.add("npm:@observablehq/zip");
@@ -32,6 +34,18 @@ export function getImplicitInputImports(inputs: Iterable<string>): Set<string> {
   if (set.has("topojson")) implicits.add("npm:topojson-client");
   if (set.has("vl")) implicits.add("observablehq:stdlib/vega-lite");
   if (set.has("vg")) implicits.add("observablehq:stdlib/vgplot");
+  if (set.has("aapl")) implicits.add("npm:@observablehq/sample-datasets/aapl.csv");
+  if (set.has("alphabet")) implicits.add("npm:@observablehq/sample-datasets/alphabet.csv");
+  if (set.has("cars")) implicits.add("npm:@observablehq/sample-datasets/cars.csv");
+  if (set.has("citywages")) implicits.add("npm:@observablehq/sample-datasets/citywages.csv");
+  if (set.has("diamonds")) implicits.add("npm:@observablehq/sample-datasets/diamonds.csv");
+  if (set.has("flare")) implicits.add("npm:@observablehq/sample-datasets/flare.csv");
+  if (set.has("industries")) implicits.add("npm:@observablehq/sample-datasets/industries.csv");
+  if (set.has("miserables")) implicits.add("npm:@observablehq/sample-datasets/miserables.json");
+  if (set.has("olympians")) implicits.add("npm:@observablehq/sample-datasets/olympians.csv");
+  if (set.has("penguins")) implicits.add("npm:@observablehq/sample-datasets/penguins.csv");
+  if (set.has("pizza")) implicits.add("npm:@observablehq/sample-datasets/pizza.csv");
+  if (set.has("weather")) implicits.add("npm:@observablehq/sample-datasets/weather.csv");
   return implicits;
 }
 
@@ -140,11 +154,8 @@ export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
     implicits.add("npm:katex/dist/fonts/KaTeX_Typewriter-Regular.woff");
     implicits.add("npm:katex/dist/fonts/KaTeX_Typewriter-Regular.woff2");
   }
-  if (set.has("npm:parquet-wasm/esm/arrow1.js")) {
-    implicits.add("npm:parquet-wasm/esm/arrow1_bg.wasm");
-  }
-  if (set.has("npm:parquet-wasm/esm/arrow2.js")) {
-    implicits.add("npm:parquet-wasm/esm/arrow2_bg.wasm");
+  if (set.has("npm:parquet-wasm")) {
+    implicits.add("npm:parquet-wasm/esm/parquet_wasm_bg.wasm");
   }
   return implicits;
 }

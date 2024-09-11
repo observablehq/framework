@@ -1,5 +1,5 @@
 {
-  "data": null,
+  "data": {},
   "title": null,
   "style": null,
   "code": [
@@ -30,9 +30,9 @@
         "imports": [],
         "expression": true,
         "async": false,
-        "inline": true,
         "input": "`}'\"`"
-      }
+      },
+      "mode": "inline"
     }
   ]
 }

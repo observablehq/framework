@@ -1,0 +1,416 @@
+{
+  "data": {},
+  "title": null,
+  "style": null,
+  "code": [
+    {
+      "id": "e9f5e6dc",
+      "node": {
+        "body": {
+          "type": "Program",
+          "start": 0,
+          "end": 221,
+          "body": [
+            {
+              "type": "ImportDeclaration",
+              "start": 0,
+              "end": 50,
+              "specifiers": [
+                {
+                  "type": "ImportSpecifier",
+                  "start": 9,
+                  "end": 12,
+                  "imported": {
+                    "type": "Identifier",
+                    "start": 9,
+                    "end": 12,
+                    "name": "jsx"
+                  },
+                  "local": {
+                    "type": "Identifier",
+                    "start": 9,
+                    "end": 12,
+                    "name": "jsx"
+                  }
+                },
+                {
+                  "type": "ImportSpecifier",
+                  "start": 14,
+                  "end": 18,
+                  "imported": {
+                    "type": "Identifier",
+                    "start": 14,
+                    "end": 18,
+                    "name": "jsxs"
+                  },
+                  "local": {
+                    "type": "Identifier",
+                    "start": 14,
+                    "end": 18,
+                    "name": "jsxs"
+                  }
+                }
+              ],
+              "source": {
+                "type": "Literal",
+                "start": 26,
+                "end": 49,
+                "value": "npm:react/jsx-runtime",
+                "raw": "\"npm:react/jsx-runtime\""
+              }
+            },
+            {
+              "type": "FunctionDeclaration",
+              "start": 51,
+              "end": 220,
+              "id": {
+                "type": "Identifier",
+                "start": 60,
+                "end": 68,
+                "name": "Greeting"
+              },
+              "expression": false,
+              "generator": false,
+              "async": false,
+              "params": [
+                {
+                  "type": "ObjectPattern",
+                  "start": 69,
+                  "end": 80,
+                  "properties": [
+                    {
+                      "type": "Property",
+                      "start": 71,
+                      "end": 78,
+                      "method": false,
+                      "shorthand": true,
+                      "computed": false,
+                      "key": {
+                        "type": "Identifier",
+                        "start": 71,
+                        "end": 78,
+                        "name": "subject"
+                      },
+                      "kind": "init",
+                      "value": {
+                        "type": "Identifier",
+                        "start": 71,
+                        "end": 78,
+                        "name": "subject"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "body": {
+                "type": "BlockStatement",
+                "start": 82,
+                "end": 220,
+                "body": [
+                  {
+                    "type": "ReturnStatement",
+                    "start": 86,
+                    "end": 218,
+                    "argument": {
+                      "type": "CallExpression",
+                      "start": 109,
+                      "end": 217,
+                      "callee": {
+                        "type": "Identifier",
+                        "start": 109,
+                        "end": 113,
+                        "name": "jsxs"
+                      },
+                      "arguments": [
+                        {
+                          "type": "Literal",
+                          "start": 114,
+                          "end": 119,
+                          "value": "div",
+                          "raw": "\"div\""
+                        },
+                        {
+                          "type": "ObjectExpression",
+                          "start": 121,
+                          "end": 216,
+                          "properties": [
+                            {
+                              "type": "Property",
+                              "start": 123,
+                              "end": 214,
+                              "method": false,
+                              "shorthand": false,
+                              "computed": false,
+                              "key": {
+                                "type": "Identifier",
+                                "start": 123,
+                                "end": 131,
+                                "name": "children"
+                              },
+                              "value": {
+                                "type": "ArrayExpression",
+                                "start": 133,
+                                "end": 214,
+                                "elements": [
+                                  {
+                                    "type": "Literal",
+                                    "start": 139,
+                                    "end": 148,
+                                    "value": "Hello, ",
+                                    "raw": "\"Hello, \""
+                                  },
+                                  {
+                                    "type": "CallExpression",
+                                    "start": 170,
+                                    "end": 201,
+                                    "callee": {
+                                      "type": "Identifier",
+                                      "start": 170,
+                                      "end": 173,
+                                      "name": "jsx"
+                                    },
+                                    "arguments": [
+                                      {
+                                        "type": "Literal",
+                                        "start": 174,
+                                        "end": 177,
+                                        "value": "b",
+                                        "raw": "\"b\""
+                                      },
+                                      {
+                                        "type": "ObjectExpression",
+                                        "start": 179,
+                                        "end": 200,
+                                        "properties": [
+                                          {
+                                            "type": "Property",
+                                            "start": 181,
+                                            "end": 198,
+                                            "method": false,
+                                            "shorthand": false,
+                                            "computed": false,
+                                            "key": {
+                                              "type": "Identifier",
+                                              "start": 181,
+                                              "end": 189,
+                                              "name": "children"
+                                            },
+                                            "value": {
+                                              "type": "Identifier",
+                                              "start": 191,
+                                              "end": 198,
+                                              "name": "subject"
+                                            },
+                                            "kind": "init"
+                                          }
+                                        ]
+                                      }
+                                    ],
+                                    "optional": false
+                                  },
+                                  {
+                                    "type": "Literal",
+                                    "start": 207,
+                                    "end": 210,
+                                    "value": "!",
+                                    "raw": "\"!\""
+                                  }
+                                ]
+                              },
+                              "kind": "init"
+                            }
+                          ]
+                        }
+                      ],
+                      "optional": false
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "sourceType": "module"
+        },
+        "declarations": [
+          {
+            "type": "Identifier",
+            "start": 9,
+            "end": 12,
+            "name": "jsx"
+          },
+          {
+            "type": "Identifier",
+            "start": 14,
+            "end": 18,
+            "name": "jsxs"
+          },
+          {
+            "type": "Identifier",
+            "start": 60,
+            "end": 68,
+            "name": "Greeting"
+          }
+        ],
+        "references": [],
+        "files": [],
+        "imports": [
+          {
+            "name": "npm:react/jsx-runtime",
+            "type": "global",
+            "method": "static"
+          }
+        ],
+        "expression": false,
+        "async": false,
+        "input": "import { jsx, jsxs } from \"npm:react/jsx-runtime\";\nfunction Greeting({ subject }) {\n  return /* @__PURE__ */ jsxs(\"div\", { children: [\n    \"Hello, \",\n    /* @__PURE__ */ jsx(\"b\", { children: subject }),\n    \"!\"\n  ] });\n}\n"
+      },
+      "mode": "jsx"
+    },
+    {
+      "id": "2fb46873",
+      "node": {
+        "body": {
+          "type": "Program",
+          "start": 0,
+          "end": 105,
+          "body": [
+            {
+              "type": "ImportDeclaration",
+              "start": 0,
+              "end": 44,
+              "specifiers": [
+                {
+                  "type": "ImportSpecifier",
+                  "start": 9,
+                  "end": 12,
+                  "imported": {
+                    "type": "Identifier",
+                    "start": 9,
+                    "end": 12,
+                    "name": "jsx"
+                  },
+                  "local": {
+                    "type": "Identifier",
+                    "start": 9,
+                    "end": 12,
+                    "name": "jsx"
+                  }
+                }
+              ],
+              "source": {
+                "type": "Literal",
+                "start": 20,
+                "end": 43,
+                "value": "npm:react/jsx-runtime",
+                "raw": "\"npm:react/jsx-runtime\""
+              }
+            },
+            {
+              "type": "ExpressionStatement",
+              "start": 45,
+              "end": 104,
+              "expression": {
+                "type": "CallExpression",
+                "start": 45,
+                "end": 103,
+                "callee": {
+                  "type": "Identifier",
+                  "start": 45,
+                  "end": 52,
+                  "name": "display"
+                },
+                "arguments": [
+                  {
+                    "type": "CallExpression",
+                    "start": 69,
+                    "end": 102,
+                    "callee": {
+                      "type": "Identifier",
+                      "start": 69,
+                      "end": 72,
+                      "name": "jsx"
+                    },
+                    "arguments": [
+                      {
+                        "type": "Identifier",
+                        "start": 73,
+                        "end": 81,
+                        "name": "Greeting"
+                      },
+                      {
+                        "type": "ObjectExpression",
+                        "start": 83,
+                        "end": 101,
+                        "properties": [
+                          {
+                            "type": "Property",
+                            "start": 85,
+                            "end": 99,
+                            "method": false,
+                            "shorthand": false,
+                            "computed": false,
+                            "key": {
+                              "type": "Identifier",
+                              "start": 85,
+                              "end": 92,
+                              "name": "subject"
+                            },
+                            "value": {
+                              "type": "Literal",
+                              "start": 94,
+                              "end": 99,
+                              "value": "JSX",
+                              "raw": "\"JSX\""
+                            },
+                            "kind": "init"
+                          }
+                        ]
+                      }
+                    ],
+                    "optional": false
+                  }
+                ],
+                "optional": false
+              }
+            }
+          ],
+          "sourceType": "module"
+        },
+        "declarations": [
+          {
+            "type": "Identifier",
+            "start": 9,
+            "end": 12,
+            "name": "jsx"
+          }
+        ],
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 45,
+            "end": 52,
+            "name": "display"
+          },
+          {
+            "type": "Identifier",
+            "start": 73,
+            "end": 81,
+            "name": "Greeting"
+          }
+        ],
+        "files": [],
+        "imports": [
+          {
+            "name": "npm:react/jsx-runtime",
+            "type": "global",
+            "method": "static"
+          }
+        ],
+        "expression": false,
+        "async": false,
+        "input": "import { jsx } from \"npm:react/jsx-runtime\";\ndisplay(/* @__PURE__ */ jsx(Greeting, { subject: \"JSX\" }));\n"
+      },
+      "mode": "jsx"
+    }
+  ]
+}

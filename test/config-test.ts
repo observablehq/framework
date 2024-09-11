@@ -1,25 +1,37 @@
 import assert from "node:assert";
+import {resolve} from "node:path";
 import MarkdownIt from "markdown-it";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
-import {LoaderResolver} from "../src/dataloader.js";
+import {LoaderResolver} from "../src/loader.js";
 
 describe("readConfig(undefined, root)", () => {
-  before(() => setCurrentDate(new Date("2024-01-11T01:02:03")));
+  before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   it("imports the config file at the specified root", async () => {
-    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/config");
+    const {md, loaders, paths, normalizePath, ...config} = await readConfig(undefined, "test/input/build/config");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
+    assert.strictEqual(typeof normalizePath, "function");
     assert.deepStrictEqual(config, {
       root: "test/input/build/config",
       output: "dist",
       base: "/",
       style: {theme: ["air", "near-midnight"]},
+      globalStylesheets: [
+        "https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap"
+      ],
       sidebar: true,
       pages: [
-        {path: "/index", name: "Index"},
-        {path: "/one", name: "One<Two"},
-        {name: "Two", path: "/sub/two"},
-        {name: "Closed subsection", open: false, pages: [{name: "Closed page", path: "/closed/page"}]}
+        {path: "/index", name: "Index", pager: "main"},
+        {path: "/one", name: "One<Two", pager: "main"},
+        {name: "Two", path: "/sub/two", pager: "main"},
+        {
+          name: "Closed subsection",
+          collapsible: true,
+          open: false,
+          path: null,
+          pager: "main",
+          pages: [{name: "Closed page", path: "/closed/page", pager: "main"}]
+        }
       ],
       title: undefined,
       toc: {label: "On this page", show: true},
@@ -28,25 +40,26 @@ describe("readConfig(undefined, root)", () => {
       head: "",
       header: "",
       footer:
-        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
-      deploy: {
-        workspace: "acme",
-        project: "bi"
-      },
-      search: false
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
+      search: null,
+      watchPath: resolve("test/input/build/config/observablehq.config.js")
     });
   });
   it("returns the default config if no config file is found", async () => {
-    const {md, loaders, ...config} = await readConfig(undefined, "test/input/build/simple");
+    const {md, loaders, paths, normalizePath, ...config} = await readConfig(undefined, "test/input/build/simple");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
+    assert.strictEqual(typeof normalizePath, "function");
     assert.deepStrictEqual(config, {
       root: "test/input/build/simple",
       output: "dist",
       base: "/",
       style: {theme: ["air", "near-midnight"]},
+      globalStylesheets: [
+        "https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap"
+      ],
       sidebar: true,
-      pages: [{name: "Build test case", path: "/simple"}],
+      pages: [{name: "Build test case", path: "/simple", pager: "main"}],
       title: undefined,
       toc: {label: "Contents", show: true},
       pager: true,
@@ -54,104 +67,224 @@ describe("readConfig(undefined, root)", () => {
       head: "",
       header: "",
       footer:
-        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-11T01:02:03">Jan 11, 2024</a>.',
-      deploy: null,
-      search: false
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
+      search: null,
+      watchPath: undefined
     });
   });
 });
 
 describe("normalizeConfig(spec, root)", () => {
   const root = "test/input/build/config";
-  it("coerces the title to a string", async () => {
-    assert.strictEqual((await config({title: 42, pages: []}, root)).title, "42");
-    assert.strictEqual((await config({title: null, pages: []}, root)).title, "null");
+  it("coerces the title to a string", () => {
+    assert.strictEqual(config({title: 42, pages: []}, root).title, "42");
+    assert.strictEqual(config({title: null, pages: []}, root).title, "null");
   });
-  it("considers the title optional", async () => {
-    assert.strictEqual((await config({pages: []}, root)).title, undefined);
-    assert.strictEqual((await config({title: undefined, pages: []}, root)).title, undefined);
+  it("considers the title optional", () => {
+    assert.strictEqual(config({pages: []}, root).title, undefined);
+    assert.strictEqual(config({title: undefined, pages: []}, root).title, undefined);
   });
-  it("populates default pages", async () => {
-    assert.deepStrictEqual((await config({}, root)).pages, [
-      {name: "One", path: "/one"},
-      {name: "H1: Section", path: "/toc-override"},
-      {name: "H1: Section", path: "/toc"},
-      {name: "A page…", path: "/closed/page"},
-      {name: "Two", path: "/sub/two"}
+  it("populates default pages", () => {
+    assert.deepStrictEqual(config({}, root).pages, [
+      {name: "One", path: "/one", pager: "main"},
+      {name: "H1: Section", path: "/toc-override", pager: "main"},
+      {name: "H1: Section", path: "/toc", pager: "main"},
+      {name: "A page…", path: "/closed/page", pager: "main"},
+      {name: "Two", path: "/sub/two", pager: "main"}
     ]);
   });
-  it("coerces pages to an array", async () => {
-    assert.deepStrictEqual((await config({pages: new Set()}, root)).pages, []);
+  it("coerces pages to an array", () => {
+    assert.deepStrictEqual(config({pages: new Set()}, root).pages, []);
   });
-  it("coerces pages", async () => {
+  it("coerces and normalizes page paths", () => {
     const inpages = [
       {name: 42, path: true},
-      {name: null, path: {toString: () => "yes"}}
+      {name: null, path: {toString: () => "yes"}},
+      {name: "Index", path: "/foo/index"},
+      {name: "Index.html", path: "/foo/index.html"},
+      {name: "Page.html", path: "/foo.html"}
     ];
     const outpages = [
-      {name: "42", path: "true"},
-      {name: "null", path: "yes"}
+      {name: "42", path: "/true", pager: "main"},
+      {name: "null", path: "/yes", pager: "main"},
+      {name: "Index", path: "/foo/index", pager: "main"},
+      {name: "Index.html", path: "/foo/index", pager: "main"},
+      {name: "Page.html", path: "/foo", pager: "main"}
     ];
-    assert.deepStrictEqual((await config({pages: inpages}, root)).pages, outpages);
+    assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
   });
-  it("coerces sections", async () => {
+  it("allows external page paths", () => {
+    const pages = [{name: "Example.com", path: "https://example.com", pager: null}];
+    assert.deepStrictEqual(config({pages}, root).pages, pages);
+  });
+  it("allows page paths to have query strings and anchor fragments", () => {
+    const inpages = [
+      {name: "Anchor fragment on index", path: "/test/index#foo=bar"},
+      {name: "Anchor fragment on index.html", path: "/test/index.html#foo=bar"},
+      {name: "Anchor fragment on page.html", path: "/test.html#foo=bar"},
+      {name: "Anchor fragment on slash", path: "/test/#foo=bar"},
+      {name: "Anchor fragment", path: "/test#foo=bar"},
+      {name: "Query string on index", path: "/test/index?foo=bar"},
+      {name: "Query string on index.html", path: "/test/index.html?foo=bar"},
+      {name: "Query string on page.html", path: "/test.html?foo=bar"},
+      {name: "Query string on slash", path: "/test/?foo=bar"},
+      {name: "Query string", path: "/test?foo=bar"}
+    ];
+    const outpages = [
+      {name: "Anchor fragment on index", path: "/test/index#foo=bar", pager: "main"},
+      {name: "Anchor fragment on index.html", path: "/test/index#foo=bar", pager: "main"},
+      {name: "Anchor fragment on page.html", path: "/test#foo=bar", pager: "main"},
+      {name: "Anchor fragment on slash", path: "/test/index#foo=bar", pager: "main"},
+      {name: "Anchor fragment", path: "/test#foo=bar", pager: "main"},
+      {name: "Query string on index", path: "/test/index?foo=bar", pager: "main"},
+      {name: "Query string on index.html", path: "/test/index?foo=bar", pager: "main"},
+      {name: "Query string on page.html", path: "/test?foo=bar", pager: "main"},
+      {name: "Query string on slash", path: "/test/index?foo=bar", pager: "main"},
+      {name: "Query string", path: "/test?foo=bar", pager: "main"}
+    ];
+    assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
+  });
+  it("coerces sections", () => {
     const inpages = [{name: 42, pages: new Set([{name: null, path: {toString: () => "yes"}}])}];
-    const outpages = [{name: "42", open: true, pages: [{name: "null", path: "yes"}]}];
-    assert.deepStrictEqual((await config({pages: inpages}, root)).pages, outpages);
+    const outpages = [
+      {
+        name: "42",
+        collapsible: false,
+        open: true,
+        path: null,
+        pager: "main",
+        pages: [{name: "null", path: "/yes", pager: "main"}]
+      }
+    ];
+    assert.deepStrictEqual(config({pages: inpages}, root).pages, outpages);
   });
-  it("coerces toc", async () => {
-    assert.deepStrictEqual((await config({pages: [], toc: {}}, root)).toc, {label: "Contents", show: true});
-    assert.deepStrictEqual((await config({pages: [], toc: {label: null}}, root)).toc, {label: "null", show: true});
+  it("coerces toc", () => {
+    assert.deepStrictEqual(config({pages: [], toc: {}}, root).toc, {label: "Contents", show: true});
+    assert.deepStrictEqual(config({pages: [], toc: {label: null}}, root).toc, {label: "null", show: true});
   });
-  it("populates default toc", async () => {
-    assert.deepStrictEqual((await config({pages: []}, root)).toc, {label: "Contents", show: true});
+  it("populates default toc", () => {
+    assert.deepStrictEqual(config({pages: []}, root).toc, {label: "Contents", show: true});
   });
-  it("promotes boolean toc to toc.show", async () => {
-    assert.deepStrictEqual((await config({pages: [], toc: true}, root)).toc, {label: "Contents", show: true});
-    assert.deepStrictEqual((await config({pages: [], toc: false}, root)).toc, {label: "Contents", show: false});
+  it("promotes boolean toc to toc.show", () => {
+    assert.deepStrictEqual(config({pages: [], toc: true}, root).toc, {label: "Contents", show: true});
+    assert.deepStrictEqual(config({pages: [], toc: false}, root).toc, {label: "Contents", show: false});
   });
-  it("coerces pager", async () => {
-    assert.strictEqual((await config({pages: [], pager: 0}, root)).pager, false);
-    assert.strictEqual((await config({pages: [], pager: 1}, root)).pager, true);
-    assert.strictEqual((await config({pages: [], pager: ""}, root)).pager, false);
-    assert.strictEqual((await config({pages: [], pager: "0"}, root)).pager, true);
+  it("coerces pager", () => {
+    assert.strictEqual(config({pages: [], pager: 0}, root).pager, false);
+    assert.strictEqual(config({pages: [], pager: 1}, root).pager, true);
+    assert.strictEqual(config({pages: [], pager: ""}, root).pager, false);
+    assert.strictEqual(config({pages: [], pager: "0"}, root).pager, true);
   });
-  it("populates default pager", async () => {
-    assert.strictEqual((await config({pages: []}, root)).pager, true);
+  it("populates default pager", () => {
+    assert.strictEqual(config({pages: []}, root).pager, true);
   });
-  describe("deploy", () => {
-    it("considers deploy optional", async () => {
-      assert.strictEqual((await config({pages: []}, root)).deploy, null);
-    });
-    it("coerces workspace", async () => {
-      assert.strictEqual(
-        (await config({pages: [], deploy: {workspace: 538, project: "bi"}}, root)).deploy?.workspace,
-        "538"
-      );
-    });
-    it("strips leading @ from workspace", async () => {
-      assert.strictEqual((await config({pages: [], deploy: {workspace: "@acme"}}, root)).deploy?.workspace, "acme");
-    });
-    it("coerces project", async () => {
-      assert.strictEqual(
-        (await config({pages: [], deploy: {workspace: "adams", project: 42}}, root)).deploy?.project,
-        "42"
-      );
-    });
+});
+
+describe("normalizePath(path) with {cleanUrls: false}", () => {
+  const root = "test/input";
+  const normalize = config({cleanUrls: false}, root).normalizePath;
+  it("appends .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo.html");
+  });
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.html"), "foo.html");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
+  });
+  it("preserves absolute paths", () => {
+    assert.strictEqual(normalize("/foo"), "/foo.html");
+    assert.strictEqual(normalize("/foo.html"), "/foo.html");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "../sub/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("foo"), "foo.html");
+    assert.strictEqual(normalize("./foo"), "./foo.html");
+    assert.strictEqual(normalize("../foo"), "../foo.html");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
+  });
+});
+
+describe("normalizePath(path) with {cleanUrls: true}", () => {
+  const root = "test/input";
+  const normalize = config({cleanUrls: true}, root).normalizePath;
+  it("does not append .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo");
+  });
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
+  });
+  it("removes .html from extensioned links", () => {
+    assert.strictEqual(normalize("foo.html"), "foo");
+  });
+  it("preserves absolute paths", () => {
+    assert.strictEqual(normalize("/foo"), "/foo");
+    assert.strictEqual(normalize("/foo.html"), "/foo");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "../sub/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("foo"), "foo");
+    assert.strictEqual(normalize("./foo"), "./foo");
+    assert.strictEqual(normalize("../foo"), "../foo");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
   });
 });
 
 describe("mergeToc(spec, toc)", () => {
   const root = "test/input/build/config";
   it("merges page- and project-level toc config", async () => {
-    const toc = (await config({pages: [], toc: true}, root)).toc;
+    const toc = config({pages: [], toc: true}, root).toc;
     assert.deepStrictEqual(mergeToc({show: false}, toc), {label: "Contents", show: false});
     assert.deepStrictEqual(mergeToc({label: "On this page"}, toc), {label: "On this page", show: true});
-    assert.deepStrictEqual(mergeToc(false, toc), {label: "Contents", show: false});
-    assert.deepStrictEqual(mergeToc(true, toc), {label: "Contents", show: true});
-    assert.deepStrictEqual(mergeToc(undefined, toc), {label: "Contents", show: true});
-    assert.deepStrictEqual(mergeToc(null, toc), {label: "Contents", show: true});
-    assert.deepStrictEqual(mergeToc(0, toc), {label: "Contents", show: false});
-    assert.deepStrictEqual(mergeToc(1, toc), {label: "Contents", show: true});
+    assert.deepStrictEqual(mergeToc({label: undefined}, toc), {label: "Contents", show: true});
+    assert.deepStrictEqual(mergeToc({show: true}, toc), {label: "Contents", show: true});
+    assert.deepStrictEqual(mergeToc({show: undefined}, toc), {label: "Contents", show: true});
+    assert.deepStrictEqual(mergeToc({}, toc), {label: "Contents", show: true});
   });
 });

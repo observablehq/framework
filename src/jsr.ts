@@ -48,6 +48,11 @@ async function getJsrPackage(root: string, specifier: string): Promise<Record<st
 
 export async function resolveJsrImport(root: string, specifier: string): Promise<string> {
   const version = await getJsrPackage(root, specifier);
-  const {name, path = version.exports["."]} = parseNpmSpecifier(specifier);
+  const {name, path = getDefaultEntry(version)} = parseNpmSpecifier(specifier);
   return join("/", "_jsr", `${name}@${version.version}`, path);
+}
+
+function getDefaultEntry(version: Record<string, any>): string {
+  const entry = version.exports["."];
+  return typeof entry === "string" ? entry : entry.default;
 }

@@ -6,13 +6,13 @@ index: true
 
 Framework provides built-in full-text page search using [MiniSearch](https://lucaong.github.io/minisearch/). Search results are queried on the client, with fuzzy and prefix matching, using a static index computed during build.
 
-<div class="tip">Search is not enabled by default. It is intended for larger projects with lots of static text, such as reports and documentation. Search will not index dynamic content such as data or charts. To enable search, set the <a href="./config#search"><b>search</b> option</a> to true in your config.</div>
+<div class="tip">Search is not enabled by default. It is intended for larger apps with lots of static text, such as reports and documentation. Search will not index dynamic content such as data or charts. To enable search, set the <a href="./config#search"><b>search</b> option</a> to true in your config.</div>
 
 Search works in two stages: when Framework builds the site, it creates an index of the contents. On the client, as soon as the user focuses the search input and starts typing, the index is retrieved and the matching pages are displayed in the sidebar. The user can then click on a result, or use the up ↑ and down ↓ arrow keys to navigate, then type return to open the page.
 
-Pages are indexed each time you build or deploy your project. When working in preview, they are reindexed every 10 minutes.
+Pages are indexed each time you build or deploy your app. When working in preview, they are reindexed every 10 minutes.
 
-By default, all the pages found in the project root (`docs` by default) or defined in the [**pages** config option](./config#pages) are indexed; you can however opt-out a page from the index by specifying an index: false property in its front matter:
+By default, all the pages found in the source root (typically `src`) or defined in the [**pages** config option](./config#pages) are indexed; you can however opt-out a page from the index by specifying an index: false property in its front matter:
 
 ```yaml
 ---

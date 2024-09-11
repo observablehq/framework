@@ -14,7 +14,7 @@ For convenience, we provide a [`DatabaseClient`](https://observablehq.com/@obser
 import {DuckDBClient} from "npm:@observablehq/duckdb";
 ```
 
-To get a DuckDB client, pass zero or more named tables to `DuckDBClient.of`. Each table can be expressed as a [`FileAttachment`](../javascript/files), [Arquero table](./arquero), [Arrow table](./arrow), an array of objects, or a promise to the same. For file attachments, the following formats are supported: [CSV](./lib/csv), [TSV](./lib/csv), [JSON](./javascript/files#json), [Apache Arrow](./lib/arrow), and [Apache Parquet](./lib/arrow#apache-parquet). For example, below we load a sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) as a Parquet file:
+To get a DuckDB client, pass zero or more named tables to `DuckDBClient.of`. Each table can be expressed as a [`FileAttachment`](../files), [Arquero table](./arquero), [Arrow table](./arrow), an array of objects, or a promise to the same. For file attachments, the following formats are supported: [CSV](./csv), [TSV](./csv), [JSON](./files#json), [Apache Arrow](./arrow), and [Apache Parquet](./arrow#apache-parquet). For example, below we load a sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) as a Parquet file:
 
 ```js echo
 const db = DuckDBClient.of({gaia: FileAttachment("gaia-sample.parquet")});
@@ -55,7 +55,7 @@ Plot.plot({
 })
 ```
 
-You can also [attach](https://duckdb.org/docs/sql/statements/attach) a complete database saved as DuckDB file, typically using the `.db` file extension (or `.ddb` or `.duckdb`). In this case, the associated name (below `base`) is a _schema_ name rather than a _table_ name.
+You can also [attach](https://duckdb.org/docs/sql/statements/attach) a complete database saved as DuckDB file, <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> typically using the `.db` file extension (or `.ddb` or `.duckdb`). In this case, the associated name (below `base`) is a _schema_ name rather than a _table_ name.
 
 ```js echo
 const db2 = await DuckDBClient.of({base: FileAttachment("quakes.db")});
@@ -92,7 +92,7 @@ db.queryRow("SELECT count() AS count FROM gaia")
 
 See the [DatabaseClient Specification](https://observablehq.com/@observablehq/database-client-specification) for more details on these methods.
 
-Finally, the `DuckDBClient.sql` method takes the same arguments as `DuckDBClient.of` and returns the corresponding `db.sql` tagged template literal. The returned function can be used to redefine the built-in [`sql` tagged template literal](../sql#sql-literals) and thereby change the database used by [SQL code blocks](../sql), allowing you to query dynamically-registered tables (unlike the **sql** front matter option).
+Finally, the `DuckDBClient.sql` method <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> takes the same arguments as `DuckDBClient.of` and returns the corresponding `db.sql` tagged template literal. The returned function can be used to redefine the built-in [`sql` tagged template literal](../sql#sql-literals) and thereby change the database used by [SQL code blocks](../sql), allowing you to query dynamically-registered tables (unlike the **sql** front matter option).
 
 ```js
 const feed = view(Inputs.select(new Map([["M4.5+", "4.5"], ["M2.5+", "2.5"], ["All", "all"]]), {label: "Earthquake feed"}));

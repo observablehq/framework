@@ -1,6 +1,6 @@
 # Radio input
 
-<a href="https://github.com/observablehq/inputs/blob/main/README.md#radio" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/checkbox.js" target="_blank">Source</a> · The radio input allows the user to choose one of a given set of values. (See the [checkbox](./checkbox) input for multiple-choice.) A radio is recommended over a [select](./select) input when the number of values to choose from is small — say, seven or fewer — because all choices will be visible up-front, improving usability.
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#radio">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/checkbox.js">Source</a> · The radio input allows the user to choose one of a given set of values. (See the [checkbox](./checkbox) input for multiple-choice.) A radio is recommended over a [select](./select) input when the number of values to choose from is small — say, seven or fewer — because all choices will be visible up-front, improving usability.
 
 ```js echo
 const color = view(Inputs.radio(["red", "green", "blue"], {label: "color"}));

@@ -1,3 +1,7 @@
+---
+keywords: geojson
+---
+
 # TopoJSON
 
 [TopoJSON](https://github.com/topojson/topojson) is an extension of [GeoJSON](https://geojson.org/), a format for encoding geometry and geographic data structures, that further encodes topology. The [TopoJSON client](https://github.com/topojson/topojson-client) library allows you to transform compact TopoJSON files to GeoJSON and display a map with — for instance — [Leaflet](./leaflet), [D3](./d3), or [Observable Plot](./plot). The TopoJSON client library is available in Markdown as `topojson`, but you can also import it like so:

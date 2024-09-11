@@ -145,4 +145,9 @@ describe("rewriteHtml(html, resolve)", () => {
     const expected = '<video width="320" height="240" controls=""><source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube"><source src="observable.mov?sha=e9864d5e85a350487f7283e3b82deb9253ea67bb93f3155a0c45f4988ad1c674" type="video/mov"></video>'; // prettier-ignore
     assert.strictEqual(rewriteHtml(html, resolvers), expected);
   });
+  it("removes <observablehq-loading> from SVG contexts", () => {
+    const html = "<svg width=640 height=120><text x=20 y=20><observablehq-loading></observablehq-loading><!--:5aa762ae:--></text></svg>"; // prettier-ignore
+    const expected = '<svg width="640" height="120"><text x="20" y="20"><!--:5aa762ae:--></text></svg>'; // prettier-ignore
+    assert.strictEqual(rewriteHtml(html, resolvers), expected);
+  });
 });

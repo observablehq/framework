@@ -1,6 +1,6 @@
 # Color input
 
-<a href="https://github.com/observablehq/inputs/blob/main/README.md#inputscoloroptions" target="_blank">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/color.js" target="_blank">Source</a> · The color input specifies an RGB color as a hexadecimal string `#rrggbb`. The initial value defaults to black (`#000000`) and can be specified with the *value* option.
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#inputscoloroptions">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/color.js">Source</a> · The color input specifies an RGB color as a hexadecimal string `#rrggbb`. The initial value defaults to black (`#000000`) and can be specified with the *value* option.
 
 ```js echo
 const color = view(Inputs.color({label: "Favorite color", value: "#4682b4"}));

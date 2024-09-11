@@ -1,6 +1,5 @@
 import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
-import type {LoaderResolver} from "./dataloader.js";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
@@ -8,9 +7,11 @@ import {resolveJsrImport} from "./jsr.js";
 import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
+import type {LoaderResolver} from "./loader.js";
 import type {MarkdownPage} from "./markdown.js";
+import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
-import {isAssetPath, isPathImport, relativePath, resolveLocalPath, resolvePath} from "./path.js";
+import {isAssetPath, isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 export interface Resolvers {
   path: string;
@@ -25,6 +26,15 @@ export interface Resolvers {
   resolveImport(specifier: string): string;
   resolveStylesheet(specifier: string): string;
   resolveScript(specifier: string): string;
+  resolveLink(href: string): string;
+}
+
+export interface ResolversConfig {
+  root: string;
+  path: string;
+  normalizePath: (path: string) => string;
+  globalStylesheets?: string[];
+  loaders: LoaderResolver;
 }
 
 const defaultImports = [
@@ -34,6 +44,8 @@ const defaultImports = [
 ];
 
 export const builtins = new Map<string, string>([
+  ["@observablehq/runtime", "/_observablehq/runtime.js"],
+  ["@observablehq/stdlib", "/_observablehq/stdlib.js"],
   ["npm:@observablehq/runtime", "/_observablehq/runtime.js"],
   ["npm:@observablehq/stdlib", "/_observablehq/stdlib.js"],
   ["npm:@observablehq/dot", "/_observablehq/stdlib/dot.js"], // TODO publish to npm
@@ -71,10 +83,8 @@ export const builtins = new Map<string, string>([
  * For files, we collect all FileAttachment calls within local modules, adding
  * them to any files referenced by static HTML.
  */
-export async function getResolvers(
-  page: MarkdownPage,
-  {root, path, loaders}: {root: string; path: string; loaders: LoaderResolver}
-): Promise<Resolvers> {
+export async function getResolvers(page: MarkdownPage, config: ResolversConfig): Promise<Resolvers> {
+  const {root, path, globalStylesheets: defaultStylesheets, loaders} = config;
   const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
   const assets = new Set<string>();
   const files = new Set<string>();
@@ -82,8 +92,7 @@ export async function getResolvers(
   const localImports = new Set<string>();
   const globalImports = new Set<string>(defaultImports);
   const staticImports = new Set<string>(defaultImports);
-  const stylesheets = new Set<string>();
-  const resolutions = new Map<string, string>();
+  const stylesheets = new Set<string>(defaultStylesheets);
 
   // Add assets.
   for (const html of [page.head, page.header, page.body, page.footer]) {
@@ -95,9 +104,7 @@ export async function getResolvers(
     for (const i of info.staticImports) staticImports.add(i);
   }
 
-  // Add stylesheets. TODO Instead of hard-coding Source Serif Pro, parse the
-  // page’s stylesheet to look for external imports.
-  stylesheets.add("https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"); // prettier-ignore
+  // Add stylesheets.
   if (page.style) stylesheets.add(page.style);
 
   // Collect directly-attached files, local imports, and static imports.
@@ -113,9 +120,12 @@ export async function getResolvers(
   }
 
   // Add SQL sources.
-  if (page.data?.sql) {
-    for (const source of Object.values(page.data.sql)) {
-      files.add(String(source));
+  if (page.data.sql) {
+    for (const value of Object.values(page.data.sql)) {
+      const source = String(value);
+      if (isAssetPath(source)) {
+        files.add(source);
+      }
     }
   }
 
@@ -124,6 +134,73 @@ export async function getResolvers(
   for (const f of files) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
   for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
   if (page.style && isPathImport(page.style)) hash.update(loaders.getSourceFileHash(resolvePath(path, page.style)));
+
+  // Add implicit imports for standard library built-ins, such as d3 and Plot.
+  for (const i of getImplicitInputImports(findFreeInputs(page))) {
+    staticImports.add(i);
+    globalImports.add(i);
+  }
+
+  // Add React for JSX blocks.
+  if (page.code.some((c) => c.mode === "jsx")) {
+    staticImports.add("npm:react-dom");
+    globalImports.add("npm:react-dom");
+  }
+
+  return {
+    path,
+    hash: hash.digest("hex"),
+    assets,
+    ...(await resolveResolvers(
+      {
+        files,
+        fileMethods,
+        localImports,
+        globalImports,
+        staticImports,
+        stylesheets
+      },
+      config
+    ))
+  };
+}
+
+/** Like getResolvers, but for JavaScript modules. */
+export async function getModuleResolvers(path: string, config: Omit<ResolversConfig, "path">): Promise<Resolvers> {
+  const {root} = config;
+  return {
+    path,
+    hash: getModuleHash(root, path),
+    assets: new Set(),
+    ...(await resolveResolvers({localImports: [path], staticImports: [path]}, {path, ...config}))
+  };
+}
+
+async function resolveResolvers(
+  {
+    files: initialFiles,
+    fileMethods: initialFileMethods,
+    localImports: initialLocalImports,
+    globalImports: initialGlobalImports,
+    staticImports: intialStaticImports,
+    stylesheets: initialStylesheets
+  }: {
+    files?: Iterable<string> | null;
+    fileMethods?: Iterable<string> | null;
+    localImports?: Iterable<string> | null;
+    globalImports?: Iterable<string> | null;
+    staticImports?: Iterable<string> | null;
+    stylesheets?: Iterable<string> | null;
+  },
+  {root, path, normalizePath, loaders}: ResolversConfig
+): Promise<Omit<Resolvers, "path" | "hash" | "assets">> {
+  const files = new Set<string>(initialFiles);
+  const fileMethods = new Set<string>(initialFileMethods);
+  const localImports = new Set<string>(initialLocalImports);
+  const globalImports = new Set<string>(initialGlobalImports);
+  const staticImports = new Set<string>(intialStaticImports);
+  const stylesheets = new Set<string>(initialStylesheets);
+  const resolutions = new Map<string, string>();
 
   // Collect transitively-attached files and local imports.
   for (const i of localImports) {
@@ -156,12 +233,6 @@ export async function getResolvers(
     globalImports.add(i);
   }
 
-  // Add implicit imports for standard library built-ins, such as d3 and Plot.
-  for (const i of getImplicitInputImports(findFreeInputs(page))) {
-    staticImports.add(i);
-    globalImports.add(i);
-  }
-
   // Add transitive imports for built-in libraries.
   for (const i of getImplicitDependencies(staticImports)) {
     staticImports.add(i);
@@ -170,20 +241,28 @@ export async function getResolvers(
     globalImports.add(i);
   }
 
-  // Resolve npm: and jsr: imports.
+  // Resolve npm:, jsr:, and bare imports. This has the side-effect of
+  // populating the npm (and jsr?) import cache with direct dependencies, and
+  // the node import cache with all transitive dependencies.
   for (const i of globalImports) {
     if (builtins.has(i)) continue;
     if (i.startsWith("npm:")) {
       resolutions.set(i, await resolveNpmImport(root, i.slice("npm:".length)));
     } else if (i.startsWith("jsr:")) {
       resolutions.set(i, await resolveJsrImport(root, i.slice("jsr:".length)));
+    } else if (!/^\w+:/.test(i)) {
+      try {
+        resolutions.set(i, await resolveNodeImport(root, i));
+      } catch {
+        // ignore error; allow the import to be resolved at runtime
+      }
     }
   }
 
-  // Follow transitive imports of npm imports. This has the side-effect of
-  // populating the npm cache.
-  for (const value of resolutions.values()) {
-    if (value.startsWith("/_npm/")) {
+  // Follow transitive imports of npm:, jsr:, and bare imports. This populates
+  // the remainder of the import caches.
+  for (const [key, value] of resolutions) {
+    if (key.startsWith("npm:")) {
       for (const i of await resolveNpmImports(root, value)) {
         if (i.type === "local") {
           const path = resolvePath(value, i.name);
@@ -192,30 +271,49 @@ export async function getResolvers(
           resolutions.set(specifier, path);
         }
       }
-    } else if (value.startsWith("/_jsr/")) {
-      // TODO jsr:
+    } else if (key.startsWith("jsr:")) {
+      // TODO jsr
+    } else if (!/^\w+:/.test(key)) {
+      for (const i of await resolveNodeImports(root, value)) {
+        if (i.type === "local") {
+          const path = resolvePath(value, i.name);
+          const specifier = extractNodeSpecifier(path);
+          globalImports.add(specifier);
+          resolutions.set(specifier, path);
+        }
+      }
     }
   }
 
-  // Resolve transitive static npm: and jsr: imports.
-  const globalStaticResolutions = new Set<string>();
+  // Resolve transitive static npm: and bare imports.
+  const staticResolutions = new Map<string, string>();
   for (const i of staticImports) {
-    const r = resolutions.get(i);
-    if (r) globalStaticResolutions.add(r);
+    if (i.startsWith("npm:") || i.startsWith("jsr:") || !/^\w+:/.test(i)) {
+      const r = resolutions.get(i);
+      if (r) staticResolutions.set(i, r);
+    }
   }
-
-  for (const value of globalStaticResolutions) {
-    if (value.startsWith("/_npm/")) {
+  for (const [key, value] of staticResolutions) {
+    if (key.startsWith("npm:")) {
       for (const i of await resolveNpmImports(root, value)) {
         if (i.type === "local" && i.method === "static") {
           const path = resolvePath(value, i.name);
           const specifier = `npm:${extractNpmSpecifier(path)}`;
           staticImports.add(specifier);
-          globalStaticResolutions.add(path);
+          staticResolutions.set(specifier, path);
         }
       }
-    } else {
+    } else if (key.startsWith("jsr:")) {
       // TODO jsr:
+    } else if (!/^\w+:/.test(key)) {
+      for (const i of await resolveNodeImports(root, value)) {
+        if (i.type === "local" && i.method === "static") {
+          const path = resolvePath(value, i.name);
+          const specifier = extractNodeSpecifier(path);
+          staticImports.add(specifier);
+          staticResolutions.set(specifier, path);
+        }
+      }
     }
   }
 
@@ -279,10 +377,16 @@ export async function getResolvers(
     }
   }
 
+  function resolveLink(href: string): string {
+    if (isAssetPath(href)) {
+      const u = parseRelativeUrl(href);
+      const localPath = resolveLocalPath(path, u.pathname);
+      if (localPath) return relativePath(path, normalizePath(localPath)) + u.search + u.hash;
+    }
+    return href;
+  }
+
   return {
-    path,
-    hash: hash.digest("hex"),
-    assets,
     files,
     localImports,
     globalImports,
@@ -291,8 +395,50 @@ export async function getResolvers(
     resolveFile,
     resolveImport,
     resolveScript,
-    resolveStylesheet
+    resolveStylesheet,
+    resolveLink
   };
+}
+
+/** Returns the set of transitive static imports for the specified module. */
+export async function getModuleStaticImports(root: string, path: string): Promise<string[]> {
+  const localImports = new Set<string>([path]);
+  const globalImports = new Set<string>();
+  const fileMethods = new Set<string>();
+
+  // Collect local and global imports from transitive local imports.
+  for (const i of localImports) {
+    const info = getModuleInfo(root, i);
+    if (!info) continue;
+    for (const o of info.localStaticImports) localImports.add(resolvePath(i, o));
+    for (const o of info.globalStaticImports) globalImports.add(o);
+    for (const m of info.fileMethods) fileMethods.add(m);
+  }
+
+  // Collect implicit imports from file methods.
+  for (const i of getImplicitFileImports(fileMethods)) {
+    globalImports.add(i);
+  }
+
+  // Collect transitive global imports.
+  for (const i of globalImports) {
+    if (builtins.has(i)) continue;
+    if (i.startsWith("npm:")) {
+      const p = await resolveNpmImport(root, i.slice("npm:".length));
+      for (const o of await resolveNpmImports(root, p)) {
+        if (o.type === "local") globalImports.add(`npm:${extractNpmSpecifier(resolvePath(p, o.name))}`);
+      }
+    } else if (i.startsWith("jsr:")) {
+      // TODO jsr:
+    } else if (!/^\w+:/.test(i)) {
+      const p = await resolveNodeImport(root, i);
+      for (const o of await resolveNodeImports(root, p)) {
+        if (o.type === "local") globalImports.add(extractNodeSpecifier(resolvePath(p, o.name)));
+      }
+    }
+  }
+
+  return [...localImports, ...globalImports].filter((i) => i !== path).map((i) => relativePath(path, i));
 }
 
 /**
@@ -301,8 +447,11 @@ export async function getResolvers(
  * knowing the transitive imports ahead of time. But it should be consistent
  * with the resolveImport returned by getResolvers (assuming caching).
  */
-export function getModuleResolver(root: string, path: string): (specifier: string) => Promise<string> {
-  const servePath = `/${join("_import", path)}`;
+export function getModuleResolver(
+  root: string,
+  path: string,
+  servePath = `/${join("_import", path)}`
+): (specifier: string) => Promise<string> {
   return async (specifier) => {
     return isPathImport(specifier)
       ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier)))
@@ -312,6 +461,10 @@ export function getModuleResolver(root: string, path: string): (specifier: strin
       ? relativePath(servePath, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`) // prettier-ignore
       : specifier.startsWith("npm:")
       ? relativePath(servePath, await resolveNpmImport(root, specifier.slice("npm:".length)))
+      : specifier.startsWith("jsr:")
+      ? relativePath(servePath, await resolveJsrImport(root, specifier.slice("jsr:".length)))
+      : !/^\w+:/.test(specifier)
+      ? relativePath(servePath, await resolveNodeImport(root, specifier))
       : specifier;
   };
 }

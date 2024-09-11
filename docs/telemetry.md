@@ -8,7 +8,7 @@ You can [opt-out of telemetry](#disabling-telemetry) by setting the `OBSERVABLE_
 
 The following data is collected:
 
-```ts
+```ts run=false
 type TelemetryIds = {
   session: uuid; // random, held in memory for the duration of the process
   device: uuid; // persists to ~/.observablehq
@@ -17,10 +17,11 @@ type TelemetryIds = {
 
 type TelemetryEnvironment = {
   version: string; // version from package.json
+  userAgent: string; // npm_config_user_agent
   node: string; // node.js version
-  systemPlatform: string; // linux, darwin, win32, ...
-  systemRelease: string; // 20.04, 11.2.3, ...
-  systemArchitecture: string; // x64, arm64, ...
+  systemPlatform: string; // linux, darwin, win32, …
+  systemRelease: string; // 20.04, 11.2.3, …
+  systemArchitecture: string; // x64, arm64, …
   cpuCount: number; // number of cpu cores
   cpuModel: string | null; // cpu model name
   cpuSpeed: number | null; // cpu speed in MHz

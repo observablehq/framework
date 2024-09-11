@@ -1,5 +1,5 @@
 {
-  "data": null,
+  "data": {},
   "title": "Fenced code options",
   "style": null,
   "code": [
@@ -85,9 +85,9 @@
         "imports": [],
         "expression": false,
         "async": false,
-        "inline": false,
         "input": "function add(a, b) {\n  return a + b;\n}\n"
-      }
+      },
+      "mode": "block"
     },
     {
       "id": "4bf815ab",
@@ -147,9 +147,9 @@
         "imports": [],
         "expression": false,
         "async": false,
-        "inline": false,
         "input": "function bareJs() {\n  return 1;\n}\n"
-      }
+      },
+      "mode": "block"
     },
     {
       "id": "d41a5631",
@@ -209,9 +209,9 @@
         "imports": [],
         "expression": false,
         "async": false,
-        "inline": false,
         "input": "function langOutside() {\n  return 1;\n}\n"
-      }
+      },
+      "mode": "block"
     },
     {
       "id": "2f4eff36",
@@ -271,9 +271,9 @@
         "imports": [],
         "expression": false,
         "async": false,
-        "inline": false,
         "input": "function langAndAttributes() {\n  return 1;\n}\n"
-      }
+      },
+      "mode": "block"
     }
   ]
 }

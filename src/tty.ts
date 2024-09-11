@@ -1,4 +1,6 @@
 import {isatty} from "node:tty";
+import * as clack from "@clack/prompts";
+import type {ClackEffects} from "./clack.js";
 import type {Logger} from "./logger.js";
 
 export const reset = color(0, 0);
@@ -22,18 +24,32 @@ function color(code: number, reset: number): TtyColor {
 }
 
 export interface TtyEffects {
+  clack: ClackEffects;
   isTty: boolean;
   logger: Logger;
   outputColumns: number;
 }
 
+const noSpinner = () => ({
+  start(msg?: string) {
+    console.log(msg);
+  },
+  stop(msg?: string, code?: number) {
+    console.log(msg, code ?? "");
+  },
+  message(msg?: string) {
+    console.log(msg);
+  }
+});
+
 export const defaultEffects: TtyEffects = {
+  clack: process.stdout.isTTY ? clack : {...clack, spinner: noSpinner},
   isTty: isatty(process.stdin.fd),
   logger: console,
-  outputColumns: process.stdout.columns ?? 80
+  outputColumns: Math.min(80, process.stdout.columns ?? 80)
 };
 
-function stripColor(s: string): string {
+export function stripColor(s: string): string {
   // eslint-disable-next-line no-control-regex
   return s.replace(/\x1b\[[0-9;]*m/g, "");
 }

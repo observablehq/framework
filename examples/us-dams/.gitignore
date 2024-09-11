@@ -1,0 +1,8 @@
+.DS_Store
+dist/
+src/.observablehq/cache/
+node_modules/
+yarn-error.log
+src/.observablehq/deploy.json
+.Rhistory
+.Rdata
