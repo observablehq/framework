@@ -15,7 +15,7 @@ A parameterized route is denoted by square brackets, such as `[param]`, in a fil
 
 (File and directory names can also be partially parameterized such as `prefix-[param].md` or `[param]-suffix.md`, or contain multiple parameters such as `[year]-[month]-[day].md`.)
 
-The [**dynamicPaths** config option](./config#dynamicPaths) would then specify the list of product pages:
+The [**dynamicPaths** config option](./config#dynamic-paths) would then specify the list of product pages:
 
 ```js run=false
 export default {
