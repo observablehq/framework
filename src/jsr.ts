@@ -1,34 +1,22 @@
-import {mkdir, readFile} from "node:fs/promises";
-import {join} from "node:path/posix";
+import {mkdir, readFile, writeFile} from "node:fs/promises";
+import {extname, join, relative} from "node:path/posix";
 import {Readable} from "node:stream";
 import {finished} from "node:stream/promises";
 import {satisfies} from "semver";
 import {x} from "tar";
 import type {NpmSpecifier} from "./npm.js";
-import {formatNpmSpecifier, initializeNpmVersionCache, parseNpmSpecifier} from "./npm.js";
+import {formatNpmSpecifier, initializeNpmVersionCache, parseNpmSpecifier, rewriteNpmImports} from "./npm.js";
 import {faint} from "./tty.js";
+import {isPathImport, resolvePath} from "./path.js";
 
 const jsrVersionCaches = new Map<string, Promise<Map<string, string[]>>>();
 const jsrVersionRequests = new Map<string, Promise<string>>();
-const jsrRequests = new Map<string, Promise<Record<string, any>>>();
+const jsrRequests = new Map<string, Promise<string>>();
 
 function getJsrVersionCache(root: string): Promise<Map<string, string[]>> {
   let cache = jsrVersionCaches.get(root);
   if (!cache) jsrVersionCaches.set(root, (cache = initializeNpmVersionCache(root, "_jsr")));
   return cache;
-}
-
-async function getJsrPackage(root: string, specifier: string): Promise<Record<string, any>> {
-  let promise = jsrRequests.get(specifier);
-  if (promise) return promise;
-  promise = (async function () {
-    const {name, range} = parseNpmSpecifier(specifier);
-    const version = await resolveJsrVersion(root, {name, range});
-    const dir = join(root, ".observablehq", "cache", "_jsr", formatNpmSpecifier({name, range: version}));
-    return JSON.parse(await readFile(join(dir, "package.json"), "utf8"));
-  })();
-  jsrRequests.set(specifier, promise);
-  return promise;
 }
 
 async function resolveJsrVersion(root: string, specifier: NpmSpecifier): Promise<string> {
@@ -73,12 +61,56 @@ async function resolveJsrVersion(root: string, specifier: NpmSpecifier): Promise
 }
 
 export async function resolveJsrImport(root: string, specifier: string): Promise<string> {
-  const version = await getJsrPackage(root, specifier);
-  const {name, path = getDefaultEntry(version)} = parseNpmSpecifier(specifier);
-  return join("/", "_jsr", `${name}@${version.version}`, path);
+  let promise = jsrRequests.get(specifier);
+  if (promise) return promise;
+  promise = (async function () {
+    const spec = parseNpmSpecifier(specifier);
+    const {name} = spec;
+    const version = await resolveJsrVersion(root, spec);
+    const dir = join(root, ".observablehq", "cache", "_jsr", formatNpmSpecifier({name, range: version}));
+    const info = JSON.parse(await readFile(join(dir, "package.json"), "utf8"));
+    let path = spec.path;
+    try {
+      path = findEntry(info, path);
+      await rewriteJsrImports(root, dir, path);
+    } catch {
+      path ??= "index.js";
+    }
+    return join("/", "_jsr", `${name}@${version}`, path);
+  })();
+  jsrRequests.set(specifier, promise);
+  return promise;
 }
 
-function getDefaultEntry(version: Record<string, any>): string {
-  const entry = version.exports["."];
-  return typeof entry === "string" ? entry : entry.default;
+// TODO This should probably be done when initially downloading the package,
+// rather than when we try to resolve it. Maybe we only do this for files that
+// are listed in exports (and their transitive dependencies)… and maybe only for
+// .js files?
+async function rewriteJsrImports(root: string, dir: string, path: string): Promise<void> {
+  const input = await readFile(join(dir, path), "utf8");
+  const promises = new Map<string, Promise<string>>();
+  const transitives: Promise<void>[] = [];
+  rewriteNpmImports(input, (i) => {
+    if (i.startsWith("@jsr/")) {
+      const s = `@${i.slice("@jsr/".length).replace(/__/, "/")}`;
+      if (!promises.has(s)) promises.set(i, resolveJsrImport(root, s));
+    } else if (isPathImport(i)) {
+      transitives.push(rewriteJsrImports(root, dir, resolvePath(path, i)));
+    } else if (!/^\0?[\w-]+:/.test(i)) {
+      // TODO npm import
+    }
+    return i;
+  });
+  const resolutions = new Map<string, string>();
+  for (const [key, promise] of promises) resolutions.set(key, await promise);
+  await Promise.all(transitives);
+  const output = rewriteNpmImports(input, (i) => resolutions.get(i) ?? i);
+  await writeFile(join(dir, path), output, "utf8");
+}
+
+function findEntry({exports}: Record<string, any>, name = "."): string {
+  const entry = exports[name];
+  if (typeof entry === "string") return entry;
+  if (typeof entry?.default === "string") return entry.default;
+  throw new Error(`unable to find entry for ${name}`, exports);
 }
