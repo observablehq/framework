@@ -9,3 +9,9 @@ printProgress();
 ```js echo
 import.meta.resolve("jsr:@luca/flag")
 ```
+
+```js echo
+import {decode} from "jsr:@quentinadam/hex";
+
+display(decode("000102"));
+```
