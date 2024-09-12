@@ -1,5 +1,6 @@
 ---
 theme: dashboard
+toc: false
 ---
 
 # U.S. electricity grid
@@ -136,7 +137,7 @@ function centerResize(render) {
   <div class="card grid-colspan-2 grid-rowspan-3">
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
-    <figure style="max-width: none; min-height: 490px;">
+    <figure style="max-width: none;">
       <div style="display: flex; flex-direction: column; align-items: center;">
         <h1 style="margin-top: 0.5rem;">${hourFormat(currentHour)}</h1>
         <div>${currentDate} </div>
@@ -170,7 +171,7 @@ function centerResize(render) {
     <h2>US electricity generation demand vs. day-ahead forecast (GWh)</h2>
     ${resize((width, height) => usGenDemandForecastChart(width, height, usDemandGenForecast, currentHour))}
   </div>
-  <div class="card grid-colspan-2">
+  <div class="card grid-colspan-2" style="min-height: 160px;">
     <h2>Neighboring country interchange (GWh)</h2>
     ${resize((width, height) => countryInterchangeChart(width, height, usDemandGenForecast, countryInterchangeSeries, currentHour))}
   </div>
