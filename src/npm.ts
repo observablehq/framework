@@ -35,11 +35,8 @@ export function formatNpmSpecifier({name, range, path}: NpmSpecifier): string {
   return `${name}${range ? `@${range}` : ""}${path ? `/${path}` : ""}`;
 }
 
-/**
- * Rewrites /npm/ import specifiers to be relative paths to /_npm/.
- * TODO This isn’t specific to npm imports; it’ll resolve any static import?
- */
-export function rewriteNpmImports(input: string, resolve: (specifier: string) => string = String): string {
+/** Rewrites /npm/ import specifiers to be relative paths to /_npm/. */
+export function rewriteNpmImports(input: string, resolve: (s: string) => string | void = () => undefined): string {
   const body = parseProgram(input);
   const output = new Sourcemap(input);
 
@@ -66,7 +63,8 @@ export function rewriteNpmImports(input: string, resolve: (specifier: string) =>
   function rewriteImportSource(source: StringLiteral) {
     const value = getStringLiteralValue(source);
     const resolved = resolve(value);
-    if (value !== resolved) output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
+    if (resolved === undefined || value === resolved) return;
+    output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
   }
 
   // TODO Preserve the source map, but download it too.

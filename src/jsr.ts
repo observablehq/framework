@@ -105,14 +105,13 @@ async function rewriteJsrImports(root: string, dir: string): Promise<void> {
         } else if (!isPathImport(i) && !/^[\w-]+:/.test(i)) {
           if (!promises.has(i)) promises.set(i, resolveNpmImport(root, i));
         }
-        return i;
       });
     } catch {
       continue; // ignore syntax errors
     }
     const resolutions = new Map<string, string>();
     for (const [key, promise] of promises) resolutions.set(key, await promise);
-    const output = rewriteNpmImports(input, (i) => resolutions.get(i) ?? i);
+    const output = rewriteNpmImports(input, (i) => resolutions.get(i));
     await writeFile(join(dir, path), output, "utf8");
   }
 }
