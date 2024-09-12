@@ -1,7 +1,8 @@
 import {mkdir, readFile, writeFile} from "node:fs/promises";
-import {join, relative} from "node:path/posix";
+import {join} from "node:path/posix";
 import {Readable} from "node:stream";
 import {finished} from "node:stream/promises";
+import {globSync} from "glob";
 import {exports as resolveExports} from "resolve.exports";
 import {satisfies} from "semver";
 import {x} from "tar";
@@ -10,7 +11,7 @@ import {parseImports} from "./javascript/imports.js";
 import type {NpmSpecifier} from "./npm.js";
 import {formatNpmSpecifier, parseNpmSpecifier} from "./npm.js";
 import {initializeNpmVersionCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
-import {isPathImport, resolvePath} from "./path.js";
+import {isPathImport} from "./path.js";
 import {faint} from "./tty.js";
 
 const jsrVersionCaches = new Map<string, Promise<Map<string, string[]>>>();
@@ -92,23 +93,8 @@ export async function resolveJsrImport(root: string, specifier: string): Promise
   return promise;
 }
 
-const rewritten = new Set<string>();
-
 async function rewriteJsrImports(root: string, dir: string): Promise<void> {
-  const paths = new Set<string>();
-  const normalizePath = (path: string) => relative(dir, join(dir, path));
-  let {exports} = JSON.parse(await readFile(join(dir, "package.json"), "utf8"));
-  if (exports !== undefined) {
-    if (typeof exports === "string") exports = {".": exports};
-    for (const name in exports) {
-      const value = exports[name];
-      if (typeof value === "string") paths.add(normalizePath(value));
-      else if (typeof value?.default === "string") paths.add(normalizePath(value.default)); // TODO browser entry?
-    }
-  }
-  for (const path of paths) {
-    if (rewritten.has(join(dir, path))) throw new Error(`already rewritten: ${join(dir, path)}`);
-    rewritten.add(join(dir, path));
+  for (const path of globSync("**/*.js", {cwd: dir, nodir: true})) {
     const input = await readFile(join(dir, path), "utf8");
     const promises = new Map<string, Promise<string>>();
     try {
@@ -116,9 +102,7 @@ async function rewriteJsrImports(root: string, dir: string): Promise<void> {
         if (i.startsWith("@jsr/")) {
           const s = `@${i.slice("@jsr/".length).replace(/__/, "/")}`;
           if (!promises.has(s)) promises.set(i, resolveJsrImport(root, s));
-        } else if (isPathImport(i)) {
-          paths.add(normalizePath(resolvePath(path, i)));
-        } else if (!/^[\w-]+:/.test(i)) {
+        } else if (!isPathImport(i) && !/^[\w-]+:/.test(i)) {
           if (!promises.has(i)) promises.set(i, resolveNpmImport(root, i));
         }
         return i;
