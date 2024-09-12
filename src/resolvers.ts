@@ -242,8 +242,8 @@ async function resolveResolvers(
   }
 
   // Resolve npm:, jsr:, and bare imports. This has the side-effect of
-  // populating the npm (and jsr?) import cache with direct dependencies, and
-  // the node import cache with all transitive dependencies.
+  // populating the npm import cache with direct dependencies, and the node
+  // and jsr import caches with all transitive dependencies.
   for (const i of globalImports) {
     if (builtins.has(i)) continue;
     if (i.startsWith("npm:")) {

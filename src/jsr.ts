@@ -93,17 +93,29 @@ export async function resolveJsrImport(root: string, specifier: string): Promise
   return promise;
 }
 
+/**
+ * After downloading a package from JSR, this rewrites any transitive JSR and
+ * Node imports to use relative paths within the import cache. For example, if
+ * jsr:@std/streams depends on jsr:@std/bytes, this will replace an import of
+ * @jsr/std__bytes with a relative path to /_jsr/@std/bytes@1.0.2/mod.js.
+ */
 async function rewriteJsrImports(root: string, dir: string): Promise<void> {
+  const info = JSON.parse(await readFile(join(dir, "package.json"), "utf8"));
   for (const path of globSync("**/*.js", {cwd: dir, nodir: true})) {
     const input = await readFile(join(dir, path), "utf8");
     const promises = new Map<string, Promise<string>>();
     try {
       rewriteNpmImports(input, (i) => {
         if (i.startsWith("@jsr/")) {
-          const s = `@${i.slice("@jsr/".length).replace(/__/, "/")}`;
-          if (!promises.has(s)) promises.set(i, resolveJsrImport(root, s));
+          const {name, path} = parseNpmSpecifier(i);
+          const range = resolveDependencyVersion(info, name);
+          const specifier = formatNpmSpecifier({name: `@${name.slice("@jsr/".length).replace(/__/, "/")}`, range, path}); // prettier-ignore
+          if (!promises.has(i)) promises.set(i, resolveJsrImport(root, specifier));
         } else if (!isPathImport(i) && !/^[\w-]+:/.test(i)) {
-          if (!promises.has(i)) promises.set(i, resolveNpmImport(root, i));
+          const {name, path} = parseNpmSpecifier(i);
+          const range = resolveDependencyVersion(info, i);
+          const specifier = formatNpmSpecifier({name, range, path});
+          if (!promises.has(i)) promises.set(i, resolveNpmImport(root, specifier));
         }
       });
     } catch {
@@ -114,6 +126,28 @@ async function rewriteJsrImports(root: string, dir: string): Promise<void> {
     const output = rewriteNpmImports(input, (i) => resolutions.get(i));
     await writeFile(join(dir, path), output, "utf8");
   }
+}
+
+type PackageDependencies = Record<string, string>;
+
+interface PackageInfo {
+  dependencies?: PackageDependencies;
+  devDependencies?: PackageDependencies;
+  peerDependencies?: PackageDependencies;
+  optionalDependencies?: PackageDependencies;
+  bundleDependencies?: PackageDependencies;
+  bundledDependencies?: PackageDependencies;
+}
+
+function resolveDependencyVersion(info: PackageInfo, name: string): string | undefined {
+  return (
+    info.dependencies?.[name] ??
+    info.devDependencies?.[name] ??
+    info.peerDependencies?.[name] ??
+    info.optionalDependencies?.[name] ??
+    info.bundleDependencies?.[name] ??
+    info.bundledDependencies?.[name]
+  );
 }
 
 export async function resolveJsrImports(root: string, path: string): Promise<ImportReference[]> {
