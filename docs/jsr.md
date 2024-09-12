@@ -1,6 +1,12 @@
 # Look, Ma! JSR imports!
 
 ```js echo
+import {Hono} from "jsr:@hono/hono";
+
+display(new Hono());
+```
+
+```js echo
 import {yassify} from "jsr:@kwhinnery/yassify";
 
 display(yassify("hello"));

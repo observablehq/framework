@@ -2,6 +2,7 @@ import {mkdir, readFile, writeFile} from "node:fs/promises";
 import {join, relative} from "node:path/posix";
 import {Readable} from "node:stream";
 import {finished} from "node:stream/promises";
+import {exports as resolveExports} from "resolve.exports";
 import {satisfies} from "semver";
 import {x} from "tar";
 import type {ImportReference} from "./javascript/imports.js";
@@ -84,7 +85,7 @@ export async function resolveJsrImport(root: string, specifier: string): Promise
     const version = await resolveJsrVersion(root, spec);
     const dir = join(root, ".observablehq", "cache", "_jsr", formatNpmSpecifier({name, range: version}));
     const info = JSON.parse(await readFile(join(dir, "package.json"), "utf8"));
-    const path = findEntry(info, spec.path);
+    const [path] = resolveExports(info, spec.path === undefined ? "." : `./${spec.path}`, {browser: true})!;
     return join("/", "_jsr", `${name}@${version}`, path);
   })();
   jsrResolveRequests.set(specifier, promise);
@@ -130,15 +131,6 @@ async function rewriteJsrImports(root: string, dir: string): Promise<void> {
     const output = rewriteNpmImports(input, (i) => resolutions.get(i) ?? i);
     await writeFile(join(dir, path), output, "utf8");
   }
-}
-
-// TODO subpath patterns? import condition? nested conditions?
-function findEntry({exports}: Record<string, any>, name = "."): string {
-  if (name !== "." && !name.startsWith("./")) name = `./${name}`;
-  const entry = exports[name];
-  if (typeof entry === "string") return entry;
-  if (typeof entry?.default === "string") return entry.default;
-  throw new Error(`unable to find entry for ${name}`);
 }
 
 export async function resolveJsrImports(root: string, path: string): Promise<ImportReference[]> {
