@@ -136,7 +136,7 @@ function centerResize(render) {
   <div class="card grid-colspan-2 grid-rowspan-3">
     <h2>Change in demand by balancing authority</h2>
     <h3>Percent change in electricity demand from previous hour</h3>
-    <figure style="max-width: none;">
+    <figure style="max-width: none; min-height: 490px;">
       <div style="display: flex; flex-direction: column; align-items: center;">
         <h1 style="margin-top: 0.5rem;">${hourFormat(currentHour)}</h1>
         <div>${currentDate} </div>
