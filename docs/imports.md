@@ -99,6 +99,18 @@ Unlike `npm:` imports, Node imports do not support semver ranges: the imported v
 
 Imports from `node_modules` are cached in `.observablehq/cache/_node` within your [source root](./config#root) (typically `src`). You shouldn’t need to clear this cache as it is automatically managed, but feel free to clear it you like.
 
+## jsr imports <a href="https://github.com/observablehq/framework/pulls/957" class="observablehq-version-badge" data-version="prerelease" title="Added in #957"></a>
+
+You can import a package from the [JSR registry](https://jsr.io/) using the `jsr:` protocol. When you import using `jsr:`, Framework automatically downloads and self-hosts the package. (As with `npm:` imports, and unlike node imports, you don’t have to install `jsr:` imports manually.) As an example, here the number three is computed using a seeded [pseudorandom number generator](https://jsr.io/@std/random) from the [Deno Standard Library](https://deno.com/blog/std-on-jsr):
+
+```js echo
+import {randomIntegerBetween, randomSeeded} from "jsr:@std/random";
+
+const prng = randomSeeded(1n);
+
+display(randomIntegerBetween(1, 10, {prng}));
+```
+
 ## Local imports
 
 You can import [JavaScript](./javascript) and [TypeScript](./javascript#type-script) modules from local files. This is useful for organizing your code into modules that can be imported across multiple pages. You can also unit test your code and share code with other web applications.
