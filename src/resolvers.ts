@@ -3,7 +3,7 @@ import {extname, join} from "node:path/posix";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
-import {resolveJsrImport} from "./jsr.js";
+import {resolveJsrImport, resolveJsrImports} from "./jsr.js";
 import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
@@ -272,7 +272,17 @@ async function resolveResolvers(
         }
       }
     } else if (key.startsWith("jsr:")) {
-      // TODO jsr
+      for (const i of await resolveJsrImports(root, value)) {
+        if (i.type === "local") {
+          const path = resolvePath(value, i.name);
+          let specifier: string;
+          if (path.startsWith("/_npm/")) specifier = `npm:${extractNpmSpecifier(path)}`;
+          else if (path.startsWith("/_jsr/")) specifier = `jsr:${path.slice("/_jsr/".length)}`;
+          else continue;
+          globalImports.add(specifier);
+          resolutions.set(specifier, path);
+        }
+      }
     } else if (!/^\w+:/.test(key)) {
       for (const i of await resolveNodeImports(root, value)) {
         if (i.type === "local") {
@@ -304,7 +314,17 @@ async function resolveResolvers(
         }
       }
     } else if (key.startsWith("jsr:")) {
-      // TODO jsr:
+      for (const i of await resolveJsrImports(root, value)) {
+        if (i.type === "local" && i.method === "static") {
+          const path = resolvePath(value, i.name);
+          let specifier: string;
+          if (path.startsWith("/_npm/")) specifier = `npm:${extractNpmSpecifier(path)}`;
+          else if (path.startsWith("/_jsr/")) specifier = `jsr:${path.slice("/_jsr/".length)}`;
+          else continue;
+          staticImports.add(specifier);
+          staticResolutions.set(specifier, path);
+        }
+      }
     } else if (!/^\w+:/.test(key)) {
       for (const i of await resolveNodeImports(root, value)) {
         if (i.type === "local" && i.method === "static") {

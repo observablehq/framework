@@ -4,6 +4,8 @@ import {Readable} from "node:stream";
 import {finished} from "node:stream/promises";
 import {satisfies} from "semver";
 import {x} from "tar";
+import type {ImportReference} from "./javascript/imports.js";
+import {parseImports} from "./javascript/imports.js";
 import type {NpmSpecifier} from "./npm.js";
 import {formatNpmSpecifier, parseNpmSpecifier} from "./npm.js";
 import {initializeNpmVersionCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
@@ -137,4 +139,9 @@ function findEntry({exports}: Record<string, any>, name = "."): string {
   if (typeof entry === "string") return entry;
   if (typeof entry?.default === "string") return entry.default;
   throw new Error(`unable to find entry for ${name}`);
+}
+
+export async function resolveJsrImports(root: string, path: string): Promise<ImportReference[]> {
+  if (!path.startsWith("/_jsr/")) throw new Error(`invalid jsr path: ${path}`);
+  return parseImports(join(root, ".observablehq", "cache"), path);
 }
