@@ -25,8 +25,14 @@ function getJsrVersionCache(root: string): Promise<Map<string, string[]>> {
   return cache;
 }
 
-async function resolveJsrVersion(root: string, specifier: NpmSpecifier): Promise<string> {
-  const {name, range} = specifier;
+/**
+ * Resolves the desired version of the specified JSR package, respecting the
+ * specifier’s range if any. If any satisfying packages already exist in the JSR
+ * import cache, the greatest satisfying cached version is returned. Otherwise,
+ * the desired version is resolved via JSR’s API, and then the package and all
+ * its transitive dependencies are downloaded from JSR (and npm if needed).
+ */
+async function resolveJsrVersion(root: string, {name, range}: NpmSpecifier): Promise<string> {
   const cache = await getJsrVersionCache(root);
   const versions = cache.get(name);
   if (versions) for (const version of versions) if (!range || satisfies(version, range)) return version;
@@ -34,7 +40,7 @@ async function resolveJsrVersion(root: string, specifier: NpmSpecifier): Promise
   let promise = jsrVersionRequests.get(href);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async function () {
-    process.stdout.write(`jsr:${formatNpmSpecifier(specifier)} ${faint("→")} `);
+    process.stdout.write(`jsr:${formatNpmSpecifier({name, range})} ${faint("→")} `);
     const metaResponse = await fetch(href);
     if (!metaResponse.ok) throw new Error(`unable to fetch: ${href}`);
     const meta = await metaResponse.json();
@@ -52,7 +58,7 @@ async function resolveJsrVersion(root: string, specifier: NpmSpecifier): Promise
         }
       }
     }
-    if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier(specifier)}`);
+    if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier({name, range})}`);
     await fetchJsrPackage(root, name, version.version, version.dist.tarball);
     process.stdout.write(`${version.version}\n`);
     return version.version;
@@ -62,6 +68,11 @@ async function resolveJsrVersion(root: string, specifier: NpmSpecifier): Promise
   return promise;
 }
 
+/**
+ * Fetches a package from the JSR registry, as well as its transitive
+ * dependencies from JSR and npm, rewriting any dependency imports as relative
+ * paths within the  import cache.
+ */
 async function fetchJsrPackage(root: string, name: string, version: string, tarball: string): Promise<void> {
   const dir = join(root, ".observablehq", "cache", "_jsr", formatNpmSpecifier({name, range: version}));
   let promise = jsrPackageRequests.get(dir);
@@ -77,6 +88,10 @@ async function fetchJsrPackage(root: string, name: string, version: string, tarb
   return promise;
 }
 
+/**
+ * Resolves the given JSR specifier, such as `@std/bytes@^1.0.0`, returning the
+ * path to the module such as `/_jsr/@std/bytes@1.0.2/mod.js`.
+ */
 export async function resolveJsrImport(root: string, specifier: string): Promise<string> {
   let promise = jsrResolveRequests.get(specifier);
   if (promise) return promise;
@@ -139,6 +154,7 @@ interface PackageInfo {
   bundledDependencies?: PackageDependencies;
 }
 
+// https://docs.npmjs.com/cli/v10/configuring-npm/package-json
 function resolveDependencyVersion(info: PackageInfo, name: string): string | undefined {
   return (
     info.dependencies?.[name] ??
