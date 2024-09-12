@@ -15,3 +15,7 @@ import {decode} from "jsr:@quentinadam/hex";
 
 display(decode("000102"));
 ```
+
+```js echo
+import "jsr:@oak/oak";
+```
