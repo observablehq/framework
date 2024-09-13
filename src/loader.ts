@@ -255,12 +255,8 @@ export class LoaderResolver {
     const exactPath = join(this.root, path);
     if (existsSync(exactPath)) return exactPath;
     if (exactPath.endsWith(".js")) {
-      const basePath = exactPath.slice(0, -".js".length);
-      for (const ext of [".ts", ".jsx", ".tsx"]) {
-        const extPath = basePath + ext;
-        if (existsSync(extPath)) return extPath;
-      }
-      return; // loaders aren’t supported for .js
+      const module = findModule(this.root, path);
+      return module && join(this.root, module.path);
     }
     const foundPath = this.find(path)?.path;
     if (foundPath) return join(this.root, foundPath);

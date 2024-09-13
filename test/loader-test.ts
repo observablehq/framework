@@ -170,3 +170,10 @@ describe("LoaderResolver.get{Source,Output}Info(path)", () => {
     assert.deepStrictEqual(loaders.getOutputInfo("input/loader/not-cached.txt"), undefined);
   });
 });
+
+describe("LoaderResolver.getWatchPath(path)", () => {
+  it("returns the path to a parameterized module", async () => {
+    const loaders = new LoaderResolver({root: "test/input/params"});
+    assert.deepStrictEqual(loaders.getWatchPath("prefix-test.js"), "test/input/params/prefix-[file].js");
+  });
+});
