@@ -131,7 +131,7 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
   // Compute the content hash.
   for (const f of assets) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
   for (const f of files) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
-  for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
+  for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i), (p: string) => loaders.getSourceFilePath(p))); // prettier-ignore
   if (page.style && isPathImport(page.style)) hash.update(loaders.getSourceFileHash(resolvePath(path, page.style)));
 
   // Add implicit imports for standard library built-ins, such as d3 and Plot.
@@ -169,7 +169,7 @@ export async function getModuleResolvers(path: string, config: Omit<ResolversCon
   const {root} = config;
   return {
     path,
-    hash: getModuleHash(root, path),
+    hash: getModuleHash(root, path), // TODO needs resolveFile?
     assets: new Set(),
     ...(await resolveResolvers({localImports: [path], staticImports: [path]}, {path, ...config}))
   };
@@ -330,9 +330,13 @@ async function resolveResolvers(
     }
   }
 
+  function resolveSourceFile(path: string): string {
+    return loaders.getSourceFilePath(path);
+  }
+
   function resolveImport(specifier: string): string {
     return isPathImport(specifier)
-      ? relativePath(path, resolveImportPath(root, resolvePath(path, specifier)))
+      ? relativePath(path, resolveImportPath(root, resolvePath(path, specifier), resolveSourceFile))
       : builtins.has(specifier)
       ? relativePath(path, builtins.get(specifier)!)
       : specifier.startsWith("observablehq:")
@@ -439,7 +443,7 @@ export function getModuleResolver(
 ): (specifier: string) => Promise<string> {
   return async (specifier) => {
     return isPathImport(specifier)
-      ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier)))
+      ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier))) // TODO needs resolveFile
       : builtins.has(specifier)
       ? relativePath(servePath, builtins.get(specifier)!)
       : specifier.startsWith("observablehq:")
@@ -456,8 +460,8 @@ export function resolveStylesheetPath(root: string, path: string): string {
   return `/${join("_import", path)}?sha=${getFileHash(root, path)}`;
 }
 
-export function resolveImportPath(root: string, path: string): string {
-  return `/${join("_import", path)}?sha=${getModuleHash(root, path)}`;
+export function resolveImportPath(root: string, path: string, resolveFile?: (name: string) => string): string {
+  return `/${join("_import", path)}?sha=${getModuleHash(root, path, resolveFile)}`;
 }
 
 // Returns any inputs that are not declared in outputs. These typically refer to

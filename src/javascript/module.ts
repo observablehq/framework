@@ -54,11 +54,11 @@ const moduleInfoCache = new Map<string, ModuleInfo>();
  * has invalid syntax, returns the hash of empty content; likewise ignores any
  * transitive imports or files that are invalid or do not exist.
  */
-export function getModuleHash(root: string, path: string): string {
-  return getModuleHashInternal(root, path).digest("hex");
+export function getModuleHash(root: string, path: string, resolveFile?: (name: string) => string): string {
+  return getModuleHashInternal(root, path, resolveFile).digest("hex");
 }
 
-function getModuleHashInternal(root: string, path: string): Hash {
+function getModuleHashInternal(root: string, path: string, resolveFile = (name: string) => name): Hash {
   const hash = createHash("sha256");
   const paths = new Set([path]);
   for (const path of paths) {
@@ -73,12 +73,12 @@ function getModuleHashInternal(root: string, path: string): Hash {
         paths.add(resolvePath(path, i));
       }
       for (const i of info.files) {
-        const f = getFileInfo(root, resolvePath(path, i));
+        const f = getFileInfo(root, resolveFile(resolvePath(path, i)));
         if (!f) continue; // ignore missing file
         hash.update(f.hash);
       }
     } else {
-      const info = getFileInfo(root, path); // e.g., import.meta.resolve("foo.json")
+      const info = getFileInfo(root, resolveFile(path)); // e.g., import.meta.resolve("foo.json")
       if (!info) continue; // ignore missing file
       hash.update(info.hash);
     }
