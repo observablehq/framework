@@ -389,7 +389,7 @@ abstract class AbstractLoader implements Loader {
     this.targetPath = targetPath;
   }
 
-  async load({useStale = true}: LoadOptions = {}, effects = defaultEffects): Promise<string> {
+  async load({useStale = false}: LoadOptions = {}, effects = defaultEffects): Promise<string> {
     const loaderPath = join(this.root, this.path);
     const key = join(this.root, this.targetPath);
     let command = runningCommands.get(key);
