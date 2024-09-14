@@ -131,7 +131,7 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
   // Compute the content hash.
   for (const f of assets) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
   for (const f of files) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
-  for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i), (p: string) => loaders.getSourceFileHash(p))); // prettier-ignore
+  for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i), (p) => loaders.getSourceFileHash(p))); // prettier-ignore
   if (page.style && isPathImport(page.style)) hash.update(loaders.getSourceFileHash(resolvePath(path, page.style)));
 
   // Add implicit imports for standard library built-ins, such as d3 and Plot.
