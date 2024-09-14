@@ -4,7 +4,7 @@ import {Readable} from "node:stream";
 import {finished} from "node:stream/promises";
 import {globSync} from "glob";
 import {exports as resolveExports} from "resolve.exports";
-import {satisfies} from "semver";
+import {rsort, satisfies} from "semver";
 import {x} from "tar";
 import type {ImportReference} from "./javascript/imports.js";
 import {parseImports} from "./javascript/imports.js";
@@ -44,24 +44,26 @@ async function resolveJsrVersion(root: string, {name, range}: NpmSpecifier): Pro
     const metaResponse = await fetch(href);
     if (!metaResponse.ok) throw new Error(`unable to fetch: ${href}`);
     const meta = await metaResponse.json();
-    let version: {version: string; dist: {tarball: string}} | undefined;
+    let info: {version: string; dist: {tarball: string}} | undefined;
     if (meta["dist-tags"][range ?? "latest"]) {
-      version = meta["versions"][meta["dist-tags"][range ?? "latest"]];
+      info = meta["versions"][meta["dist-tags"][range ?? "latest"]];
     } else if (range) {
       if (meta.versions[range]) {
-        version = meta.versions[range]; // exact match; ignore yanked
+        info = meta.versions[range]; // exact match; ignore yanked
       } else {
         for (const key in meta.versions) {
           if (satisfies(key, range) && !meta.versions[key].yanked) {
-            version = meta.versions[key];
+            info = meta.versions[key];
           }
         }
       }
     }
-    if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier({name, range})}`);
-    await fetchJsrPackage(root, name, version.version, version.dist.tarball);
-    process.stdout.write(`${version.version}\n`);
-    return version.version;
+    if (!info) throw new Error(`unable to resolve version: ${formatNpmSpecifier({name, range})}`);
+    const {version, dist} = info;
+    await fetchJsrPackage(root, name, version, dist.tarball);
+    cache.set(name, versions ? rsort(versions.concat(version)) : [version]);
+    process.stdout.write(`${version}\n`);
+    return version;
   })();
   promise.catch(console.error).then(() => jsrVersionRequests.delete(href));
   jsrVersionRequests.set(href, promise);
@@ -84,6 +86,7 @@ async function fetchJsrPackage(root: string, name: string, version: string, tarb
     await finished(Readable.fromWeb(tarballResponse.body as any).pipe(x({strip: 1, C: dir})));
     await rewriteJsrImports(root, dir);
   })();
+  promise.catch(console.error).then(() => jsrPackageRequests.delete(dir));
   jsrPackageRequests.set(dir, promise);
   return promise;
 }
@@ -104,6 +107,7 @@ export async function resolveJsrImport(root: string, specifier: string): Promise
     const [path] = resolveExports(info, spec.path === undefined ? "." : `./${spec.path}`, {browser: true})!;
     return join("/", "_jsr", `${name}@${version}`, path);
   })();
+  // TODO delete request promise?
   jsrResolveRequests.set(specifier, promise);
   return promise;
 }
