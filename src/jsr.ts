@@ -93,9 +93,12 @@ async function fetchJsrPackage(root: string, name: string, version: string, tarb
 
 /**
  * Resolves the given JSR specifier, such as `@std/bytes@^1.0.0`, returning the
- * path to the module such as `/_jsr/@std/bytes@1.0.2/mod.js`.
+ * path to the module such as `/_jsr/@std/bytes@1.0.2/mod.js`. This function
+ * also allows JSR specifiers with a leading slash indicating an already-
+ * resolved path such as /@std/bytes@1.0.2/mod.js.
  */
 export async function resolveJsrImport(root: string, specifier: string): Promise<string> {
+  if (specifier.startsWith("/")) return `/_jsr/${specifier.slice("/".length)}`;
   let promise = jsrResolveRequests.get(specifier);
   if (promise) return promise;
   promise = (async function () {
@@ -173,4 +176,16 @@ function resolveDependencyVersion(info: PackageInfo, name: string): string | und
 export async function resolveJsrImports(root: string, path: string): Promise<ImportReference[]> {
   if (!path.startsWith("/_jsr/")) throw new Error(`invalid jsr path: ${path}`);
   return parseImports(join(root, ".observablehq", "cache"), path);
+}
+
+/**
+ * The conversion of JSR specifier (e.g., @std/random) to JSR path (e.g.,
+ * @std/random@0.1.0/between.js) is not invertible, so we can’t reconstruct the
+ * JSR specifier from the path; hence this method instead returns a specifier
+ * with a leading slash such as /@std/random@0.1.0/between.js that can be used
+ * to avoid re-resolving JSR specifiers.
+ */
+export function extractJsrSpecifier(path: string): string {
+  if (!path.startsWith("/_jsr/")) throw new Error(`invalid jsr path: ${path}`);
+  return path.slice("/_jsr".length);
 }

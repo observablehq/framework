@@ -3,7 +3,7 @@ import {extname, join} from "node:path/posix";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
-import {resolveJsrImport, resolveJsrImports} from "./jsr.js";
+import {extractJsrSpecifier, resolveJsrImport, resolveJsrImports} from "./jsr.js";
 import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
@@ -277,7 +277,7 @@ async function resolveResolvers(
           const path = resolvePath(value, i.name);
           let specifier: string;
           if (path.startsWith("/_npm/")) specifier = `npm:${extractNpmSpecifier(path)}`;
-          else if (path.startsWith("/_jsr/")) specifier = `jsr:${path.slice("/_jsr/".length)}`;
+          else if (path.startsWith("/_jsr/")) specifier = `jsr:${extractJsrSpecifier(path)}`;
           else continue;
           globalImports.add(specifier);
           resolutions.set(specifier, path);
@@ -319,7 +319,7 @@ async function resolveResolvers(
           const path = resolvePath(value, i.name);
           let specifier: string;
           if (path.startsWith("/_npm/")) specifier = `npm:${extractNpmSpecifier(path)}`;
-          else if (path.startsWith("/_jsr/")) specifier = `jsr:${path.slice("/_jsr/".length)}`;
+          else if (path.startsWith("/_jsr/")) specifier = `jsr:${extractJsrSpecifier(path)}`;
           else continue;
           staticImports.add(specifier);
           staticResolutions.set(specifier, path);
@@ -449,7 +449,10 @@ export async function getModuleStaticImports(root: string, path: string): Promis
         if (o.type === "local") globalImports.add(`npm:${extractNpmSpecifier(resolvePath(p, o.name))}`);
       }
     } else if (i.startsWith("jsr:")) {
-      // TODO jsr:
+      const p = await resolveJsrImport(root, i.slice("jsr:".length));
+      for (const o of await resolveJsrImports(root, p)) {
+        if (o.type === "local") globalImports.add(`jsr:${extractJsrSpecifier(resolvePath(p, o.name))}`);
+      }
     } else if (!/^\w+:/.test(i)) {
       const p = await resolveNodeImport(root, i);
       for (const o of await resolveNodeImports(root, p)) {
