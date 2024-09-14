@@ -344,8 +344,8 @@ async function resolveResolvers(
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
-    } else if (specifier.startsWith("jsr:")) {
-      // TODO jsr:
+    } else if (!specifier.startsWith("observablehq:")) {
+      throw new Error(`unhandled implicit stylesheet: ${specifier}`);
     }
   }
 
@@ -357,8 +357,8 @@ async function resolveResolvers(
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
-    } else if (specifier.startsWith("jsr:")) {
-      // TODO jsr:
+    } else if (!specifier.startsWith("observablehq:")) {
+      throw new Error(`unhandled implicit download: ${specifier}`);
     }
   }
 
