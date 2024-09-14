@@ -4,7 +4,13 @@ theme: dashboard
 
 # Food imports to the United States
 
-In 2023, the United States imported more than ${d3.format("$d")(d3.sum(sample, d => +d.FoodValue)/1000)} billion in edible products from its ${n} leading exporters. The variety is vast, with distinctive contributions arriving from each major supplier. Data: [US Department of Agriculture](https://www.ers.usda.gov/data-products/u-s-food-imports/)
+In 2023, the United States imported more than ${d3.format("$d")(d3.sum(sample, d => +d.FoodValue)/1000)} billion in edible products from its ${n} leading exporters. The variety is vast, with distinctive contributions arriving from each major supplier. 
+
+The first visualization is a Marimekko chart, in which the height of each row encodes the relative proportion of edible products imported to the US from their top suppliers, and each cell represents the value within a given row associated with each category. One can quickly tease out high-level patterns, including clear patterns (e.g. fruit arriving primarily from tropical climates). Some surprises emerge as well, like the plurality of products arriving from Ireland falling into the "other" category (in this case, essential oils).
+
+Like the Marimekko chart, the second and third charts in this dashboard spotlight large-scale patterns in this diverse and fascinating data set. The sunburst chart shows the relative proportion of each category across all countries of origin, while also drilling into the types and values of commodities that constitute each category. The third chart is a time series – a normalized streamgraph, illustrating the relative consistency of import distribution over the past 20 years.
+
+Data: [US Department of Agriculture](https://www.ers.usda.gov/data-products/u-s-food-imports/)
 
 ```js
 // components
