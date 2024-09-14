@@ -131,7 +131,7 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
   // Compute the content hash.
   for (const f of assets) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
   for (const f of files) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
-  for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i), (p: string) => loaders.getSourceFilePath(p))); // prettier-ignore
+  for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i), (p: string) => loaders.getSourceFileHash(p))); // prettier-ignore
   if (page.style && isPathImport(page.style)) hash.update(loaders.getSourceFileHash(resolvePath(path, page.style)));
 
   // Add implicit imports for standard library built-ins, such as d3 and Plot.
@@ -330,13 +330,13 @@ async function resolveResolvers(
     }
   }
 
-  function resolveSourceFile(path: string): string {
-    return loaders.getSourceFilePath(path);
+  function getSourceHash(path: string): string {
+    return loaders.getSourceFileHash(path);
   }
 
   function resolveImport(specifier: string): string {
     return isPathImport(specifier)
-      ? relativePath(path, resolveImportPath(root, resolvePath(path, specifier), resolveSourceFile))
+      ? relativePath(path, resolveImportPath(root, resolvePath(path, specifier), getSourceHash))
       : builtins.has(specifier)
       ? relativePath(path, builtins.get(specifier)!)
       : specifier.startsWith("observablehq:")
@@ -460,8 +460,8 @@ export function resolveStylesheetPath(root: string, path: string): string {
   return `/${join("_import", path)}?sha=${getFileHash(root, path)}`;
 }
 
-export function resolveImportPath(root: string, path: string, resolveFile?: (name: string) => string): string {
-  return `/${join("_import", path)}?sha=${getModuleHash(root, path, resolveFile)}`;
+export function resolveImportPath(root: string, path: string, getHash?: (name: string) => string): string {
+  return `/${join("_import", path)}?sha=${getModuleHash(root, path, getHash)}`;
 }
 
 // Returns any inputs that are not declared in outputs. These typically refer to
