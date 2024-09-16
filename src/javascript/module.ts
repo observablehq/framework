@@ -54,11 +54,11 @@ const moduleInfoCache = new Map<string, ModuleInfo>();
  * has invalid syntax, returns the hash of empty content; likewise ignores any
  * transitive imports or files that are invalid or do not exist.
  */
-export function getModuleHash(root: string, path: string, getHash?: (path: string) => string): string {
+export function getModuleHash(root: string, path: string, getHash?: (p: string) => string): string {
   return getModuleHashInternal(root, path, getHash).digest("hex");
 }
 
-function getModuleHashInternal(root: string, path: string, getHash = (path: string) => getFileHash(root, path)): Hash {
+function getModuleHashInternal(root: string, path: string, getHash = (p: string) => getFileHash(root, p)): Hash {
   const hash = createHash("sha256");
   const paths = new Set([path]);
   for (const path of paths) {
@@ -88,11 +88,7 @@ function getModuleHashInternal(root: string, path: string, getHash = (path: stri
  * during build because we want the hash of the built module to change if the
  * version of an imported npm package changes.
  */
-export async function getLocalModuleHash(
-  root: string,
-  path: string,
-  getHash?: (path: string) => string
-): Promise<string> {
+export async function getLocalModuleHash(root: string, path: string, getHash?: (p: string) => string): Promise<string> {
   const hash = getModuleHashInternal(root, path, getHash);
   const info = getModuleInfo(root, path);
   if (info) {

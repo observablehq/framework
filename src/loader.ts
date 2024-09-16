@@ -16,6 +16,7 @@ import {findModule, getFileInfo} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage, ParseOptions} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
+import {getModuleResolver, resolveImportPath} from "./resolvers.js";
 import type {Params} from "./route.js";
 import {isParameterized, requote, route} from "./route.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
@@ -318,6 +319,14 @@ export class LoaderResolver {
 
   getOutputInfo(name: string): FileInfo | undefined {
     return getFileInfo(this.root, this.getOutputFilePath(name));
+  }
+
+  getModuleResolver(path: string, servePath?: string): (specifier: string) => Promise<string> {
+    return getModuleResolver(this.root, path, servePath, (p) => this.getSourceFileHash(p));
+  }
+
+  resolveImportPath(path: string): string {
+    return resolveImportPath(this.root, path, (p) => this.getSourceFileHash(p));
   }
 
   resolveFilePath(path: string): string {

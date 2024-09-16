@@ -12,8 +12,8 @@ import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {getModuleResolver, getModuleResolvers, getResolvers} from "./resolvers.js";
-import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
+import {getModuleResolvers, getResolvers} from "./resolvers.js";
+import {resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -239,7 +239,7 @@ export async function build(
     const sourcePath = join(root, module.path);
     const importPath = join("_import", module.path);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    const resolveImport = getModuleResolver(root, path);
+    const resolveImport = loaders.getModuleResolver(path);
     const input = await readJavaScript(sourcePath);
     const contents = await transpileModule(input, {
       root,
@@ -267,7 +267,7 @@ export async function build(
       }
     });
     const alias = await resolveLocalImport(path);
-    aliases.set(resolveImportPath(root, path, (name) => loaders.getSourceFileHash(name)), alias);
+    aliases.set(loaders.resolveImportPath(path), alias);
     await effects.writeFile(alias, contents);
   }
 
