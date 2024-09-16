@@ -12,7 +12,7 @@ import {maybeStat, prepareOutput, visitFiles} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
 import type {FileInfo} from "./javascript/module.js";
-import {findModule, getFileInfo} from "./javascript/module.js";
+import {findModule, getFileInfo, getLocalModuleHash} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage, ParseOptions} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
@@ -319,6 +319,10 @@ export class LoaderResolver {
 
   getOutputInfo(name: string): FileInfo | undefined {
     return getFileInfo(this.root, this.getOutputFilePath(name));
+  }
+
+  getLocalModuleHash(path: string): Promise<string> {
+    return getLocalModuleHash(this.root, path, (p) => this.getOutputFileHash(p));
   }
 
   getModuleResolver(path: string, servePath?: string): (specifier: string) => Promise<string> {

@@ -4,7 +4,7 @@ import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError} from "./error.js";
 import {getClientPath, prepareOutput} from "./files.js";
-import {findModule, getLocalModuleHash, getModuleHash, readJavaScript} from "./javascript/module.js";
+import {findModule, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
@@ -230,7 +230,7 @@ export async function build(
   // string. Note that this hash is not of the content of the module itself, but
   // of the transitive closure of the module and its imports and files.
   const resolveLocalImport = async (path: string): Promise<string> => {
-    const hash = (await getLocalModuleHash(root, path, (p) => loaders.getOutputFileHash(p))).slice(0, 8);
+    const hash = (await loaders.getLocalModuleHash(path)).slice(0, 8);
     return applyHash(join("/_import", path), hash);
   };
   for (const path of localImports) {
