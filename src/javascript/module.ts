@@ -88,8 +88,12 @@ function getModuleHashInternal(root: string, path: string, getHash = (path: stri
  * during build because we want the hash of the built module to change if the
  * version of an imported npm package changes.
  */
-export async function getLocalModuleHash(root: string, path: string): Promise<string> {
-  const hash = getModuleHashInternal(root, path);
+export async function getLocalModuleHash(
+  root: string,
+  path: string,
+  getHash?: (path: string) => string
+): Promise<string> {
+  const hash = getModuleHashInternal(root, path, getHash);
   const info = getModuleInfo(root, path);
   if (info) {
     const globalPaths = new Set<string>();

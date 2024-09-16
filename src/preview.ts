@@ -29,7 +29,7 @@ import {populateNpmCache} from "./npm.js";
 import {isPathImport, resolvePath} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {getResolvers} from "./resolvers.js";
+import {getModuleResolver, getResolvers} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import type {Params} from "./route.js";
 import {route} from "./route.js";
@@ -162,6 +162,7 @@ export class PreviewServer {
               root,
               path,
               params: module.params,
+              resolveImport: getModuleResolver(root, path, undefined, (name) => loaders.getSourceFileHash(name)),
               resolveFile: (name) => loaders.resolveFilePath(resolvePath(path, name)),
               resolveFileInfo: (name) => loaders.getSourceInfo(resolvePath(path, name))
             });

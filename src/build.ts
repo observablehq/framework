@@ -230,7 +230,7 @@ export async function build(
   // string. Note that this hash is not of the content of the module itself, but
   // of the transitive closure of the module and its imports and files.
   const resolveLocalImport = async (path: string): Promise<string> => {
-    const hash = (await getLocalModuleHash(root, path)).slice(0, 8);
+    const hash = (await getLocalModuleHash(root, path, (p) => loaders.getOutputFileHash(p))).slice(0, 8);
     return applyHash(join("/_import", path), hash);
   };
   for (const path of localImports) {
@@ -267,7 +267,7 @@ export async function build(
       }
     });
     const alias = await resolveLocalImport(path);
-    aliases.set(resolveImportPath(root, path), alias);
+    aliases.set(resolveImportPath(root, path, (name) => loaders.getSourceFileHash(name)), alias);
     await effects.writeFile(alias, contents);
   }
 

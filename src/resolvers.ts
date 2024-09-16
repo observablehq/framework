@@ -169,7 +169,7 @@ export async function getModuleResolvers(path: string, config: Omit<ResolversCon
   const {root} = config;
   return {
     path,
-    hash: getModuleHash(root, path), // TODO needs getHash?
+    hash: getModuleHash(root, path),
     assets: new Set(),
     ...(await resolveResolvers({localImports: [path], staticImports: [path]}, {path, ...config}))
   };
@@ -439,11 +439,12 @@ export async function getModuleStaticImports(root: string, path: string): Promis
 export function getModuleResolver(
   root: string,
   path: string,
-  servePath = `/${join("_import", path)}`
+  servePath = `/${join("_import", path)}`,
+  getHash?: (path: string) => string
 ): (specifier: string) => Promise<string> {
   return async (specifier) => {
     return isPathImport(specifier)
-      ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier))) // TODO needs getHash?
+      ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier), getHash))
       : builtins.has(specifier)
       ? relativePath(servePath, builtins.get(specifier)!)
       : specifier.startsWith("observablehq:")
