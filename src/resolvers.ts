@@ -83,7 +83,7 @@ export const builtins = new Map<string, string>([
  * them to any files referenced by static HTML.
  */
 export async function getResolvers(page: MarkdownPage, config: ResolversConfig): Promise<Resolvers> {
-  const {root, path, globalStylesheets: defaultStylesheets, loaders} = config;
+  const {path, globalStylesheets: defaultStylesheets, loaders} = config;
   const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
   const assets = new Set<string>();
   const files = new Set<string>();
@@ -330,13 +330,9 @@ async function resolveResolvers(
     }
   }
 
-  function getSourceHash(path: string): string {
-    return loaders.getSourceFileHash(path);
-  }
-
   function resolveImport(specifier: string): string {
     return isPathImport(specifier)
-      ? relativePath(path, resolveImportPath(root, resolvePath(path, specifier), getSourceHash))
+      ? relativePath(path, loaders.resolveImportPath(resolvePath(path, specifier)))
       : builtins.has(specifier)
       ? relativePath(path, builtins.get(specifier)!)
       : specifier.startsWith("observablehq:")
