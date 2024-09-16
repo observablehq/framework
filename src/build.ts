@@ -1,10 +1,10 @@
 import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
-import {access, constants, copyFile, readFile, realpath, stat, writeFile} from "node:fs/promises";
+import {access, constants, copyFile, readFile, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError, isEnoent} from "./error.js";
-import {getClientPath, maybeStat, prepareOutput, visitMarkdownFiles} from "./files.js";
+import {getClientPath, prepareOutput, visitMarkdownFiles} from "./files.js";
 import {getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
@@ -359,15 +359,15 @@ export class FileBuildEffects implements BuildEffects {
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
     this.logger.log(destination);
-    await noClobber(destination);
     await prepareOutput(destination);
+    if (existsSync(destination)) throw new Error(`file conflict: ${outputPath}`);
     await copyFile(sourcePath, destination);
   }
   async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
     this.logger.log(destination);
-    await noClobber(destination);
     await prepareOutput(destination);
+    if (existsSync(destination)) throw new Error(`file conflict: ${outputPath}`);
     await writeFile(destination, contents);
   }
   async writeBuildManifest(buildManifest: BuildManifest): Promise<void> {
@@ -379,14 +379,4 @@ export class FileBuildEffects implements BuildEffects {
 
 export interface BuildManifest {
   pages: {path: string; title: string | null}[];
-}
-
-// Asserts that the destination file is not already present. This can happen if
-// the same file is referenced with inconsistent naming (e.g. upper vs.
-// lowercase), and would result in a broken site.
-async function noClobber(path) {
-  if (await maybeStat(path)) {
-    const real = (await realpath(path)).slice((await realpath(".")).length + 1);
-    throw new Error(`${faint("File name conflict over")} ${real}.`);
-  }
 }
