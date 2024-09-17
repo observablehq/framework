@@ -1,4 +1,5 @@
 import {createHash} from "node:crypto";
+import {existsSync} from "node:fs";
 import {copyFile, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
@@ -424,12 +425,14 @@ export class FileBuildEffects implements BuildEffects {
     const destination = join(this.outputRoot, outputPath);
     this.logger.log(destination);
     await prepareOutput(destination);
+    if (existsSync(destination)) throw new Error(`file conflict: ${outputPath}`);
     await copyFile(sourcePath, destination);
   }
   async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
     this.logger.log(destination);
     await prepareOutput(destination);
+    if (existsSync(destination)) throw new Error(`file conflict: ${outputPath}`);
     await writeFile(destination, contents);
   }
   async writeBuildManifest(buildManifest: BuildManifest): Promise<void> {
