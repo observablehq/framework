@@ -5,7 +5,7 @@ import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
 import {CliError} from "./error.js";
 import {getClientPath, prepareOutput} from "./files.js";
-import {findModule, getLocalModuleHash, getModuleHash, readJavaScript} from "./javascript/module.js";
+import {findModule, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
@@ -13,8 +13,8 @@ import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
-import {getModuleResolver, getModuleResolvers, getResolvers} from "./resolvers.js";
-import {resolveImportPath, resolveStylesheetPath} from "./resolvers.js";
+import {getModuleResolvers, getResolvers} from "./resolvers.js";
+import {resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
@@ -231,7 +231,7 @@ export async function build(
   // string. Note that this hash is not of the content of the module itself, but
   // of the transitive closure of the module and its imports and files.
   const resolveLocalImport = async (path: string): Promise<string> => {
-    const hash = (await getLocalModuleHash(root, path)).slice(0, 8);
+    const hash = (await loaders.getLocalModuleHash(path)).slice(0, 8);
     return applyHash(join("/_import", path), hash);
   };
   for (const path of localImports) {
@@ -240,7 +240,7 @@ export async function build(
     const sourcePath = join(root, module.path);
     const importPath = join("_import", module.path);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
-    const resolveImport = getModuleResolver(root, path);
+    const resolveImport = loaders.getModuleResolver(path);
     const input = await readJavaScript(sourcePath);
     const contents = await transpileModule(input, {
       root,
@@ -268,7 +268,7 @@ export async function build(
       }
     });
     const alias = await resolveLocalImport(path);
-    aliases.set(resolveImportPath(root, path), alias);
+    aliases.set(loaders.resolveImportPath(path), alias);
     await effects.writeFile(alias, contents);
   }
 
