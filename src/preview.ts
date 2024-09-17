@@ -45,6 +45,7 @@ export interface PreviewOptions {
   port?: number;
   origins?: string[];
   verbose?: boolean;
+  dependencies?: Set<string>;
 }
 
 export async function preview(options: PreviewOptions): Promise<PreviewServer> {
@@ -58,19 +59,22 @@ export class PreviewServer {
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _verbose: boolean;
+  private readonly dependencies: Set<string> | undefined;
 
   private constructor({
     config,
     root,
     origins = [],
     server,
-    verbose
+    verbose,
+    dependencies
   }: {
     config?: string;
     root?: string;
     origins?: string[];
     server: Server;
     verbose: boolean;
+    dependencies?: Set<string>;
   }) {
     this._config = config;
     this._root = root;
@@ -80,6 +84,7 @@ export class PreviewServer {
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
     this._socketServer.on("connection", this._handleConnection);
+    this.dependencies = dependencies;
   }
 
   static async start({verbose = true, hostname, port, open, ...options}: PreviewOptions) {
@@ -172,6 +177,7 @@ export class PreviewServer {
         }
         throw enoent(path);
       } else if (pathname.startsWith("/_file/")) {
+        if (this.dependencies) this.dependencies.add(pathname.slice("/_file".length));
         send(req, await loaders.loadFile(pathname.slice("/_file".length)), {root}).pipe(res);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);

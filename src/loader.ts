@@ -1,13 +1,13 @@
 import {createHash} from "node:crypto";
 import type {FSWatcher, WatchListener, WriteStream} from "node:fs";
-import {createReadStream, existsSync, statSync, watch} from "node:fs";
-import {open, readFile, rename, unlink} from "node:fs/promises";
+import {createReadStream, existsSync, readFileSync, statSync, watch} from "node:fs";
+import {open, readFile, rename, rm, unlink, writeFile} from "node:fs/promises";
 import {dirname, extname, join} from "node:path/posix";
 import {createGunzip} from "node:zlib";
 import {spawn} from "cross-spawn";
 import JSZip from "jszip";
 import {extract} from "tar-stream";
-import {enoent} from "./error.js";
+import {enoent, isEnoent} from "./error.js";
 import {maybeStat, prepareOutput, visitFiles} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
@@ -16,6 +16,7 @@ import {findModule, getFileInfo, getLocalModuleHash, getModuleHash} from "./java
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage, ParseOptions} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
+import {preview} from "./preview.js";
 import {getModuleResolver, resolveImportPath} from "./resolvers.js";
 import type {Params} from "./route.js";
 import {isParameterized, requote, route} from "./route.js";
@@ -51,6 +52,9 @@ const defaultEffects: LoadEffects = {
 export interface LoadOptions {
   /** Whether to use a stale cache; true when building. */
   useStale?: boolean;
+
+  /** An asset server for chained data loaders. */
+  FILE_SERVER?: string;
 }
 
 export interface LoaderOptions {
@@ -61,7 +65,7 @@ export interface LoaderOptions {
 }
 
 export class LoaderResolver {
-  private readonly root: string;
+  readonly root: string;
   private readonly interpreters: Map<string, string[]>;
 
   constructor({root, interpreters}: {root: string; interpreters?: Record<string, string[] | null>}) {
@@ -304,7 +308,21 @@ export class LoaderResolver {
     const info = getFileInfo(this.root, path);
     if (!info) return createHash("sha256").digest("hex");
     const {hash} = info;
-    return path === name ? hash : createHash("sha256").update(hash).update(String(info.mtimeMs)).digest("hex");
+    if (path === name) return hash;
+    const hash2 = createHash("sha256").update(hash).update(String(info.mtimeMs));
+    try {
+      for (const path of JSON.parse(
+        readFileSync(join(this.root, ".observablehq", "cache", `${name}__dependencies`), "utf-8")
+      )) {
+        const info = getFileInfo(this.root, this.getSourceFilePath(path));
+        if (info) hash2.update(info.hash).update(String(info.mtimeMs));
+      }
+    } catch (error) {
+      if (!isEnoent(error)) {
+        throw error;
+      }
+    }
+    return hash2.digest("hex");
   }
 
   getOutputFileHash(name: string): string {
@@ -417,12 +435,37 @@ abstract class AbstractLoader implements Loader {
         const outputPath = join(".observablehq", "cache", this.targetPath);
         const cachePath = join(this.root, outputPath);
         const loaderStat = await maybeStat(loaderPath);
-        const cacheStat = await maybeStat(cachePath);
-        if (!cacheStat) effects.output.write(faint("[missing] "));
-        else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) {
-          if (useStale) return effects.output.write(faint("[using stale] ")), outputPath;
-          else effects.output.write(faint("[stale] "));
-        } else return effects.output.write(faint("[fresh] ")), outputPath;
+        const paths = new Set([cachePath]);
+        try {
+          for (const path of JSON.parse(await readFile(`${cachePath}__dependencies`, "utf-8"))) paths.add(path);
+        } catch (error) {
+          if (!isEnoent(error)) {
+            throw error;
+          }
+        }
+
+        const FRESH = 0;
+        const STALE = 1;
+        const MISSING = 2;
+        let status = FRESH;
+        for (const path of paths) {
+          const cacheStat = await maybeStat(path);
+          if (!cacheStat) {
+            status = MISSING;
+            break;
+          } else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) status = Math.max(status, STALE);
+        }
+        switch (status) {
+          case FRESH:
+            return effects.output.write(faint("[fresh] ")), outputPath;
+          case STALE:
+            if (useStale) return effects.output.write(faint("[using stale] ")), outputPath;
+            effects.output.write(faint("[stale] "));
+            break;
+          case MISSING:
+            effects.output.write(faint("[missing] "));
+            break;
+        }
         const tempPath = join(this.root, ".observablehq", "cache", `${this.targetPath}.${process.pid}`);
         const errorPath = tempPath + ".err";
         const errorStat = await maybeStat(errorPath);
@@ -434,8 +477,17 @@ abstract class AbstractLoader implements Loader {
         await prepareOutput(tempPath);
         await prepareOutput(cachePath);
         const tempFd = await open(tempPath, "w");
+
+        // Launch a server for chained data loaders. TODO configure host?
+        const dependencies = new Set<string>();
+        const {server} = await preview({root: this.root, verbose: false, hostname: "127.0.0.1", dependencies});
+        const address = server.address();
+        if (!address || typeof address !== "object")
+          throw new Error("Couldn't launch server for chained data loaders!");
+        const FILE_SERVER = `http://${address.address}:${address.port}/_file/`;
+
         try {
-          await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), {useStale}, effects);
+          await this.exec(tempFd.createWriteStream({highWaterMark: 1024 * 1024}), {useStale, FILE_SERVER}, effects);
           await rename(tempPath, cachePath);
         } catch (error) {
           await rename(tempPath, errorPath);
@@ -443,6 +495,19 @@ abstract class AbstractLoader implements Loader {
         } finally {
           await tempFd.close();
         }
+
+        const cachedeps = `${cachePath}__dependencies`;
+        if (dependencies.size) await writeFile(cachedeps, JSON.stringify([...dependencies]), "utf-8");
+        else
+          try {
+            await rm(cachedeps);
+          } catch (error) {
+            if (!isEnoent(error)) throw error;
+          }
+
+        // TODO: server.close() might be enough?
+        await new Promise((closed) => server.close(closed));
+
         return outputPath;
       })();
       command.finally(() => runningCommands.delete(key)).catch(() => {});
@@ -495,8 +560,12 @@ class CommandLoader extends AbstractLoader {
     this.args = args;
   }
 
-  async exec(output: WriteStream): Promise<void> {
-    const subprocess = spawn(this.command, this.args, {windowsHide: true, stdio: ["ignore", output, "inherit"]});
+  async exec(output: WriteStream, {FILE_SERVER}): Promise<void> {
+    const subprocess = spawn(this.command, this.args, {
+      windowsHide: true,
+      stdio: ["ignore", output, "inherit"],
+      env: {...process.env, FILE_SERVER}
+    });
     const code = await new Promise((resolve, reject) => {
       subprocess.on("error", reject);
       subprocess.on("close", resolve);
