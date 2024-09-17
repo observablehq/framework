@@ -17,7 +17,6 @@ export class FileWatchers {
       for (const p of chainDependencies(root, resolvePath(path, name))) {
         const watchPath = loaders.getWatchPath(p);
         if (!watchPath) continue;
-        console.warn(watchPath, "for", name);
         let currentStat = await maybeStat(watchPath);
         let watcher: FSWatcher;
         const index = watchers.length;
