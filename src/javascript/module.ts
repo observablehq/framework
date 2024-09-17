@@ -54,11 +54,11 @@ const moduleInfoCache = new Map<string, ModuleInfo>();
  * has invalid syntax, returns the hash of empty content; likewise ignores any
  * transitive imports or files that are invalid or do not exist.
  */
-export function getModuleHash(root: string, path: string): string {
-  return getModuleHashInternal(root, path).digest("hex");
+export function getModuleHash(root: string, path: string, getHash?: (p: string) => string): string {
+  return getModuleHashInternal(root, path, getHash).digest("hex");
 }
 
-function getModuleHashInternal(root: string, path: string): Hash {
+function getModuleHashInternal(root: string, path: string, getHash = (p: string) => getFileHash(root, p)): Hash {
   const hash = createHash("sha256");
   const paths = new Set([path]);
   for (const path of paths) {
@@ -73,14 +73,10 @@ function getModuleHashInternal(root: string, path: string): Hash {
         paths.add(resolvePath(path, i));
       }
       for (const i of info.files) {
-        const f = getFileInfo(root, resolvePath(path, i));
-        if (!f) continue; // ignore missing file
-        hash.update(f.hash);
+        hash.update(getHash(resolvePath(path, i)));
       }
     } else {
-      const info = getFileInfo(root, path); // e.g., import.meta.resolve("foo.json")
-      if (!info) continue; // ignore missing file
-      hash.update(info.hash);
+      hash.update(getHash(path)); // e.g., import.meta.resolve("foo.json")
     }
   }
   return hash;
@@ -92,8 +88,8 @@ function getModuleHashInternal(root: string, path: string): Hash {
  * during build because we want the hash of the built module to change if the
  * version of an imported npm package changes.
  */
-export async function getLocalModuleHash(root: string, path: string): Promise<string> {
-  const hash = getModuleHashInternal(root, path);
+export async function getLocalModuleHash(root: string, path: string, getHash?: (p: string) => string): Promise<string> {
+  const hash = getModuleHashInternal(root, path, getHash);
   const info = getModuleInfo(root, path);
   if (info) {
     const globalPaths = new Set<string>();
