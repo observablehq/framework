@@ -309,18 +309,10 @@ export class LoaderResolver {
     if (!info) return createHash("sha256").digest("hex");
     const {hash} = info;
     if (path === name) return hash;
-    const hash2 = createHash("sha256").update(hash).update(String(info.mtimeMs));
-    try {
-      for (const path of JSON.parse(
-        readFileSync(join(this.root, ".observablehq", "cache", `${name}__dependencies`), "utf-8")
-      )) {
-        const info = getFileInfo(this.root, this.getSourceFilePath(path));
-        if (info) hash2.update(info.hash).update(String(info.mtimeMs));
-      }
-    } catch (error) {
-      if (!isEnoent(error)) {
-        throw error;
-      }
+    const hash2 = createHash("sha256");
+    for (const p of chainDependencies(this.root, name)) {
+      const info = getFileInfo(this.root, this.getSourceFilePath(p));
+      if (info) hash2.update(info.hash).update(String(info.mtimeMs));
     }
     return hash2.digest("hex");
   }
@@ -432,29 +424,22 @@ abstract class AbstractLoader implements Loader {
     let command = runningCommands.get(key);
     if (!command) {
       command = (async () => {
-        const outputPath = join(".observablehq", "cache", this.targetPath);
-        const cachePath = join(this.root, outputPath);
         const loaderStat = await maybeStat(loaderPath);
-        const paths = new Set([cachePath]);
-        try {
-          for (const path of JSON.parse(await readFile(`${cachePath}__dependencies`, "utf-8"))) paths.add(path);
-        } catch (error) {
-          if (!isEnoent(error)) {
-            throw error;
-          }
-        }
-
+        const paths = chainDependencies(this.root, this.targetPath);
         const FRESH = 0;
         const STALE = 1;
         const MISSING = 2;
         let status = FRESH;
         for (const path of paths) {
-          const cacheStat = await maybeStat(path);
+          const cachePath = join(this.root, ".observablehq", "cache", path);
+          const cacheStat = await maybeStat(cachePath);
           if (!cacheStat) {
             status = MISSING;
             break;
           } else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) status = Math.max(status, STALE);
         }
+        const outputPath = join(".observablehq", "cache", this.targetPath);
+        const cachePath = join(this.root, outputPath);
         switch (status) {
           case FRESH:
             return effects.output.write(faint("[fresh] ")), outputPath;
@@ -650,4 +635,19 @@ const extractors = new Map<string, new (options: ExtractorOptions) => Loader>([
 function formatElapsed(start: number): string {
   const elapsed = performance.now() - start;
   return `${Math.floor(elapsed)}ms`;
+}
+
+export function chainDependencies(root: string, path: string): Set<string> {
+  const paths = new Set([path]);
+  for (const path of paths) {
+    try {
+      for (const f of JSON.parse(readFileSync(join(root, ".observablehq", "cache", `${path}__dependencies`), "utf-8")))
+        paths.add(f);
+    } catch (error) {
+      if (!isEnoent(error)) {
+        throw error;
+      }
+    }
+  }
+  return paths;
 }

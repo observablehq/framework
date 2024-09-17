@@ -1,8 +1,8 @@
 import type {FSWatcher} from "node:fs";
-import {readFileSync, watch} from "node:fs";
-import {join} from "node:path/posix";
+import {watch} from "node:fs";
 import {isEnoent} from "./error.js";
 import {maybeStat} from "./files.js";
+import {chainDependencies} from "./loader.js";
 import type {LoaderResolver} from "./loader.js";
 import {resolvePath} from "./path.js";
 
@@ -14,23 +14,10 @@ export class FileWatchers {
     const {watchers} = that;
     const {root} = loaders;
     for (const name of names) {
-      const path0 = resolvePath(path, name);
-      const paths = new Set([path0]);
-      try {
-        for (const path of JSON.parse(
-          readFileSync(join(root, ".observablehq", "cache", `${path0}__dependencies`), "utf-8")
-        ))
-          paths.add(path);
-      } catch (error) {
-        if (!isEnoent(error)) {
-          throw error;
-        }
-      }
-
-      for (const path of paths) {
-        const watchPath = loaders.getWatchPath(path);
+      for (const p of chainDependencies(root, resolvePath(path, name))) {
+        const watchPath = loaders.getWatchPath(p);
         if (!watchPath) continue;
-        console.warn(watchPath, name);
+        console.warn(watchPath, "for", name);
         let currentStat = await maybeStat(watchPath);
         let watcher: FSWatcher;
         const index = watchers.length;
