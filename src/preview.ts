@@ -162,6 +162,7 @@ export class PreviewServer {
               root,
               path,
               params: module.params,
+              resolveImport: loaders.getModuleResolver(path),
               resolveFile: (name) => loaders.resolveFilePath(resolvePath(path, name)),
               resolveFileInfo: (name) => loaders.getSourceInfo(resolvePath(path, name))
             });

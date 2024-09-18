@@ -84,7 +84,7 @@ export const builtins = new Map<string, string>([
  * them to any files referenced by static HTML.
  */
 export async function getResolvers(page: MarkdownPage, config: ResolversConfig): Promise<Resolvers> {
-  const {root, path, globalStylesheets: defaultStylesheets, loaders} = config;
+  const {path, globalStylesheets: defaultStylesheets, loaders} = config;
   const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
   const assets = new Set<string>();
   const files = new Set<string>();
@@ -132,7 +132,7 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
   // Compute the content hash.
   for (const f of assets) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
   for (const f of files) hash.update(loaders.getSourceFileHash(resolvePath(path, f)));
-  for (const i of localImports) hash.update(getModuleHash(root, resolvePath(path, i)));
+  for (const i of localImports) hash.update(loaders.getModuleHash(resolvePath(path, i)));
   if (page.style && isPathImport(page.style)) hash.update(loaders.getSourceFileHash(resolvePath(path, page.style)));
 
   // Add implicit imports for standard library built-ins, such as d3 and Plot.
@@ -364,7 +364,7 @@ async function resolveResolvers(
 
   function resolveImport(specifier: string): string {
     return isPathImport(specifier)
-      ? relativePath(path, resolveImportPath(root, resolvePath(path, specifier)))
+      ? relativePath(path, loaders.resolveImportPath(resolvePath(path, specifier)))
       : builtins.has(specifier)
       ? relativePath(path, builtins.get(specifier)!)
       : specifier.startsWith("observablehq:")
@@ -473,11 +473,12 @@ export async function getModuleStaticImports(root: string, path: string): Promis
 export function getModuleResolver(
   root: string,
   path: string,
-  servePath = `/${join("_import", path)}`
+  servePath = `/${join("_import", path)}`,
+  getHash?: (path: string) => string
 ): (specifier: string) => Promise<string> {
   return async (specifier) => {
     return isPathImport(specifier)
-      ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier)))
+      ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier), getHash))
       : builtins.has(specifier)
       ? relativePath(servePath, builtins.get(specifier)!)
       : specifier.startsWith("observablehq:")
@@ -496,8 +497,8 @@ export function resolveStylesheetPath(root: string, path: string): string {
   return `/${join("_import", path)}?sha=${getFileHash(root, path)}`;
 }
 
-export function resolveImportPath(root: string, path: string): string {
-  return `/${join("_import", path)}?sha=${getModuleHash(root, path)}`;
+export function resolveImportPath(root: string, path: string, getHash?: (name: string) => string): string {
+  return `/${join("_import", path)}?sha=${getModuleHash(root, path, getHash)}`;
 }
 
 // Returns any inputs that are not declared in outputs. These typically refer to

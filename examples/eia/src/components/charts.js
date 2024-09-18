@@ -16,9 +16,10 @@ function friendlyTypeName(d) {
 export function top5BalancingAuthoritiesChart(width, height, top5Demand, maxDemand) {
   return Plot.plot({
     marginTop: 8,
-    marginLeft: 250,
+    marginLeft: Math.min(width/2, 250),
     height: height - 4,
     width,
+    style: "overflow: hidden;",
     y: {label: null, tickSize: 0},
     x: {label: null, grid: true, tickSize: 0, tickPadding: 2, domain: [0, maxDemand / 1000], nice: true},
     marks: [

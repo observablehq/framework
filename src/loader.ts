@@ -12,10 +12,11 @@ import {maybeStat, prepareOutput, visitFiles} from "./files.js";
 import {FileWatchers} from "./fileWatchers.js";
 import {formatByteSize} from "./format.js";
 import type {FileInfo} from "./javascript/module.js";
-import {findModule, getFileInfo} from "./javascript/module.js";
+import {findModule, getFileInfo, getLocalModuleHash, getModuleHash} from "./javascript/module.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage, ParseOptions} from "./markdown.js";
 import {parseMarkdown} from "./markdown.js";
+import {getModuleResolver, resolveImportPath} from "./resolvers.js";
 import type {Params} from "./route.js";
 import {isParameterized, requote, route} from "./route.js";
 import {cyan, faint, green, red, yellow} from "./tty.js";
@@ -255,12 +256,8 @@ export class LoaderResolver {
     const exactPath = join(this.root, path);
     if (existsSync(exactPath)) return exactPath;
     if (exactPath.endsWith(".js")) {
-      const basePath = exactPath.slice(0, -".js".length);
-      for (const ext of [".ts", ".jsx", ".tsx"]) {
-        const extPath = basePath + ext;
-        if (existsSync(extPath)) return extPath;
-      }
-      return; // loaders aren’t supported for .js
+      const module = findModule(this.root, path);
+      return module && join(this.root, module.path);
     }
     const foundPath = this.find(path)?.path;
     if (foundPath) return join(this.root, foundPath);
@@ -310,12 +307,34 @@ export class LoaderResolver {
     return path === name ? hash : createHash("sha256").update(hash).update(String(info.mtimeMs)).digest("hex");
   }
 
+  getOutputFileHash(name: string): string {
+    const info = this.getOutputInfo(name);
+    if (!info) throw new Error(`output file not found: ${name}`);
+    return info.hash;
+  }
+
   getSourceInfo(name: string): FileInfo | undefined {
     return getFileInfo(this.root, this.getSourceFilePath(name));
   }
 
   getOutputInfo(name: string): FileInfo | undefined {
     return getFileInfo(this.root, this.getOutputFilePath(name));
+  }
+
+  getLocalModuleHash(path: string): Promise<string> {
+    return getLocalModuleHash(this.root, path, (p) => this.getOutputFileHash(p));
+  }
+
+  getModuleHash(path: string): string {
+    return getModuleHash(this.root, path, (p) => this.getSourceFileHash(p));
+  }
+
+  getModuleResolver(path: string, servePath?: string): (specifier: string) => Promise<string> {
+    return getModuleResolver(this.root, path, servePath, (p) => this.getSourceFileHash(p));
+  }
+
+  resolveImportPath(path: string): string {
+    return resolveImportPath(this.root, path, (p) => this.getSourceFileHash(p));
   }
 
   resolveFilePath(path: string): string {
@@ -389,7 +408,7 @@ abstract class AbstractLoader implements Loader {
     this.targetPath = targetPath;
   }
 
-  async load({useStale = true}: LoadOptions = {}, effects = defaultEffects): Promise<string> {
+  async load({useStale = false}: LoadOptions = {}, effects = defaultEffects): Promise<string> {
     const loaderPath = join(this.root, this.path);
     const key = join(this.root, this.targetPath);
     let command = runningCommands.get(key);
