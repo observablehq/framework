@@ -36,7 +36,7 @@ export function formatNpmSpecifier({name, range, path}: NpmSpecifier): string {
 }
 
 /** Rewrites /npm/ import specifiers to be relative paths to /_npm/. */
-export function rewriteNpmImports(input: string, resolve: (specifier: string) => string = String): string {
+export function rewriteNpmImports(input: string, resolve: (s: string) => string | void = () => undefined): string {
   const body = parseProgram(input);
   const output = new Sourcemap(input);
 
@@ -63,7 +63,8 @@ export function rewriteNpmImports(input: string, resolve: (specifier: string) =>
   function rewriteImportSource(source: StringLiteral) {
     const value = getStringLiteralValue(source);
     const resolved = resolve(value);
-    if (value !== resolved) output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
+    if (resolved === undefined || value === resolved) return;
+    output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
   }
 
   // TODO Preserve the source map, but download it too.
@@ -178,9 +179,9 @@ export async function getDependencyResolver(
   };
 }
 
-async function initializeNpmVersionCache(root: string): Promise<Map<string, string[]>> {
+export async function initializeNpmVersionCache(root: string, dir = "_npm"): Promise<Map<string, string[]>> {
   const cache = new Map<string, string[]>();
-  const cacheDir = join(root, ".observablehq", "cache", "_npm");
+  const cacheDir = join(root, ".observablehq", "cache", dir);
   try {
     for (const entry of await readdir(cacheDir)) {
       if (entry.startsWith("@")) {
@@ -211,7 +212,7 @@ const npmVersionRequests = new Map<string, Promise<string>>();
 
 function getNpmVersionCache(root: string): Promise<Map<string, string[]>> {
   let cache = npmVersionCaches.get(root);
-  if (!cache) npmVersionCaches.set(root, (cache = initializeNpmVersionCache(root)));
+  if (!cache) npmVersionCaches.set(root, (cache = initializeNpmVersionCache(root, "_npm")));
   return cache;
 }
 

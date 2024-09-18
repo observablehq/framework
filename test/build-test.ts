@@ -9,6 +9,7 @@ import type {BuildManifest} from "../src/build.js";
 import {FileBuildEffects, build} from "../src/build.js";
 import {normalizeConfig, readConfig, setCurrentDate} from "../src/config.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
+import {mockJsr} from "./mocks/jsr.js";
 
 const silentEffects = {
   logger: {log() {}, warn() {}, error() {}},
@@ -31,6 +32,7 @@ const failureTests = ["missing-file", "missing-import"];
 describe("build", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   mockJsDelivr();
+  mockJsr();
 
   // Each sub-directory of test/input/build is a test case.
   const inputRoot = "test/input/build";
