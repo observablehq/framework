@@ -11,7 +11,7 @@ function getOptions({path, ...config}: ConfigSpec & {path: string}): Config & {p
 
 describe("getResolvers(page, {root, path})", () => {
   mockJsDelivr();
-  const builtins = ["npm:@observablehq/runtime", "npm:@observablehq/stdlib", "observablehq:client"];
+  const builtins = ["observablehq:runtime", "observablehq:stdlib", "observablehq:client"];
   it("resolves directly-attached files", async () => {
     const options = getOptions({root: "test/input", path: "attached.md"});
     const page = parseMarkdown("${FileAttachment('foo.csv')}", options);
@@ -250,6 +250,6 @@ describe("getModuleStaticImports(root, path)", () => {
   });
   it("returns transitive global static imports", async () => {
     assert.deepStrictEqual(await getModuleStaticImports("test/input/imports", "static-npm-import.js"), ["npm:canvas-confetti"]); // prettier-ignore
-    assert.deepStrictEqual(await getModuleStaticImports("test/input/imports", "local-fetch-from-import.js"), ["./baz.js", "npm:@observablehq/stdlib"]); // prettier-ignore
+    assert.deepStrictEqual(await getModuleStaticImports("test/input/imports", "local-fetch-from-import.js"), ["./baz.js", "observablehq:stdlib"]); // prettier-ignore
   });
 });

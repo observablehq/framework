@@ -7,7 +7,7 @@ keywords: [dark, width]
 The Observable standard library includes several generator utilities. These are available by default in Markdown as `Generators`, but you can import them explicitly:
 
 ```js echo
-import {Generators} from "npm:@observablehq/stdlib";
+import {Generators} from "observablehq:stdlib";
 ```
 
 ## input(*element*)

@@ -39,8 +39,8 @@ export interface ResolversConfig {
 
 const defaultImports = [
   "observablehq:client", // Framework client
-  "npm:@observablehq/runtime", // Runtime
-  "npm:@observablehq/stdlib" // Standard library
+  "observablehq:runtime", // Runtime
+  "observablehq:stdlib" // Standard library
 ];
 
 export const builtins = new Map<string, string>([

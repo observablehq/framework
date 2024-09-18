@@ -7,8 +7,8 @@ Embedded modules are vanilla JavaScript, and behave identically when embedded in
 Embedded modules are often written as component functions that return DOM elements. These functions can take options (or “props”), and typically load their own data. For example, below is a simple `chart.js` module that exports a `Chart` function that renders a scatterplot of global surface temperature data.
 
 ```js run=false
-import {FileAttachment} from "npm:@observablehq/stdlib";
 import * as Plot from "npm:@observablehq/plot";
+import {FileAttachment} from "observablehq:stdlib";
 
 export async function Chart() {
   const gistemp = await FileAttachment("./lib/gistemp.csv").csv({typed: true});

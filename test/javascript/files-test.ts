@@ -9,6 +9,8 @@ describe("findFiles(node, input)", () => {
     assert.deepStrictEqual(files('FileAttachment("foo.json")'), [{name: "./foo.json", method: "json"}]);
   });
   it("finds imported FileAttachment", () => {
+    assert.deepStrictEqual(files('import {FileAttachment} from "observablehq:stdlib";\nFileAttachment("foo.json")'), [{name: "./foo.json", method: "json"}]);
+    assert.deepStrictEqual(files('import {FileAttachment as F} from "observablehq:stdlib";\nF("foo.json")'), [{name: "./foo.json", method: "json"}]);
     assert.deepStrictEqual(files('import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment("foo.json")'), [{name: "./foo.json", method: "json"}]);
     assert.deepStrictEqual(files('import {FileAttachment as F} from "npm:@observablehq/stdlib";\nF("foo.json")'), [{name: "./foo.json", method: "json"}]);
   });
@@ -103,25 +105,25 @@ describe("findFiles(node, input)", () => {
     assert.deepStrictEqual(files('File("foo.txt").csv', {aliases: ["File"]}), [{name: "./foo.txt", method: "csv"}]);
   });
   it("finds the import declaration", () => {
-    assert.deepStrictEqual(files('import {FileAttachment} from "npm:@observablehq/stdlib";\nFileAttachment("foo.txt").csv', {aliases: []}), [{name: "./foo.txt", method: "csv"}]);
+    assert.deepStrictEqual(files('import {FileAttachment} from "observablehq:stdlib";\nFileAttachment("foo.txt").csv', {aliases: []}), [{name: "./foo.txt", method: "csv"}]);
   });
   it("finds the import declaration if aliased", () => {
-    assert.deepStrictEqual(files('import {FileAttachment as F} from "npm:@observablehq/stdlib";\nF("foo.txt").csv', {aliases: []}), [{name: "./foo.txt", method: "csv"}]);
+    assert.deepStrictEqual(files('import {FileAttachment as F} from "observablehq:stdlib";\nF("foo.txt").csv', {aliases: []}), [{name: "./foo.txt", method: "csv"}]);
   });
   it("finds the import declaration if aliased and masking a global", () => {
-    assert.deepStrictEqual(files('import {FileAttachment as File} from "npm:@observablehq/stdlib";\nFile("foo.txt").csv', {aliases: []}), [{name: "./foo.txt", method: "csv"}]);
+    assert.deepStrictEqual(files('import {FileAttachment as File} from "observablehq:stdlib";\nFile("foo.txt").csv', {aliases: []}), [{name: "./foo.txt", method: "csv"}]);
   });
   it("finds the import declaration if multiple aliases", () => {
-    assert.deepStrictEqual(files('import {FileAttachment as F, FileAttachment as G} from "npm:@observablehq/stdlib";\nF("file1.txt");\nG("file2.txt");', {aliases: []}), [{name: "./file1.txt", method: "text"}, {name: "./file2.txt", method: "text"}]);
+    assert.deepStrictEqual(files('import {FileAttachment as F, FileAttachment as G} from "observablehq:stdlib";\nF("file1.txt");\nG("file2.txt");', {aliases: []}), [{name: "./file1.txt", method: "text"}, {name: "./file2.txt", method: "text"}]);
   });
   it("ignores import declarations from another module", () => {
     assert.deepStrictEqual(files('import {FileAttachment as F} from "npm:@observablehq/not-stdlib";\nFileAttachment("file1.txt");', {aliases: []}), []);
   });
   it.skip("supports namespace imports", () => {
-    assert.deepStrictEqual(files('import * as O from "npm:@observablehq/stdlib";\nO.FileAttachment("foo.txt");', {aliases: []}), [{name: "./foo.txt", method: "text"}]);
+    assert.deepStrictEqual(files('import * as O from "observablehq:stdlib";\nO.FileAttachment("foo.txt");', {aliases: []}), [{name: "./foo.txt", method: "text"}]);
   });
   it("ignores masked references", () => {
-    assert.deepStrictEqual(files('import {FileAttachment} from "npm:@observablehq/stdlib";\n((FileAttachment) => FileAttachment("file.txt"))(String);', {aliases: []}), []);
+    assert.deepStrictEqual(files('import {FileAttachment} from "observablehq:stdlib";\n((FileAttachment) => FileAttachment("file.txt"))(String);', {aliases: []}), []);
   });
 });
 

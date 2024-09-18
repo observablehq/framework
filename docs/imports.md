@@ -130,7 +130,7 @@ import {foo} from "./foo.js";
 Within a local module, you can import other local modules, as well as `npm:`, Node, and remote imports. You can also reference local files within a local module by importing [`FileAttachment`](./files) from the Observable standard library like so:
 
 ```js run=false
-import {FileAttachment} from "npm:@observablehq/stdlib";
+import {FileAttachment} from "observablehq:stdlib";
 
 export const sales = await FileAttachment("sales.csv").csv({typed: true});
 ```
@@ -212,9 +212,9 @@ For convenience, Framework provides recommended libraries by default in Markdown
 
 Click on any of the imported symbols below to learn more.
 
-<pre><code class="language-js">import {<a href="./files">FileAttachment</a>} from "npm:@observablehq/stdlib";</code></pre>
-<pre><code class="language-js">import {<a href="./reactivity#generators">Generators</a>} from "npm:@observablehq/stdlib";</code></pre>
-<pre><code class="language-js">import {<a href="./reactivity#mutables">Mutable</a>} from "npm:@observablehq/stdlib";</code></pre>
+<pre><code class="language-js">import {<a href="./files">FileAttachment</a>} from "observablehq:stdlib";</code></pre>
+<pre><code class="language-js">import {<a href="./reactivity#generators">Generators</a>} from "observablehq:stdlib";</code></pre>
+<pre><code class="language-js">import {<a href="./reactivity#mutables">Mutable</a>} from "observablehq:stdlib";</code></pre>
 <pre><code class="language-js">import <a href="./lib/dot">dot</a> from "npm:@observablehq/dot";</code></pre>
 <pre><code class="language-js">import * as <a href="./lib/duckdb">duckdb</a> from "npm:@duckdb/duckdb-wasm";</code></pre>
 <pre><code class="language-js">import {<a href="./lib/duckdb">DuckDBClient</a>} from "npm:@observablehq/duckdb";</code></pre>

@@ -1,4 +1,4 @@
-import {FileAttachment, registerFile} from "npm:@observablehq/stdlib";
+import {FileAttachment, registerFile} from "observablehq:stdlib";
 import {main, runtime, undefine} from "./main.js";
 import {findLoading, findRoots, registerRoot} from "./main.js";
 import {enableCopyButtons} from "./pre.js";

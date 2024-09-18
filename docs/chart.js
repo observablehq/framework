@@ -1,5 +1,5 @@
-import {FileAttachment} from "npm:@observablehq/stdlib";
 import * as Plot from "npm:@observablehq/plot";
+import {FileAttachment} from "observablehq:stdlib";
 
 export async function Chart() {
   const gistemp = await FileAttachment("./lib/gistemp.csv").csv({typed: true});

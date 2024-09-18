@@ -326,7 +326,7 @@ Normally, only the code block that declares a top-level variable can define it o
 `Mutable` is available by default in Markdown but you can import it explicitly like so:
 
 ```js echo
-import {Mutable} from "npm:@observablehq/stdlib";
+import {Mutable} from "observablehq:stdlib";
 ```
 
 Then to use it:
