@@ -27,7 +27,6 @@ export function mockJsr() {
     const agent = getCurrentAgent();
     const npmClient = agent.get("https://npm.jsr.io");
     for (const [name, pkg] of packages) {
-      console.log("mockJsr", name);
       npmClient
         .intercept({path: `/@jsr/${name.replace(/^@/, "").replace(/\//, "__")}`, method: "GET"})
         .reply(200, pkg, {headers: {"content-type": "application/json; charset=utf-8"}})
