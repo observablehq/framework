@@ -1,3 +1,7 @@
+#observablehq-main {
+  container-type: inline-size;
+}
+
 .grid {
   margin: 1rem 0;
   display: grid;
