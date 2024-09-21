@@ -25,7 +25,6 @@ Imported symbols can be referenced in any code block or inline expression — no
 Inputs.button("Throw confetti! 🎉", {reduce: () => confetti()})
 ```
 
-
 <div class="tip">While imports can live in code blocks anywhere on the page, by convention imports are placed at the top of pages for readability.</div>
 
 Framework provides a variety of ways to import. When you reference `d3`, `Inputs`, `Plot` or some other built-in, you’re [implicitly importing](#implicit-imports) from npm. In addition, you can import modules explicitly from:
@@ -206,6 +205,13 @@ Module preloading does not apply to [dynamic imports](#dynamic-imports) and [`im
 <link rel="modulepreload" href="npm:d3-array">
 ```
 
+## Observable imports
+
+Framework includes a few built-in libraries implemented by Framework itself that can be imported via the `observablehq:` protocol. This currently includes:
+
+* `observablehq:runtime` - the [Observable Runtime](https://github.com/observablehq/runtime)
+* `observablehq:stdlib` - [Framework’s standard library](https://github.com/observablehq/framework/blob/main/src/client/stdlib.js)
+
 ## Implicit imports
 
 For convenience, Framework provides recommended libraries by default in Markdown. These implicit imports are only evaluated if you reference the corresponding symbol and hence don’t add overhead if you don’t use them; for example, D3 won’t be loaded unless you reference `d3`.
@@ -215,6 +221,7 @@ Click on any of the imported symbols below to learn more.
 <pre><code class="language-js">import {<a href="./files">FileAttachment</a>} from "observablehq:stdlib";</code></pre>
 <pre><code class="language-js">import {<a href="./reactivity#generators">Generators</a>} from "observablehq:stdlib";</code></pre>
 <pre><code class="language-js">import {<a href="./reactivity#mutables">Mutable</a>} from "observablehq:stdlib";</code></pre>
+<pre><code class="language-js">import {<a href="./javascript#resize-render">resize</a>} from "observablehq:stdlib";</code></pre>
 <pre><code class="language-js">import <a href="./lib/dot">dot</a> from "npm:@observablehq/dot";</code></pre>
 <pre><code class="language-js">import * as <a href="./lib/duckdb">duckdb</a> from "npm:@duckdb/duckdb-wasm";</code></pre>
 <pre><code class="language-js">import {<a href="./lib/duckdb">DuckDBClient</a>} from "npm:@observablehq/duckdb";</code></pre>
@@ -235,7 +242,11 @@ Click on any of the imported symbols below to learn more.
 <pre><code class="language-js">import {<a href="./lib/htl">svg</a>} from "npm:htl";</code></pre>
 <pre><code class="language-js">import * as <a href="./lib/leaflet">L</a> from "npm:leaflet";</code></pre>
 <pre><code class="language-js">import <a href="../lib/lodash">_</a> from "npm:lodash";</code></pre>
+<pre><code class="language-js">import * as <a href="./jsx">React</a> from "npm:react";</code></pre>
+<pre><code class="language-js">import * as <a href="./jsx">ReactDOM</a> from "npm:react-dom";</code></pre>
 <pre><code class="language-js">import * as <a href="../lib/topojson">topojson</a> from "npm:topojson-client";</code></pre>
+
+In addition to the above, several implicit imports have slightly more involved definitions: [`now`](./lib/generators#now), [`width`](./lib/generators#width-element), [`dark`](./lib/generators#dark), [`vg`](./lib/mosaic), and [`vl`](./lib/vega-lite).
 
 ## Require
 
