@@ -7,8 +7,8 @@ export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
   if (set.has("csv") || set.has("tsv")) implicits.add("npm:d3-dsv");
   if (set.has("parquet")) implicits.add("npm:apache-arrow").add("npm:parquet-wasm");
   if (set.has("sqlite")) implicits.add("npm:@observablehq/sqlite");
-  if (set.has("xlsx")) implicits.add("npm:@observablehq/xlsx");
-  if (set.has("zip")) implicits.add("npm:@observablehq/zip");
+  if (set.has("xlsx")) implicits.add("observablehq:stdlib/xlsx");
+  if (set.has("zip")) implicits.add("observablehq:stdlib/zip");
   return implicits;
 }
 
@@ -168,8 +168,8 @@ export function getImplicitDependencies(imports: Iterable<string>): Set<string> 
   if (set.has("npm:@observablehq/inputs")) implicits.add("npm:htl").add("npm:isoformat");
   if (set.has("npm:@observablehq/mermaid")) implicits.add("npm:mermaid");
   if (set.has("npm:@observablehq/tex")) implicits.add("npm:katex");
-  if (set.has("npm:@observablehq/xlsx")) implicits.add("npm:exceljs");
-  if (set.has("npm:@observablehq/zip")) implicits.add("npm:jszip");
+  if (set.has("observablehq:stdlib/xlsx")) implicits.add("npm:exceljs");
+  if (set.has("observablehq:stdlib/zip")) implicits.add("npm:jszip");
   if (set.has("observablehq:stdlib/vega-lite")) implicits.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
   if (set.has("observablehq:stdlib/vgplot")) implicits.add("npm:@uwdata/vgplot").add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm"); // prettier-ignore
   return implicits;

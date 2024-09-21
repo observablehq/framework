@@ -39,8 +39,8 @@ export interface ResolversConfig {
 
 const defaultImports = [
   "observablehq:client", // Framework client
-  "npm:@observablehq/runtime", // Runtime
-  "npm:@observablehq/stdlib" // Standard library
+  "observablehq:runtime", // Runtime
+  "observablehq:stdlib" // Standard library
 ];
 
 export const builtins = new Map<string, string>([
@@ -53,9 +53,7 @@ export const builtins = new Map<string, string>([
   ["npm:@observablehq/inputs", "/_observablehq/stdlib/inputs.js"], // TODO publish to npm
   ["npm:@observablehq/mermaid", "/_observablehq/stdlib/mermaid.js"], // TODO publish to npm
   ["npm:@observablehq/tex", "/_observablehq/stdlib/tex.js"], // TODO publish to npm
-  ["npm:@observablehq/sqlite", "/_observablehq/stdlib/sqlite.js"], // TODO publish to npm
-  ["npm:@observablehq/xlsx", "/_observablehq/stdlib/xlsx.js"], // TODO publish to npm
-  ["npm:@observablehq/zip", "/_observablehq/stdlib/zip.js"] // TODO publish to npm
+  ["npm:@observablehq/sqlite", "/_observablehq/stdlib/sqlite.js"] // TODO publish to npm
 ]);
 
 /**

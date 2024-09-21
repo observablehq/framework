@@ -1,5 +1,5 @@
 import {file as _file} from "@observablehq/inputs";
-import {AbstractFile} from "npm:@observablehq/stdlib";
+import {AbstractFile} from "observablehq:stdlib";
 
 export {
   button,

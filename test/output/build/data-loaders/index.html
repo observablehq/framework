@@ -11,8 +11,8 @@
 <link rel="modulepreload" href="./_observablehq/client.00000001.js">
 <link rel="modulepreload" href="./_observablehq/runtime.00000002.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.00000003.js">
-<link rel="modulepreload" href="./_import/import-test.7d216225.js">
-<link rel="modulepreload" href="./_import/test.513ced9f.js">
+<link rel="modulepreload" href="./_import/import-test.e7269c4e.js">
+<link rel="modulepreload" href="./_import/test.17d808d0.js">
 <script type="module">
 
 import {define} from "./_observablehq/client.00000001.js";
@@ -21,7 +21,7 @@ import {registerFile} from "./_observablehq/stdlib.00000003.js";
 registerFile("./test.txt", {"name":"./test.txt","mimeType":"text/plain","path":"./_file/test.f2ca1bb6.txt","lastModified":/* ts */1706742000000,"size":5});
 
 define({id: "05e74070", inputs: ["display"], outputs: ["test"], body: async (display) => {
-const {test} = await import("./_import/import-test.7d216225.js");
+const {test} = await import("./_import/import-test.e7269c4e.js");
 
 display(await test);
 return {test};

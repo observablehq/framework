@@ -1,5 +1,5 @@
-import {AbstractFile} from "npm:@observablehq/stdlib";
 import JSZip from "npm:jszip";
+import {AbstractFile} from "observablehq:stdlib";
 
 export class ZipArchive {
   constructor(archive) {

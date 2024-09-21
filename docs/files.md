@@ -7,7 +7,7 @@ keywords: file, fileattachment, attachment
 Load files — whether static or generated dynamically by a [data loader](./data-loaders) — using the built-in `FileAttachment` function. This is available by default in Markdown, but you can import it explicitly like so:
 
 ```js echo
-import {FileAttachment} from "npm:@observablehq/stdlib";
+import {FileAttachment} from "observablehq:stdlib";
 ```
 
 The `FileAttachment` function takes a path and returns a file handle. This handle exposes:
