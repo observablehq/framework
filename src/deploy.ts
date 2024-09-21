@@ -688,9 +688,12 @@ class Deployer {
         case "uploaded":
           spinner.stop("Deploy complete");
           break pollLoop;
-        case "error":
+        case "failed":
           spinner.stop("Deploy failed");
           throw new CliError("Deploy failed to process on server");
+        case "canceled":
+          spinner.stop("Deploy canceled");
+          throw new CliError("Deploy canceled");
         default:
           spinner.stop("Unknown status");
           throw new CliError(`Unknown deploy status: ${deployInfo.status}`);
