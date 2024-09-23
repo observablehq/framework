@@ -84,10 +84,10 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
 </script>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(page.header, resolvers)}
-<main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
+<!-- div id="observablehq-center" -->${renderHeader(page.header, resolvers)}
+<main id="observablehq-main" class="observablehq-center observablehq${draft ? " observablehq--draft" : ""}">
 ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
-</div>
+<!-- /div -->
 `);
 }
 
@@ -251,7 +251,9 @@ function renderModulePreload(href: string): Html | null {
 
 function renderHeader(header: MarkdownPage["header"], resolvers: HtmlResolvers): Html | null {
   return header
-    ? html`\n<header id="observablehq-header">\n${html.unsafe(rewriteHtml(header, resolvers))}\n</header>`
+    ? html`\n<header id="observablehq-header" class="observablehq-center">\n${html.unsafe(
+        rewriteHtml(header, resolvers)
+      )}\n</header>`
     : null;
 }
 
@@ -259,9 +261,9 @@ function renderFooter(footer: MarkdownPage["footer"], resolvers: HtmlResolvers, 
   const {path} = options;
   const link = options.pager ? findLink(path, options) : null;
   return link || footer
-    ? html`\n<footer id="observablehq-footer">${link ? renderPager(link, resolvers.resolveLink) : ""}${
-        footer ? html`\n<div>${html.unsafe(rewriteHtml(footer, resolvers))}</div>` : ""
-      }
+    ? html`\n<footer id="observablehq-footer" class="observablehq-center">${
+        link ? renderPager(link, resolvers.resolveLink) : ""
+      }${footer ? html`\n<div>${html.unsafe(rewriteHtml(footer, resolvers))}</div>` : ""}
 </footer>`
     : null;
 }

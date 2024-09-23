@@ -7,7 +7,8 @@
 #observablehq-main,
 #observablehq-header,
 #observablehq-footer {
-  margin: 1rem auto;
+  margin: 0 auto;
+  padding: 0 2rem;
   max-width: 1152px;
 }
 
@@ -20,6 +21,7 @@
 #observablehq-footer {
   display: block;
   margin-top: 10rem;
+  margin-bottom: 2rem;
   font: 12px var(--sans-serif);
   color: var(--theme-foreground-faint);
 }
@@ -76,8 +78,8 @@
   content: "Next page";
 }
 
-#observablehq-center {
-  margin: 1rem 2rem;
+.observablehq-center {
+  width: auto;
 }
 
 #observablehq-sidebar {
@@ -360,16 +362,17 @@
     box-shadow: none;
     border-right: solid 1px var(--theme-foreground-faintest);
   }
-  #observablehq-sidebar-toggle:checked ~ #observablehq-center,
-  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center {
-    padding-left: calc(272px + 1rem);
-    padding-right: 1rem;
+  #observablehq-sidebar-toggle:checked ~ .observablehq-center,
+  #observablehq-sidebar-toggle:indeterminate ~ .observablehq-center {
+    padding-left: calc(272px + 3rem);
+    padding-right: 3rem;
   }
 }
 
 @media (min-width: calc(640px + 6rem + 192px)) {
-  #observablehq-toc ~ #observablehq-center {
-    padding-right: calc(192px + 1rem);
+  #observablehq-toc ~ .observablehq-center {
+    padding-left: 2rem;
+    padding-right: calc(192px + 3rem);
   }
   #observablehq-toc {
     display: block;
@@ -389,10 +392,10 @@
   #observablehq-toc {
     display: block;
   }
-  #observablehq-sidebar-toggle:checked ~ #observablehq-toc ~ #observablehq-center,
-  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc ~ #observablehq-center,
-  #observablehq-toc ~ #observablehq-center {
-    padding-right: calc(192px + 1rem);
+  #observablehq-sidebar-toggle:checked ~ #observablehq-toc ~ .observablehq-center,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc ~ .observablehq-center,
+  #observablehq-toc ~ .observablehq-center {
+    padding-right: calc(192px + 3rem);
   }
 }
 
@@ -608,7 +611,7 @@
 }
 
 @media print {
-  #observablehq-center {
+  .observablehq-center {
     padding-left: 1em !important;
   }
   #observablehq-sidebar,
