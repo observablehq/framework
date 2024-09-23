@@ -5,7 +5,7 @@ TMPDIR="docs/.observablehq/cache/"
 
 # Download the data (if it’s not already in the cache).
 if [ ! -f "$TMPDIR/dft-collisions.csv" ]; then
-  curl "$URL" -o "$TMPDIR/dft-collisions.csv"
+  curl -f "$URL" -o "$TMPDIR/dft-collisions.csv"
 fi
 
 # Generate a CSV file using DuckDB.

@@ -6,7 +6,7 @@ TMPDIR="src/.observablehq/cache/"
 
 # Download the data (if it’s not already in the cache).
 if [ ! -f "$TMPDIR/$CODE.csv" ]; then
-  curl "$URL" -o "$TMPDIR/$CODE.csv"
+  curl -f "$URL" -o "$TMPDIR/$CODE.csv"
 fi
 
 # Generate a Parquet file using DuckDB.

@@ -13,7 +13,7 @@ Next, here’s a bash script, `ca.json.sh`:
 ```bash
 # Download the ZIP archive from the Census Bureau (if needed).
 if [ ! -f src/.observablehq/cache/cb_2023_06_cousub_500k.zip ]; then
-  curl -o src/.observablehq/cache/cb_2023_06_cousub_500k.zip 'https://www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_06_cousub_500k.zip'
+  curl -f -o src/.observablehq/cache/cb_2023_06_cousub_500k.zip 'https://www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_06_cousub_500k.zip'
 fi
 
 # Unzip the ZIP archive to extract the shapefile.
