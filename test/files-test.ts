@@ -55,10 +55,10 @@ describe("visitFiles(root)", () => {
       "files.md",
       "observable logo small.png",
       "observable logo.png",
-      "unknown-mime-extension.really",
       "subsection/additional-styles.css",
       "subsection/file-sub.csv",
-      "subsection/subfiles.md"
+      "subsection/subfiles.md",
+      "unknown-mime-extension.really"
     ]);
   });
   it("handles circular symlinks, visiting files only once", function () {
@@ -66,7 +66,7 @@ describe("visitFiles(root)", () => {
     assert.deepStrictEqual(collect(visitFiles("test/input/circular-files")), ["a/a.txt", "b/b.txt"]);
   });
   it("ignores .observablehq at any level", function () {
-    assert.deepStrictEqual(collect(visitFiles("test/files")), ["visible.txt", "sub/visible.txt"]);
+    assert.deepStrictEqual(collect(visitFiles("test/files")), ["sub/visible.txt", "visible.txt"]);
   });
 });
 
@@ -74,7 +74,7 @@ describe("visitFiles(root, test)", () => {
   it("skips directories and files that don’t pass the specified test", () => {
     assert.deepStrictEqual(
       collect(visitFiles("test/input/build/params", (name) => isParameterized(name) || extname(name) !== "")),
-      ["[name]-icon.svg.js", "observablehq.config.js", "[dir]/index.md", "[dir]/loaded.md.js"]
+      ["[dir]/index.md", "[dir]/loaded.md.js", "[name]-icon.svg.js", "observablehq.config.js"]
     );
     assert.deepStrictEqual(collect(visitFiles("test/input/build/params", (name) => !isParameterized(name))), [
       "observablehq.config.js"
@@ -88,5 +88,5 @@ function collect(generator: Generator<string>): string[] {
     if (value.startsWith(".observablehq/cache/")) continue;
     values.push(value);
   }
-  return values;
+  return values.sort();
 }
