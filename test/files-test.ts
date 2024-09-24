@@ -74,7 +74,7 @@ describe("visitFiles(root, test)", () => {
   it("skips directories and files that don’t pass the specified test", () => {
     assert.deepStrictEqual(
       collect(visitFiles("test/input/build/params", (name) => isParameterized(name) || extname(name) !== "")),
-      ["observablehq.config.js", "[dir]/index.md", "[dir]/loaded.md.js"]
+      ["[name]-icon.svg.js", "observablehq.config.js", "[dir]/index.md", "[dir]/loaded.md.js"]
     );
     assert.deepStrictEqual(collect(visitFiles("test/input/build/params", (name) => !isParameterized(name))), [
       "observablehq.config.js"
