@@ -73,6 +73,7 @@ export async function build(
   // Load pages, building a list of additional assets as we go.
   let assetCount = 0;
   let pageCount = 0;
+  const pagePaths = new Set<string>();
   for await (const path of config.paths()) {
     effects.output.write(`${faint("load")} ${path} `);
     const start = performance.now();
@@ -113,6 +114,7 @@ export async function build(
     for (const i of resolvers.globalImports) addGlobalImport(path, resolvers.resolveImport(i));
     for (const s of resolvers.stylesheets) addStylesheet(path, s);
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
+    pagePaths.add(path);
     outputs.set(path, {type: "page", page, resolvers});
     ++pageCount;
   }
@@ -130,7 +132,7 @@ export async function build(
   // Add the search bundle and data, if needed.
   if (config.search) {
     globalImports.add("/_observablehq/search.js").add("/_observablehq/minisearch.json");
-    const contents = await searchIndex(config, effects);
+    const contents = await searchIndex(config, pagePaths, effects);
     effects.output.write(`${faint("index →")} `);
     const cachePath = join(cacheRoot, "_observablehq", "minisearch.json");
     await prepareOutput(cachePath);

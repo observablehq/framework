@@ -29,7 +29,11 @@ const indexOptions = {
 
 type MiniSearchResult = Omit<SearchResult, "path" | "keywords"> & {id: string; keywords: string};
 
-export async function searchIndex(config: Config, effects = defaultEffects): Promise<string> {
+export async function searchIndex(
+  config: Config,
+  paths: Iterable<string> | AsyncIterable<string> = getDefaultSearchPaths(config),
+  effects = defaultEffects
+): Promise<string> {
   const {pages, search, normalizePath} = config;
   if (!search) return "{}";
   const cached = indexCache.get(pages);
@@ -37,7 +41,7 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
 
   // Index the pages
   const index = new MiniSearch<MiniSearchResult>(indexOptions);
-  for await (const result of indexPages(config, effects)) index.add(normalizeResult(result, normalizePath));
+  for await (const result of indexPages(config, paths, effects)) index.add(normalizeResult(result, normalizePath));
   if (search.index) for await (const result of search.index()) index.add(normalizeResult(result, normalizePath));
 
   // Pass the serializable index options to the client.
@@ -57,8 +61,12 @@ export async function searchIndex(config: Config, effects = defaultEffects): Pro
   return json;
 }
 
-async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIterable<SearchResult> {
-  const {root, pages, loaders} = config;
+async function* indexPages(
+  config: Config,
+  paths: Iterable<string> | AsyncIterable<string>,
+  effects: SearchIndexEffects
+): AsyncIterable<SearchResult> {
+  const {pages, loaders} = config;
 
   // Get all the listed pages (which are indexed by default)
   const pagePaths = new Set(["/index"]);
@@ -67,9 +75,7 @@ async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIt
     if ("pages" in p) for (const {path} of p.pages) pagePaths.add(path);
   }
 
-  for await (const path of config.paths()) {
-    if (path.endsWith(".js") && findModule(root, path)) continue; // ignore modules
-    if (loaders.find(path)) continue; // ignore assets
+  for await (const path of paths) {
     const {body, title, data} = await loaders.loadPage(path, {...config, path});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
@@ -95,6 +101,15 @@ async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIt
 
     effects.logger.log(`${faint("index")} ${path}`);
     yield {path, title, text, keywords: normalizeKeywords(data?.keywords)};
+  }
+}
+
+async function* getDefaultSearchPaths(config: Config): AsyncGenerator<string> {
+  const {root, loaders} = config;
+  for await (const path of config.paths()) {
+    if (path.endsWith(".js") && findModule(root, path)) continue; // ignore modules
+    if (loaders.find(path)) continue; // ignore assets
+    yield path;
   }
 }
 
