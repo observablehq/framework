@@ -68,7 +68,8 @@ async function* indexPages(config: Config, effects: SearchIndexEffects): AsyncIt
   }
 
   for await (const path of config.paths()) {
-    if (path.endsWith(".js") && findModule(root, path)) continue;
+    if (path.endsWith(".js") && findModule(root, path)) continue; // ignore modules
+    if (loaders.find(path)) continue; // ignore assets
     const {body, title, data} = await loaders.loadPage(path, {...config, path});
 
     // Skip pages that opt-out of indexing, and skip unlisted pages unless
