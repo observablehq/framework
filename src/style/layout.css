@@ -2,7 +2,7 @@
   --theme-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M5 7L8.125 9.5L11.25 7' stroke='black' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
   --theme-toggle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m10.5,11 2.5-3-2.5-3 M6,8h7' fill='none' stroke='black' stroke-width='2'/%3E%3Crect x='2' y='2' fill='currentColor' height='12' rx='0.5' width='2'/%3E%3C/svg%3E");
   --theme-magnifier: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath stroke='currentColor' stroke-width='2' fill='none' d='M15,15L10.5,10.5a3,3 0 1,0 -6 -6a3,3 0 1,0 6 6'%3E%3C/path%3E%3C/svg%3E");
-  --observablehq-max-width: 1512px; /* 1152px + 272px */
+  --observablehq-max-width: 1512px;
 }
 
 body {
@@ -88,7 +88,7 @@ body {
 }
 
 #observablehq-sidebar {
-  --observablehq-sidebar-padding-left: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2));
+  --observablehq-sidebar-padding-left: calc(max(0rem, (100vw - var(--observablehq-max-width)) / 2));
   position: fixed;
   background: var(--theme-background-alt);
   color: var(--theme-foreground-muted);
@@ -549,7 +549,7 @@ body {
   position: absolute;
   overflow-y: auto;
   top: 6.5rem;
-  left: 0;
+  left: var(--observablehq-sidebar-padding-left);
   right: 0.5rem;
   bottom: 0;
 }
