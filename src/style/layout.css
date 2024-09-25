@@ -379,7 +379,7 @@ body {
 
 @media (min-width: calc(640px + 6rem + 192px)) {
   #observablehq-toc ~ #observablehq-main {
-    padding-right: 192px;
+    padding-right: calc(192px + 1rem);
   }
   #observablehq-toc {
     display: block;
@@ -402,7 +402,7 @@ body {
   #observablehq-sidebar-toggle:checked ~ #observablehq-toc ~ #observablehq-center,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc ~ #observablehq-main,
   #observablehq-toc ~ #observablehq-main {
-    padding-right: 192px;
+    padding-right: calc(192px + 1rem);
   }
 }
 
