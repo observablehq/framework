@@ -83,8 +83,8 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}
 <div id="observablehq-center">${renderHeader(page.header, resolvers)}${
-  toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
-}
+    toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
+  }
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
 ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
 </div>
