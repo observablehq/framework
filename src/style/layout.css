@@ -386,7 +386,6 @@ body {
     left: 0;
     visibility: initial;
     box-shadow: none;
-    border-right: solid 1px var(--theme-foreground-faintest);
   }
   #observablehq-sidebar-toggle:checked ~ #observablehq-center,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center {
