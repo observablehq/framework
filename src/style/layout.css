@@ -91,7 +91,7 @@ body {
 }
 
 #observablehq-sidebar {
-  --observablehq-sidebar-padding-left: calc((100% - var(--observablehq-max-width)) / 2);
+  --observablehq-sidebar-padding-left: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2));
   position: fixed;
   background: var(--theme-background-alt);
   color: var(--theme-foreground-muted);
