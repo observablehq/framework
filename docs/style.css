@@ -46,13 +46,13 @@ code:not(pre code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code) {
 #observablehq-header {
   position: fixed;
   top: 1rem;
-  left: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2) + var(--observablehq-inset-left) + 3rem);
-  right: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2) + 3rem);
+  left: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2) + var(--observablehq-inset-left) + 2rem);
+  right: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2) + var(--observablehq-inset-right) + 2rem);
   z-index: 1;
 }
 
 #observablehq-center {
-  padding-top: 3rem;
+  padding-top: 3.4rem;
 }
 
 #observablehq-toc {
