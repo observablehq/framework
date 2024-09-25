@@ -59,10 +59,6 @@ code:not(pre code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code) {
   top: 3rem;
 }
 
-#observablehq-header > div {
-  background: var(--theme-background);
-}
-
 #observablehq-header a[href] {
   color: inherit;
 }
