@@ -43,6 +43,26 @@ code:not(pre code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code) {
   }
 }
 
+#observablehq-header {
+  position: fixed;
+  top: 1rem;
+  left: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2) + var(--observablehq-inset-left) + 3rem);
+  right: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2) + 3rem);
+  z-index: 1;
+}
+
+#observablehq-center {
+  padding-top: 3rem;
+}
+
+#observablehq-toc {
+  top: 3rem;
+}
+
+#observablehq-header > div {
+  background: var(--theme-background);
+}
+
 #observablehq-header a[href] {
   color: inherit;
 }
