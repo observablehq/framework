@@ -35,6 +35,7 @@ body {
 }
 
 #observablehq-main {
+  margin-top: 0.67rem;
   min-height: calc(100vh - 20rem);
   position: relative;
   z-index: 0;
@@ -101,7 +102,7 @@ body {
 
 #observablehq-center {
   margin: 1rem 2rem;
-  padding-top: var(--observablehq-header-height);
+  padding-top: calc(var(--observablehq-header-height) + 0.5rem);
   --observablehq-inset-left: 0rem;
   --observablehq-inset-right: 0rem;
 }
@@ -393,7 +394,7 @@ body {
   }
 }
 
-@media (min-width: calc(640px + 6rem + 192px)) {
+@media (min-width: calc(640px + 5rem + 192px)) {
   #observablehq-toc ~ #observablehq-main {
     padding-right: calc(192px + 1rem);
   }
@@ -413,7 +414,7 @@ body {
   }
 }
 
-@media (min-width: calc(640px + 6rem + 272px + 192px)) {
+@media (min-width: calc(640px + 7rem + 272px + 192px)) {
   #observablehq-sidebar-toggle:checked ~ #observablehq-center #observablehq-toc,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-toc,
   #observablehq-toc {
