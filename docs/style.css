@@ -122,3 +122,7 @@ a.observablehq-version-badge {
 .observablehq-version-badge::before {
   content: attr(data-version);
 }
+
+*:has(>.observablehq-header-anchor) {
+  scroll-margin-top: 4.5rem;
+}
