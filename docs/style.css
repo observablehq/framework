@@ -99,6 +99,10 @@ h1 {
   font-weight: 500;
 }
 
+#observablehq-header {
+  container-type: inline-size;
+}
+
 @container not (min-width: 640px) {
   .hide-if-small {
     display: none;
