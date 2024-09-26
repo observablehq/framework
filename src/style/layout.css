@@ -547,7 +547,6 @@ body {
 
 #observablehq-search {
   position: relative;
-  padding: 0.5rem 0 0 0;
   display: flex;
   align-items: center;
 }
@@ -557,7 +556,7 @@ body {
   width: 100%;
   border: none;
   border-radius: 4px;
-  background-color: var(--theme-background);
+  background-color: var(--theme-background-alt);
   font-size: 13.3px;
   height: 28px;
 }
@@ -578,10 +577,15 @@ body {
   pointer-events: none;
 }
 
+#observablehq-search:not(:focus-within)::before {
+  color: var(--theme-foreground-faint);
+}
+
 #observablehq-search::after {
   position: absolute;
   right: 6px;
   content: attr(data-shortcut);
+  color: var(--theme-foreground-faint);
   pointer-events: none;
 }
 
@@ -593,7 +597,7 @@ body {
   --relevance-width: 32px;
   position: absolute;
   overflow-y: auto;
-  top: 6.5rem;
+  top: calc(var(--observablehq-header-height) + 2rem);
   left: var(--observablehq-sidebar-padding-left);
   right: 0.5rem;
   bottom: 0;

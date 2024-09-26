@@ -82,7 +82,7 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
     .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, params, mode, resolveImport})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}
-<div id="observablehq-center">${renderHeader(page.header, resolvers)}${
+<div id="observablehq-center">${renderHeader(page.header, options, resolvers)}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
@@ -143,9 +143,8 @@ async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink
     }"><a href="${encodeURI(resolveLink("/"))}">${title}</a></li>
   </ol>${
     search
-      ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
-  <div id="observablehq-search-results"></div>
-  <script>{${html.unsafe(
+      ? html`\n  <div id="observablehq-search-results"></div>
+  <script type="module">{${html.unsafe(
     (await rollupClient(getClientPath("search-init.js"), root, path, {resolveImport, minify: true})).trim()
   )}}</script>`
       : ""
@@ -249,9 +248,11 @@ function renderModulePreload(href: string): Html | null {
   return isJavaScript(href) ? html`\n<link rel="modulepreload" href="${href}">` : null;
 }
 
-function renderHeader(header: MarkdownPage["header"], resolvers: HtmlResolvers): Html | null {
-  return header
-    ? html`\n<header id="observablehq-header">\n${html.unsafe(rewriteHtml(header, resolvers))}\n</header>`
+function renderHeader(header: MarkdownPage["header"], {search}: RenderOptions, resolvers: HtmlResolvers): Html | null {
+  return header || search
+    ? html`\n<header id="observablehq-header">${
+        search ? html`\n<div id="observablehq-search"><input type="search" placeholder="Search"></div>` : null
+      }${header ? html`\n${html.unsafe(rewriteHtml(header, resolvers))}` : null}\n</header>`
     : null;
 }
 
