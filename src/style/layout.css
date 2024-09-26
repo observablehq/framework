@@ -275,8 +275,7 @@ body {
   color: var(--theme-foreground-muted);
   font: 400 14px var(--sans-serif);
   z-index: 1;
-  top: 0;
-  top: calc(var(--observablehq-header-height) + 1rem);
+  top: calc(var(--observablehq-header-height) + 1.5rem);
   right: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2) + 1rem);
   bottom: 0;
   overflow-y: auto;
