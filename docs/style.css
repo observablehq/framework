@@ -7,7 +7,6 @@
     noto, "segoe ui", arial, sans-serif;
   --monospace: "Spline Sans Mono", Menlo, Consolas, monospace;
   --theme-foreground-focus: #148576;
-  scroll-padding-top: 4rem;
 }
 
 h1 code,

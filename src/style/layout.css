@@ -4,6 +4,11 @@
   --theme-magnifier: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath stroke='currentColor' stroke-width='2' fill='none' d='M15,15L10.5,10.5a3,3 0 1,0 -6 -6a3,3 0 1,0 6 6'%3E%3C/path%3E%3C/svg%3E");
   --observablehq-max-width: 1440px;
   --observablehq-header-height: 2.2rem;
+  scroll-padding-top: 2.5rem;
+}
+
+:root:has(#observablehq-header) {
+  scroll-padding-top: calc(var(--observablehq-header-height) + 2.5rem);
 }
 
 body {
