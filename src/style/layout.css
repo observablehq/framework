@@ -145,12 +145,26 @@ body {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--theme-background-alt);
   font-size: 16px;
   font-weight: 700;
   padding-top: 1rem;
   margin: 0;
   color: var(--theme-foreground);
+}
+
+#observablehq-sidebar > ol:first-child::before {
+  content: "";
+  position: absolute;
+  inset: 0 -0.5rem;
+  background: var(--theme-background-alt);
+}
+
+#observablehq-sidebar > ol:first-child > li {
+  position: relative;
+}
+
+#observablehq-sidebar > ol:first-child > li > a {
+  height: calc(var(--observablehq-header-height) - 1rem);
 }
 
 #observablehq-sidebar > ol:last-child,
@@ -219,7 +233,7 @@ body {
   top: 1rem;
   right: 0;
   width: 2rem;
-  height: 2.2rem;
+  height: var(--observablehq-header-height);
   display: flex;
   align-items: center;
   justify-content: center;
