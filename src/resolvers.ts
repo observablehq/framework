@@ -477,10 +477,8 @@ export function getModuleResolver(
   return async (specifier) => {
     return isPathImport(specifier)
       ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier), getHash))
-      : builtins.has(specifier)
-      ? relativePath(servePath, builtins.get(specifier)!)
-      : specifier.startsWith("observablehq:")
-      ? relativePath(servePath, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`) // prettier-ignore
+      : builtins.has(specifier) || specifier.startsWith("observablehq:")
+      ? relativePath(servePath, resolveBuiltin(specifier))
       : specifier.startsWith("npm:")
       ? relativePath(servePath, await resolveNpmImport(root, specifier.slice("npm:".length)))
       : specifier.startsWith("jsr:")
@@ -489,6 +487,12 @@ export function getModuleResolver(
       ? relativePath(servePath, await resolveNodeImport(root, specifier))
       : specifier;
   };
+}
+
+export function resolveBuiltin(specifier: string): string {
+  if (builtins.has(specifier)) return builtins.get(specifier)!;
+  if (!specifier.startsWith("observablehq:")) throw new Error(`not built-in: ${specifier}`);
+  return `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`;
 }
 
 export function resolveStylesheetPath(root: string, path: string): string {
