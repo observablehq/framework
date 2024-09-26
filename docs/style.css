@@ -10,15 +10,6 @@
   scroll-padding-top: 4rem;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  margin-top: revert;
-}
-
 h1 code,
 h2 code,
 h3 code,
