@@ -108,6 +108,15 @@ h1 {
   }
 }
 
+#observablehq-sidebar > ol:first-child > li::before {
+  display: none;
+}
+
+#observablehq-sidebar > ol:first-child > li > a {
+  background: none;
+  color: inherit;
+}
+
 a.observablehq-version-badge {
   font: 500 12px var(--sans-serif);
   display: inline-block;
