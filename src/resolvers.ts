@@ -32,7 +32,6 @@ export interface Resolvers {
 export interface ResolversConfig {
   root: string;
   path: string;
-  logo: string | null;
   normalizePath: (path: string) => string;
   globalStylesheets?: string[];
   loaders: LoaderResolver;
@@ -94,7 +93,7 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
   const stylesheets = new Set<string>(defaultStylesheets);
 
   // Add assets.
-  for (const html of [config.logo, page.head, page.header, page.body, page.footer]) {
+  for (const html of [page.head, page.header, page.body, page.footer]) {
     if (!html) continue;
     const info = findAssets(html, path);
     for (const f of info.files) assets.add(f);
