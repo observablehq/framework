@@ -34,6 +34,7 @@ describe("readConfig(undefined, root)", () => {
         }
       ],
       title: undefined,
+      home: "Home",
       toc: {label: "On this page", show: true},
       pager: true,
       scripts: [],
@@ -61,6 +62,7 @@ describe("readConfig(undefined, root)", () => {
       sidebar: true,
       pages: [{name: "Build test case", path: "/simple", pager: "main"}],
       title: undefined,
+      home: "Home",
       toc: {label: "Contents", show: true},
       pager: true,
       scripts: [],
@@ -83,6 +85,11 @@ describe("normalizeConfig(spec, root)", () => {
   it("considers the title optional", () => {
     assert.strictEqual(config({pages: []}, root).title, undefined);
     assert.strictEqual(config({title: undefined, pages: []}, root).title, undefined);
+  });
+  it("defaults the home to the escaped title", () => {
+    assert.strictEqual(config({title: "dollar&pound", pages: []}, root).home, "dollar&amp;pound");
+    assert.strictEqual(config({title: 42, pages: []}, root).home, "42");
+    assert.strictEqual(config({title: null, pages: []}, root).home, "null");
   });
   it("populates default pages", () => {
     assert.deepStrictEqual(config({}, root).pages, [
