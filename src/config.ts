@@ -5,6 +5,7 @@ import op from "node:path";
 import {basename, dirname, extname, join} from "node:path/posix";
 import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
+import he from "he";
 import type MarkdownIt from "markdown-it";
 import wrapAnsi from "wrap-ansi";
 import {visitFiles} from "./files.js";
@@ -79,6 +80,7 @@ export interface Config {
   root: string; // defaults to src
   output: string; // defaults to dist
   base: string; // defaults to "/"
+  home: string; // defaults to the (escaped) title, or "Home"
   title?: string;
   sidebar: boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section<Page>)[];
@@ -112,6 +114,7 @@ export interface ConfigSpec {
   header?: unknown;
   footer?: unknown;
   interpreters?: unknown;
+  home?: unknown;
   title?: unknown;
   pages?: unknown;
   pager?: unknown;
@@ -244,6 +247,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     markdownIt: spec.markdownIt as any
   });
   const title = spec.title === undefined ? undefined : String(spec.title);
+  const home = spec.home === undefined ? he.escape(title ?? "Home") : String(spec.home); // eslint-disable-line import/no-named-as-default-member
   const pages = spec.pages === undefined ? undefined : normalizePages(spec.pages);
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
   const dynamicPaths = normalizeDynamicPaths(spec.dynamicPaths);
@@ -272,6 +276,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     root,
     output,
     base,
+    home,
     title,
     sidebar: sidebar!, // see below
     pages: pages!, // see below

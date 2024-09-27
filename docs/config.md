@@ -104,11 +104,15 @@ In this case, the path to the stylesheet is resolved relative to the page’s Ma
 
 ## title
 
-The app’s title. If specified, this text is used for the link to the home page in the sidebar, and to complement the titles of the webpages. For instance, a page titled “Sales” in an app titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. If not specified, the home page link will appear as “Home” in the sidebar, and page titles will be shown as-is.
+The app’s title. If specified, this text is appended to page titles with a separating pipe symbol (“|”). For instance, a page titled “Sales” in an app titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. See also the [**home** option](#home).
 
 ## sidebar
 
 Whether to show the sidebar. Defaults to true if **pages** is not empty.
+
+## home <a href="https://github.com/observablehq/framework/pull/1689" class="observablehq-version-badge" data-version="prerelease" title="Added in #1689"></a>
+
+An HTML fragment to render the link to the home page in the top of the sidebar. Defaults to the [app’s title](#title), if any, and otherwise the word “Home”. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
 
 ## pages
 
