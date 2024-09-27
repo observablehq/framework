@@ -120,7 +120,7 @@ export default {
     </svg>
     Observable Framework
   </span>`,
-  header: `<div style="display: flex; flex-grow: 1; justify-content: space-between;">
+  header: `<div style="display: flex; flex-grow: 1; justify-content: space-between; white-space: nowrap;">
     <div>
       <a href="/" class="hide-if-sidebar" style="display: flex; align-items: center; gap: 0.25rem;">
         <svg width="22" height="22" viewBox="0 0 21.92930030822754 22.68549919128418" fill="currentColor" style="align-self: center;">
