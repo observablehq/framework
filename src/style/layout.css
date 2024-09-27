@@ -170,7 +170,13 @@ body {
   position: relative;
 }
 
+#observablehq-sidebar > ol:first-child > li::before {
+  display: none;
+}
+
 #observablehq-sidebar > ol:first-child > li > a {
+  background: none;
+  color: inherit;
   height: calc(var(--observablehq-header-height) - 1rem);
 }
 

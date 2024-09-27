@@ -100,6 +100,14 @@ h1 {
   }
 }
 
+
+@media (min-width: calc(640px + 6rem + 272px)) {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center .hide-if-sidebar,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center .hide-if-sidebar {
+    visibility: hidden;
+  }
+}
+
 a.observablehq-version-badge {
   font: 500 12px var(--sans-serif);
   display: inline-block;

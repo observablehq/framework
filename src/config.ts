@@ -79,6 +79,7 @@ export interface Config {
   root: string; // defaults to src
   output: string; // defaults to dist
   base: string; // defaults to "/"
+  home?: string;
   title?: string;
   sidebar: boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section<Page>)[];
@@ -112,6 +113,7 @@ export interface ConfigSpec {
   header?: unknown;
   footer?: unknown;
   interpreters?: unknown;
+  home?: unknown;
   title?: unknown;
   pages?: unknown;
   pager?: unknown;
@@ -243,6 +245,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     quotes: spec.quotes === undefined ? undefined : (spec.quotes as any),
     markdownIt: spec.markdownIt as any
   });
+  const home = spec.home === undefined ? undefined : String(spec.home);
   const title = spec.title === undefined ? undefined : String(spec.title);
   const pages = spec.pages === undefined ? undefined : normalizePages(spec.pages);
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
@@ -272,6 +275,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     root,
     output,
     base,
+    home,
     title,
     sidebar: sidebar!, // see below
     pages: pages!, // see below
