@@ -32,7 +32,7 @@ export default {
     {name: "Themes", path: "/themes"},
     {name: "Page loaders", path: "/page-loaders"},
     {name: "Parameterized routes", path: "/params"},
-    {name: "Embedded analytics", path: "/embeds"},
+    {name: "Embedding", path: "/embeds"},
     {name: "Configuration", path: "/config"},
     {name: "Examples", path: "https://github.com/observablehq/framework/tree/main/examples"},
     {
