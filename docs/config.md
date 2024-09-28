@@ -171,6 +171,18 @@ An HTML fragment to add to the head. Defaults to the empty string. If specified 
 
 An HTML fragment to add to the header. Defaults to the empty string. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
 
+<div class="tip">
+
+By default, the header is fixed to the top of the window. To instead have the header scroll with the content, add the following to a custom stylesheet:
+
+```css run=false
+#observablehq-header {
+  position: absolute;
+}
+```
+
+</div>
+
 ## footer
 
 An HTML fragment to add to the footer. Defaults to “Built with Observable.” If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
