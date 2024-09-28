@@ -20,21 +20,26 @@ export default {
     {name: "What is Framework?", path: "/what-is-framework"},
     {name: "Getting started", path: "/getting-started"},
     {name: "Deploying", path: "/deploying"},
-    {name: "Project structure", path: "/project-structure"},
-    {name: "Markdown", path: "/markdown"},
-    {name: "JavaScript", path: "/javascript"},
-    {name: "Reactivity", path: "/reactivity"},
-    {name: "JSX", path: "/jsx"},
-    {name: "Imports", path: "/imports"},
-    {name: "Data loaders", path: "/data-loaders"},
-    {name: "Files", path: "/files"},
-    {name: "SQL", path: "/sql"},
-    {name: "Themes", path: "/themes"},
-    {name: "Page loaders", path: "/page-loaders"},
-    {name: "Parameterized routes", path: "/params"},
     {name: "Embedding", path: "/embeds"},
-    {name: "Configuration", path: "/config"},
-    {name: "Examples", path: "https://github.com/observablehq/framework/tree/main/examples"},
+    {
+      name: "Reference",
+      open: false,
+      pages: [
+        {name: "Project structure", path: "/project-structure"},
+        {name: "Markdown", path: "/markdown"},
+        {name: "JavaScript", path: "/javascript"},
+        {name: "Reactivity", path: "/reactivity"},
+        {name: "JSX", path: "/jsx"},
+        {name: "Imports", path: "/imports"},
+        {name: "Data loaders", path: "/data-loaders"},
+        {name: "Files", path: "/files"},
+        {name: "SQL", path: "/sql"},
+        {name: "Themes", path: "/themes"},
+        {name: "Page loaders", path: "/page-loaders"},
+        {name: "Parameterized routes", path: "/params"},
+        {name: "Configuration", path: "/config"}
+      ]
+    },
     {
       name: "Inputs",
       open: false,
@@ -86,6 +91,7 @@ export default {
         {name: "ZIP", path: "/lib/zip"}
       ]
     },
+    {name: "Examples", path: "https://github.com/observablehq/framework/tree/main/examples"},
     {name: "Converting notebooks", path: "/convert"},
     {name: "Contributing", path: "/contributing", pager: false}
   ],

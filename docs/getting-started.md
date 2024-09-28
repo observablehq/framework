@@ -535,6 +535,12 @@ The <code>build</code> command generates the `dist` directory; you can then copy
 
 <pre data-copy>npx http-server dist</pre>
 
+<div class="tip">By default, Framework generates “clean” URLs by dropping the `.html` extension from page links. Not all webhosts support this; some need the <a href="./config#cleanUrls"><b>cleanUrls</b> config option</a> set to false.</div>
+
+<div class="tip">When deploying to GitHub Pages without using GitHub’s related actions (<a href="https://github.com/actions/configure-pages">configure-pages</a>,
+<a href="https://github.com/actions/deploy-pages">deploy-pages</a>, and
+<a href="https://github.com/actions/upload-pages-artifact">upload-pages-artifact</a>), you may need to create a <code>.nojekyll</code> file in your <code>dist</code> folder after building. See GitHub’s documentation on <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#static-site-generators">static site generators</a> for more.</div>
+
 ## Next steps
 
 Here are a few more tips.
