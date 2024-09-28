@@ -120,7 +120,7 @@ export default {
     </svg>
     Observable Framework
   </span>`,
-  header: `<div style="display: flex; flex-grow: 1; justify-content: space-between; white-space: nowrap;">
+  header: `<div style="display: flex; flex-grow: 1; align-items: center; justify-content: space-between; white-space: nowrap;">
     <div>
       <a href="/" class="hide-if-sidebar" style="display: flex; align-items: center; gap: 0.25rem;">
         <svg width="22" height="22" viewBox="0 0 21.92930030822754 22.68549919128418" fill="currentColor" style="align-self: center;">
@@ -132,13 +132,14 @@ export default {
         </span>
       </a>
     </div>
-    <span style="display: flex; align-items: center; gap: 1rem; font-size: 14px; position: relative; top: 0.7px;">
-      <a target="_blank" title="${
+    <span style="display: flex; align-items: baseline; gap: 1rem;">
+      &#8203;
+      <a style="font-size: 14px;" target="_blank" title="${
         process.env.npm_package_version
       } release notes" href="https://github.com/observablehq/framework/releases"><span>${
         process.env.npm_package_version
       }</span></a>
-      <a target="_blank" data-decoration="★" title="${stargazers_count.toLocaleString(
+      <a style="font-size: 14px;" target="_blank" data-decoration="★" title="${stargazers_count.toLocaleString(
         "en-US"
       )} GitHub stars" href="https://github.com/observablehq/framework"><span>GitHub️ ${
         stargazers_count ? formatPrefix(".1s", 1000)(stargazers_count) : ""
