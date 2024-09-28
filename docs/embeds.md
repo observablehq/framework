@@ -12,7 +12,7 @@ In addition to standalone apps, you can use Framework to embed interactive views
 
 ## Exported modules
 
-Framework allows [JavaScript modules](./imports#local-imports) to be exported for use in another application. Exported modules are vanilla JavaScript and function identically in an external web application as on a Framework page. As with local modules, exported modules can load data from a [static file](./files) or a [data loader](./data-loaders), [import](./imports) other local modules, and import libraries from [npm](./imports#npm-imports) or [JSR](./imports#jsr-imports).
+Framework allows [JavaScript modules](./imports#local-imports) to be exported for use in another application. Exported modules are vanilla JavaScript and behave identically in an external web application as on a Framework page. As with local modules, exported modules can load data from a [static file](./files) or a [data loader](./data-loaders), [import](./imports) other local modules, and import libraries from [npm](./imports#npm-imports) or [JSR](./imports#jsr-imports).
 
 Exported modules typically define **data components**: functions that render dynamic content, such as a chart or table, by returning a DOM element. Data components can take options (or “props”), and load any needed data using [`FileAttachment`](./files). For example, the `chart.js` module below exports a `Chart` data component that loads a CSV file and renders a responsive scatterplot of global surface temperature.
 
