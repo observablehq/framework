@@ -71,6 +71,9 @@ export async function build(
   const addStylesheet = (path: string, s: string) => stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
 
   // Load pages, building a list of additional assets as we go.
+  let assetCount = 0;
+  let pageCount = 0;
+  const pagePaths = new Set<string>();
   for await (const path of config.paths()) {
     effects.output.write(`${faint("load")} ${path} `);
     const start = performance.now();
@@ -86,8 +89,17 @@ export async function build(
         for (const s of resolvers.stylesheets) addStylesheet(path, s);
         effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
         outputs.set(path, {type: "module", resolvers});
+        ++assetCount;
         continue;
       }
+    }
+    const file = loaders.find(path);
+    if (file) {
+      effects.output.write(`${faint("copy")} ${join(root, path)} ${faint("→")} `);
+      const sourcePath = join(root, await file.load({useStale: true}, effects));
+      await effects.copyFile(sourcePath, path);
+      ++assetCount;
+      continue;
     }
     const page = await loaders.loadPage(path, options, effects);
     if (page.data.draft) {
@@ -102,13 +114,16 @@ export async function build(
     for (const i of resolvers.globalImports) addGlobalImport(path, resolvers.resolveImport(i));
     for (const s of resolvers.stylesheets) addStylesheet(path, s);
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
+    pagePaths.add(path);
     outputs.set(path, {type: "page", page, resolvers});
+    ++pageCount;
   }
 
   // Check that there’s at least one output.
-  const outputCount = outputs.size;
+  const outputCount = pageCount + assetCount;
   if (!outputCount) throw new CliError(`Nothing to build: no pages found in your ${root} directory.`);
-  effects.logger.log(`${faint("built")} ${outputCount} ${faint(`page${outputCount === 1 ? "" : "s"} in`)} ${root}`);
+  if (pageCount) effects.logger.log(`${faint("built")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`); // prettier-ignore
+  if (assetCount) effects.logger.log(`${faint("built")} ${assetCount} ${faint(`asset${assetCount === 1 ? "" : "s"} in`)} ${root}`); // prettier-ignore
 
   // For cache-breaking we rename most assets to include content hashes.
   const aliases = new Map<string, string>();
@@ -117,7 +132,7 @@ export async function build(
   // Add the search bundle and data, if needed.
   if (config.search) {
     globalImports.add("/_observablehq/search.js").add("/_observablehq/minisearch.json");
-    const contents = await searchIndex(config, effects);
+    const contents = await searchIndex(config, pagePaths, effects);
     effects.output.write(`${faint("index →")} `);
     const cachePath = join(cacheRoot, "_observablehq", "minisearch.json");
     await prepareOutput(cachePath);
@@ -349,7 +364,7 @@ export async function build(
   }
   effects.logger.log("");
 
-  Telemetry.record({event: "build", step: "finish", pageCount: outputCount});
+  Telemetry.record({event: "build", step: "finish", pageCount});
 }
 
 function applyHash(path: string, hash: string): string {
