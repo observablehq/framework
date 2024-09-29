@@ -10,17 +10,17 @@ If you don’t yet have an app ready to deploy, create one by following our [Get
 
 ## Manual deploys
 
-First, make sure that your app builds without error:
-
-```sh
-npm run build
-```
-
-Once that is done you can deploy to Observable:
+To deploy your app, run the deploy command:
 
 ```sh
 npm run deploy
 ```
+
+<div class="tip">
+
+Deploying automatically creates a [deploy configuration file](#deploy-configuration) (`.observablehq/deploy.json`) if it does not already exist. You should commit this file to git; it is required for automated deploys, and lets you re-deploy manually with fewer prompts.
+
+</div>
 
 The first time you deploy an app, you will be prompted to configure the app’s _slug_ (which determines its URL), access level, and other details. If you aren’t yet signed-in to Observable, you will also be prompted to sign-in.
 
@@ -36,43 +36,15 @@ npm run deploy -- --help
 
 </div>
 
-## Deploy configuration
-
-The deploy command creates a file at <code>.observablehq/deploy.json</code> under the source root (typically <code>src</code>) with information on where to deploy the app. This file allows you to re-deploy an app without having to repeat where you want the app to live on Observable.
-
-The contents of the deploy config file look like this:
-
-```json run=false
-{
-  "projectId": "0123456789abcdef",
-  "projectSlug": "hello-framework",
-  "workspaceLogin": "acme"
-}
-```
-
-<div class="note">
-
-A deploy config file is required for automated deploys. You should commit this file to git.
-
-</div>
-
-To store the deploy config file somewhere else, use the `--deploy-config` argument. For example, to create a “staging” deploy to share early versions of your app, you could use a `deploy-staging.json` like so:
-
-```sh
-npm run deploy -- --deploy-config=src/.observablehq/deploy-staging.json
-```
-
-If the specified config file does not yet exist, you will again be prompted to choose or create a new app; the resulting configuration will then be saved to the specified file. You can re-deploy to staging by passing the same `--deploy-config` argument; or you can deploy to “production” by not specifying the `--deploy-config` argument to use the default deploy config.
-
 ## Automated deploys
 
-Once the app has been set up, you can have Observable build the next deploys for you. You can build automatically _on commit_ (whenever you push a new commit to your project’s default branch) and _on schedule_ (such as daily or weekly).
+After deploying an app manually at least once, Observable can handle subsequent deploys for you automatically. You can automate deploys both [on commit](https://observablehq.com/documentation/data-apps/github) (whenever you push a new commit to your project’s default branch) and [on schedule](https://observablehq.com/documentation/data-apps/schedules) (such as daily or weekly).
 
-Automatic deploys — also known as _continuous deployment_ or _CD_ — ensure that your data is up to date, and that any changes you make to your app are immediately reflected in the deployed version.
+Automatic deploys — also called _continuous deployment_ or _CD_ — ensure that your data is always up to date, and that any changes you make to your app are immediately reflected in the deployed version.
 
 On your app settings page on Observable, open the **Build settings** tab to set up a link to a GitHub repository hosting your project’s files. Observable will then listen for changes in the repo and deploy the app automatically.
 
-The settings page also allows you to trigger a build manually, add secrets (for data loaders to use private APIs and passwords), view logs, configure sharing, _etc._ For details, see the [Building & deploying](https://observablehq.com/documentation/data-apps/deploys) documentation.
+The settings page also allows you to trigger a manual deploy on Observable Cloud, add secrets (for data loaders to use private APIs and passwords), view logs, configure sharing, _etc._ For details, see the [Building & deploying](https://observablehq.com/documentation/data-apps/deploys) documentation.
 
 ## GitHub Actions
 
@@ -165,18 +137,24 @@ This uses one cache per calendar day (in the `America/Los_Angeles` time zone). I
 
 <div class="note">You’ll need to edit the paths above if you’ve configured a source root other than <code>src</code>.</div>
 
-## Other hosting services
+## Deploy configuration
 
-Observable Framework builds a set of static files that can be hosted by any static site hosting services. To build your app, run:
+The deploy command creates a file at <code>.observablehq/deploy.json</code> under the source root (typically <code>src</code>) with information on where to deploy the app. This file allows you to re-deploy an app without having to repeat where you want the app to live on Observable.
 
-```sh
-npm run build
+The contents of the deploy config file look like this:
+
+```json run=false
+{
+  "projectId": "0123456789abcdef",
+  "projectSlug": "hello-framework",
+  "workspaceLogin": "acme"
+}
 ```
 
-Then upload the contents of your `dist` directory to your static service of choice.
+To store the deploy config file somewhere else, use the `--deploy-config` argument. For example, to create a “staging” deploy to share early versions of your app, you could use a `deploy-staging.json` like so:
 
-<div class="tip">By default, Framework generates “clean” URLs by dropping the `.html` extension from page links. Not all webhosts support this; some need the <a href="./config#cleanUrls"><b>cleanUrls</b> config option</a> set to false.</div>
+```sh
+npm run deploy -- --deploy-config=src/.observablehq/deploy-staging.json
+```
 
-<div class="tip">When deploying to GitHub Pages without using GitHub’s related actions (<a href="https://github.com/actions/configure-pages">configure-pages</a>,
-<a href="https://github.com/actions/deploy-pages">deploy-pages</a>, and
-<a href="https://github.com/actions/upload-pages-artifact">upload-pages-artifact</a>), you may need to create a <code>.nojekyll</code> file in your <code>dist</code> folder after building. See GitHub’s documentation on <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#static-site-generators">static site generators</a> for more.</div>
+If the specified config file does not yet exist, you will again be prompted to choose or create a new app; the resulting configuration will then be saved to the specified file. You can re-deploy to staging by passing the same `--deploy-config` argument; or you can deploy to “production” by not specifying the `--deploy-config` argument to use the default deploy config.

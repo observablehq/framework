@@ -6,10 +6,11 @@ import {extname, join} from "node:path/posix";
 import type {Program} from "acorn";
 import type {TransformOptions} from "esbuild";
 import {transform, transformSync} from "esbuild";
+import {resolveJsrImport} from "../jsr.js";
 import {resolveNodeImport} from "../node.js";
 import {resolveNpmImport} from "../npm.js";
 import {resolvePath} from "../path.js";
-import {builtins} from "../resolvers.js";
+import {builtins, resolveBuiltin} from "../resolvers.js";
 import type {RouteResult} from "../route.js";
 import {route} from "../route.js";
 import {findFiles} from "./files.js";
@@ -94,8 +95,12 @@ export async function getLocalModuleHash(root: string, path: string, getHash?: (
   if (info) {
     const globalPaths = new Set<string>();
     for (const i of [...info.globalStaticImports, ...info.globalDynamicImports]) {
-      if (i.startsWith("npm:") && !builtins.has(i)) {
+      if (builtins.has(i) || i.startsWith("observablehq:")) {
+        hash.update(`${resolveBuiltin(i)}?version=${process.env.npm_package_version}`); // change hash when Framework changes
+      } else if (i.startsWith("npm:")) {
         globalPaths.add(await resolveNpmImport(root, i.slice("npm:".length)));
+      } else if (i.startsWith("jsr:")) {
+        globalPaths.add(await resolveJsrImport(root, i.slice("jsr:".length)));
       } else if (!/^\w+:/.test(i)) {
         globalPaths.add(await resolveNodeImport(root, i));
       }

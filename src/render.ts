@@ -81,10 +81,10 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
     .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, params, mode, resolveImport})}`)
     .join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}${
+</script>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}
+<div id="observablehq-center">${renderHeader(page.header, resolvers)}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(page.header, resolvers)}
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
 ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
 </div>
@@ -132,7 +132,7 @@ function registerFile(
 }
 
 async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink}: Resolvers): Promise<Html> {
-  const {title = "Home", pages, root, path, search} = options;
+  const {home, pages, root, path, search} = options;
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -140,7 +140,7 @@ async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
-    }"><a href="${encodeURI(resolveLink("/"))}">${title}</a></li>
+    }"><a href="${encodeURI(resolveLink("/"))}">${html.unsafe(home)}</a></li>
   </ol>${
     search
       ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>

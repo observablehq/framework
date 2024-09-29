@@ -11,8 +11,8 @@
 <link rel="modulepreload" href="./_observablehq/client.00000001.js">
 <link rel="modulepreload" href="./_observablehq/runtime.00000002.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.00000003.js">
-<link rel="modulepreload" href="./_import/top.6c858de5.js">
-<link rel="modulepreload" href="./_import/foo/foo.3bb4a170.js">
+<link rel="modulepreload" href="./_import/top.c85e149a.js">
+<link rel="modulepreload" href="./_import/foo/foo.666599bc.js">
 <script type="module">
 
 import {define} from "./_observablehq/client.00000001.js";
@@ -24,7 +24,7 @@ registerFile("./top-data.csv", {"name":"./top-data.csv","mimeType":"text/csv","p
 registerFile("./top-data.json", {"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.67358ed8.json","lastModified":/* ts */1706742000000,"size":10});
 
 define({id: "cb908c08", inputs: ["display"], outputs: ["fooCsvData","fooJsonData","topCsvData","topJsonData"], body: async (display) => {
-const {fooCsvData, fooJsonData, topCsvData, topJsonData} = await import("./_import/top.6c858de5.js");
+const {fooCsvData, fooJsonData, topCsvData, topJsonData} = await import("./_import/top.c85e149a.js");
 
 display(fooJsonData);
 display(fooCsvData);
@@ -47,11 +47,11 @@ return {fooCsvData,fooJsonData,topCsvData,topJsonData};
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
+<div id="observablehq-center">
 <aside id="observablehq-toc" data-selector="h1:not(:first-of-type)[id], h2:first-child[id], :not(h1) + h2[id]">
 <nav>
 </nav>
 </aside>
-<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="top" tabindex="-1"><a class="observablehq-header-anchor" href="#top">Top</a></h1>
 <div class="observablehq observablehq--block"><!--:cb908c08:--></div>

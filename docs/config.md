@@ -104,11 +104,15 @@ In this case, the path to the stylesheet is resolved relative to the page’s Ma
 
 ## title
 
-The app’s title. If specified, this text is used for the link to the home page in the sidebar, and to complement the titles of the webpages. For instance, a page titled “Sales” in an app titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. If not specified, the home page link will appear as “Home” in the sidebar, and page titles will be shown as-is.
+The app’s title. If specified, this text is appended to page titles with a separating pipe symbol (“|”). For instance, a page titled “Sales” in an app titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. See also the [**home** option](#home).
 
 ## sidebar
 
 Whether to show the sidebar. Defaults to true if **pages** is not empty.
+
+## home <a href="https://github.com/observablehq/framework/pull/1689" class="observablehq-version-badge" data-version="prerelease" title="Added in #1689"></a>
+
+An HTML fragment to render the link to the home page in the top of the sidebar. Defaults to the [app’s title](#title), if any, and otherwise the word “Home”. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
 
 ## pages
 
@@ -157,7 +161,7 @@ Whether to show the previous & next links in the footer; defaults to true. The p
 
 ## dynamicPaths <a href="https://github.com/observablehq/framework/releases/tag/v1.11.0" class="observablehq-version-badge" data-version="^1.11.0" title="Added in 1.11.0"></a>
 
-The list of [parameterized pages](./params), [dynamic pages](./page-loaders), and [embedded modules](./embeds) to generate, either as a (synchronous) iterable of strings, or a function that returns an async iterable of strings if you wish to load the list of dynamic pages asynchronously.
+The list of [parameterized pages](./params), [dynamic pages](./page-loaders), and [exported modules and files](./embeds) to generate, either as a (synchronous) iterable of strings, or a function that returns an async iterable of strings if you wish to load the list of dynamic pages asynchronously.
 
 ## head
 
@@ -166,6 +170,18 @@ An HTML fragment to add to the head. Defaults to the empty string. If specified 
 ## header
 
 An HTML fragment to add to the header. Defaults to the empty string. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
+
+<div class="tip">
+
+By default, the header is fixed to the top of the window. To instead have the header scroll with the content, add the following to a custom stylesheet:
+
+```css run=false
+#observablehq-header {
+  position: absolute;
+}
+```
+
+</div>
 
 ## footer
 

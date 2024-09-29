@@ -16,7 +16,7 @@ https://github.com/observablehq/framework/releases
 
 ## Getting help 🏠
 
-Please [open a discussion](https://github.com/observablehq/framework/discussions) if you’d like help. We also recommend [searching issues](https://github.com/observablehq/framework/issues). You can also ask on the [Observable forum](https://talk.observablehq.com/) or [Observable community Slack](https://observablehq.com/slack/join).
+Please [open a discussion](https://github.com/observablehq/framework/discussions) if you’d like help. We also recommend [searching issues](https://github.com/observablehq/framework/issues).
 
 ## Contributing 🙏
 

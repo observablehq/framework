@@ -100,15 +100,19 @@ Imports from `node_modules` are cached in `.observablehq/cache/_node` within you
 
 ## JSR imports <a href="https://github.com/observablehq/framework/pulls/957" class="observablehq-version-badge" data-version="prerelease" title="Added in #957"></a>
 
-You can import a package from [JSR (the JavaScript Registry)](https://jsr.io/) using the `jsr:` protocol. When you import using `jsr:`, Framework automatically downloads and self-hosts the package. (As with `npm:` imports, and unlike Node imports, you don’t have to install from `jsr:` manually.) As an example, here the number three is computed using a [pseudorandom number generator](https://jsr.io/@std/random) from the [Deno Standard Library](https://deno.com/blog/std-on-jsr):
+You can import a package from [JSR (the JavaScript Registry)](https://jsr.io/) using the `jsr:` protocol. As an example, to import a [pseudorandom number generator](https://jsr.io/@std/random) from the [Deno Standard Library](https://deno.com/blog/std-on-jsr):
 
 ```js echo
 import {randomIntegerBetween, randomSeeded} from "jsr:@std/random";
-
-const prng = randomSeeded(1n);
-
-display(randomIntegerBetween(1, 10, {prng}));
 ```
+
+And then to generate a random number:
+
+```js echo
+randomIntegerBetween(1, 10, {prng: randomSeeded(1n)})
+```
+
+JSR imports, like npm imports, are automatically [self-hosted](#self-hosting-of-npm-imports). Downloads from JSR are cached in `.observablehq/cache/_jsr` within your source root (typically `src`). An imported module is downloaded from JSR only if it is not already in the cache. You can clear the cache and restart the server to re-fetch the latest versions of libraries from JSR.  If specify the desired version of a package, add a [semver range](https://docs.npmjs.com/about-semantic-versioning) to the import specifier.
 
 ## Local imports
 
