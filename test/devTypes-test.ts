@@ -12,7 +12,7 @@ describe("package.json", () => {
     "@types/tar",
     "@types/tar-stream",
     "@types/send",
-    "@types/ws",
+    "@types/ws"
   ]);
 
   const buffer = readFileSync("package.json");
@@ -20,17 +20,17 @@ describe("package.json", () => {
   const packages = {
     ...info.dependencies,
     ...info.devDependencies,
-    ...info.engines,
+    ...info.engines
   };
   const prefix = "@types/";
 
-  for(const [name, version] of Object.entries(info.devDependencies)) {
-    if(!name.startsWith(prefix)) continue;
+  for (const [name, version] of Object.entries(info.devDependencies)) {
+    if (!name.startsWith(prefix)) continue;
     const libVersion = packages[name.slice(prefix.length)];
 
-    it(`${name} matches library version`, function() {
-      if(allowMismatch.has(name)) return this.skip();
+    it(`${name} matches library version`, function () {
+      if (allowMismatch.has(name)) return this.skip();
       assert.strictEqual(version, libVersion);
     });
-  };
+  }
 });
