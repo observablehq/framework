@@ -84,7 +84,7 @@ Framework includes a helper script (`observable create`) for creating new apps. 
 
 <div class="tip">
   <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 18 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) that runs in the terminal.</p>
-  <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
+  <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
 </div>
 
 To create a new app with npm, run:
@@ -583,4 +583,4 @@ or
 
 ### Ask for help, or share your feedback
 
-Please reach out if you have questions or thoughts! You can post on the <a href="https://talk.observablehq.com/">Observable forum</a>, start a <a href="https://github.com/observablehq/framework/discussions">GitHub discussion</a>, or file a <a href="https://github.com/observablehq/framework/issues">GitHub issue</a>. And if you like Framework, please give us a star ⭐️ on <a href="https://github.com/observablehq/framework">GitHub</a> — we appreciate your support. 🙏
+Please reach out if you have questions or thoughts! You can start a <a href="https://github.com/observablehq/framework/discussions">GitHub discussion</a> to ask for help or share your work, or file a <a href="https://github.com/observablehq/framework/issues">GitHub issue</a> to report a bug or request a feature. If you like Framework, please give us a star ⭐️ on <a href="https://github.com/observablehq/framework">GitHub</a> — we appreciate your support. 🙏
