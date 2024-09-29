@@ -1,0 +1,93 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 45,
+    "body": [
+      {
+        "type": "VariableDeclaration",
+        "start": 0,
+        "end": 44,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 6,
+            "end": 43,
+            "id": {
+              "type": "Identifier",
+              "start": 6,
+              "end": 9,
+              "name": "foo"
+            },
+            "init": {
+              "type": "CallExpression",
+              "start": 12,
+              "end": 43,
+              "callee": {
+                "type": "MemberExpression",
+                "start": 12,
+                "end": 31,
+                "object": {
+                  "type": "MetaProperty",
+                  "start": 12,
+                  "end": 23,
+                  "meta": {
+                    "type": "Identifier",
+                    "start": 12,
+                    "end": 18,
+                    "name": "import"
+                  },
+                  "property": {
+                    "type": "Identifier",
+                    "start": 19,
+                    "end": 23,
+                    "name": "meta"
+                  }
+                },
+                "property": {
+                  "type": "Identifier",
+                  "start": 24,
+                  "end": 31,
+                  "name": "resolve"
+                },
+                "computed": false,
+                "optional": false
+              },
+              "arguments": [
+                {
+                  "type": "Literal",
+                  "start": 32,
+                  "end": 42,
+                  "value": "./foo.js",
+                  "raw": "\"./foo.js\""
+                }
+              ],
+              "optional": false
+            }
+          }
+        ],
+        "kind": "const"
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 6,
+      "end": 9,
+      "name": "foo"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [
+    {
+      "name": "./foo.js",
+      "type": "local",
+      "method": "dynamic"
+    }
+  ],
+  "expression": false,
+  "async": false
+}
