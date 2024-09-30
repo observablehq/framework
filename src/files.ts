@@ -50,18 +50,21 @@ export function* visitFiles(root: string, test?: (name: string) => boolean): Gen
   const visited = new Set<number>();
   const queue: string[] = [(root = normalize(root))];
   for (const path of queue) {
-    const status = maybeStatSync(path);
-    if (!status) continue;
-    if (status.isDirectory()) {
-      if (visited.has(status.ino)) continue; // circular symlink
-      visited.add(status.ino);
-      for (const entry of readdirSync(path)) {
-        if (entry === ".observablehq") continue; // ignore the .observablehq directory
-        if (test !== undefined && !test(entry)) continue;
-        queue.push(join(path, entry));
+    try {
+      const status = statSync(path);
+      if (status.isDirectory()) {
+        if (visited.has(status.ino)) continue; // circular symlink
+        visited.add(status.ino);
+        for (const entry of readdirSync(path)) {
+          if (entry === ".observablehq") continue; // ignore the .observablehq directory
+          if (test !== undefined && !test(entry)) continue;
+          queue.push(join(path, entry));
+        }
+      } else {
+        yield relative(root, path);
       }
-    } else {
-      yield relative(root, path);
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
     }
   }
 }
@@ -70,15 +73,6 @@ export function* visitFiles(root: string, test?: (name: string) => boolean): Gen
 export async function maybeStat(path: string): Promise<Stats | undefined> {
   try {
     return await stat(path);
-  } catch (error) {
-    if (!isEnoent(error)) throw error;
-  }
-}
-
-/** Like fs.statSync, but returns undefined instead of throwing ENOENT if not found. */
-export function maybeStatSync(path: string): Stats | undefined {
-  try {
-    return statSync(path);
   } catch (error) {
     if (!isEnoent(error)) throw error;
   }
