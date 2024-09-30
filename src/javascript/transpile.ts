@@ -10,7 +10,7 @@ import {Sourcemap} from "../sourcemap.js";
 import type {FileExpression} from "./files.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
-import {hasImportDeclaration, isImportMetaResolve} from "./imports.js";
+import {hasImportDeclaration, isImportMetaResolve, isJavaScript} from "./imports.js";
 import type {FileInfo} from "./module.js";
 import {findParams} from "./params.js";
 import type {JavaScriptNode} from "./parse.js";
@@ -24,11 +24,12 @@ export interface TranspileOptions {
   params?: Params;
   mode?: string;
   resolveImport?: (specifier: string) => string;
+  resolveFile?: (specifier: string) => string;
 }
 
 export function transpileJavaScript(
   node: JavaScriptNode,
-  {id, path, params, mode, resolveImport}: TranspileOptions
+  {id, path, params, mode, resolveImport, resolveFile}: TranspileOptions
 ): string {
   let async = node.async;
   const inputs = Array.from(new Set<string>(node.references.map((r) => r.name)));
@@ -39,7 +40,7 @@ export function transpileJavaScript(
   const output = new Sourcemap(node.input).trim();
   if (params) rewriteParams(output, node.body, params, node.input);
   rewriteImportDeclarations(output, node.body, resolveImport);
-  rewriteImportExpressions(output, node.body, resolveImport);
+  rewriteImportExpressions(output, node.body, resolveImport, resolveFile);
   rewriteFileExpressions(output, node.files, path);
   if (display) output.insertLeft(0, "display(await(\n").insertRight(node.input.length, "\n))");
   output.insertLeft(0, `, body: ${async ? "async " : ""}(${inputs}) => {\n`);
@@ -134,7 +135,9 @@ export async function transpileModule(
   for (const node of calls) {
     const source = node.arguments[0];
     if (isImportMetaResolve(node) && isStringLiteral(source)) {
-      await rewriteImportSource(source);
+      const value = getStringLiteralValue(source);
+      const resolution = isPathImport(value) && !isJavaScript(value) ? resolveFile(value) : await resolveImport(value);
+      output.replaceLeft(source.start, source.end, JSON.stringify(resolution));
     }
   }
 
@@ -152,10 +155,11 @@ function rewriteFileExpressions(output: Sourcemap, files: FileExpression[], path
 function rewriteImportExpressions(
   output: Sourcemap,
   body: Node,
-  resolve: (specifier: string) => string = String
+  resolveImport: (specifier: string) => string = String,
+  resolveFile: (specifier: string) => string = String
 ): void {
   function rewriteImportSource(source: StringLiteral) {
-    output.replaceLeft(source.start, source.end, JSON.stringify(resolve(getStringLiteralValue(source))));
+    output.replaceLeft(source.start, source.end, JSON.stringify(resolveImport(getStringLiteralValue(source))));
   }
   simple(body, {
     ImportExpression(node) {
@@ -167,7 +171,8 @@ function rewriteImportExpressions(
     CallExpression(node) {
       const source = node.arguments[0];
       if (isImportMetaResolve(node) && isStringLiteral(source)) {
-        const resolution = resolve(getStringLiteralValue(source));
+        const value = getStringLiteralValue(source);
+        const resolution = isPathImport(value) && !isJavaScript(value) ? resolveFile(value) : resolveImport(value);
         output.replaceLeft(
           node.start,
           node.end,

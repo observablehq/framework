@@ -2,6 +2,7 @@ import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
+import {isJavaScript} from "./javascript/imports.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
 import {extractJsrSpecifier, resolveJsrImport, resolveJsrImports} from "./jsr.js";
 import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
@@ -114,6 +115,7 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     for (const i of node.imports) {
       (i.type === "local" ? localImports : globalImports).add(i.name);
       if (i.method === "static") staticImports.add(i.name);
+      if (i.type === "local" && i.method === "resolve" && !isJavaScript(i.name)) files.add(i.name);
     }
   }
 

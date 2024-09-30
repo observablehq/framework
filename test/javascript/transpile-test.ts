@@ -6,6 +6,7 @@ import {isEnoent} from "../../src/error.js";
 import {parseJavaScript} from "../../src/javascript/parse.js";
 import type {TranspileModuleOptions} from "../../src/javascript/transpile.js";
 import {transpileJavaScript, transpileModule} from "../../src/javascript/transpile.js";
+import {isPathImport} from "../../src/path.js";
 import {mockJsDelivr} from "../mocks/jsdelivr.js";
 
 function isJsFile(inputRoot: string, fileName: string) {
@@ -15,7 +16,15 @@ function isJsFile(inputRoot: string, fileName: string) {
 }
 
 function mockResolveImport(specifier: string): string {
-  return specifier.replace(/^npm:/, "https://cdn.jsdelivr.net/npm/");
+  return isPathImport(specifier)
+    ? `./${join("_import", specifier)}`
+    : specifier.replace(/^npm:/, "https://cdn.jsdelivr.net/npm/");
+}
+
+function mockResolveFile(specifier: string): string {
+  return isPathImport(specifier)
+    ? `./${join("_file", specifier)}`
+    : specifier.replace(/^npm:/, "https://cdn.jsdelivr.net/npm/");
 }
 
 function runTests(inputRoot: string, outputRoot: string, filter: (name: string) => boolean = () => true) {
@@ -34,7 +43,12 @@ function runTests(inputRoot: string, outputRoot: string, filter: (name: string) 
 
       try {
         const node = parseJavaScript(input, {path: name});
-        actual = transpileJavaScript(node, {id: "0", path: name, resolveImport: mockResolveImport});
+        actual = transpileJavaScript(node, {
+          id: "0",
+          path: name,
+          resolveImport: mockResolveImport,
+          resolveFile: mockResolveFile
+        });
       } catch (error) {
         if (!(error instanceof SyntaxError)) throw error;
         actual = `define({id: "0", body: () => { throw new SyntaxError(${JSON.stringify(error.message)}); }});\n`;

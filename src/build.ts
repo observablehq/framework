@@ -250,6 +250,7 @@ export async function build(
     return applyHash(join("/_import", path), hash);
   };
   for (const path of localImports) {
+    if (!path.endsWith(".js")) continue;
     const module = findModule(root, path);
     if (!module) throw new Error(`import not found: ${path}`);
     const sourcePath = join(root, module.path);

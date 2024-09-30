@@ -2,17 +2,17 @@
   "body": {
     "type": "Program",
     "start": 0,
-    "end": 43,
+    "end": 60,
     "body": [
       {
         "type": "VariableDeclaration",
         "start": 0,
-        "end": 42,
+        "end": 59,
         "declarations": [
           {
             "type": "VariableDeclarator",
             "start": 6,
-            "end": 41,
+            "end": 58,
             "id": {
               "type": "Identifier",
               "start": 6,
@@ -22,7 +22,7 @@
             "init": {
               "type": "CallExpression",
               "start": 12,
-              "end": 41,
+              "end": 58,
               "callee": {
                 "type": "MemberExpression",
                 "start": 12,
@@ -57,9 +57,9 @@
                 {
                   "type": "Literal",
                   "start": 32,
-                  "end": 40,
-                  "value": "npm:d3",
-                  "raw": "\"npm:d3\""
+                  "end": 57,
+                  "value": "./fetch-local-data.json",
+                  "raw": "\"./fetch-local-data.json\""
                 }
               ],
               "optional": false
@@ -83,8 +83,8 @@
   "files": [],
   "imports": [
     {
-      "name": "npm:d3",
-      "type": "global",
+      "name": "./fetch-local-data.json",
+      "type": "local",
       "method": "resolve"
     }
   ],
