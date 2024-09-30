@@ -50,7 +50,8 @@ export function* visitFiles(root: string, test?: (name: string) => boolean): Gen
   const visited = new Set<number>();
   const queue: string[] = [(root = normalize(root))];
   for (const path of queue) {
-    const status = statSync(path);
+    const status = maybeStatSync(path);
+    if (!status) continue;
     if (status.isDirectory()) {
       if (visited.has(status.ino)) continue; // circular symlink
       visited.add(status.ino);
@@ -69,6 +70,15 @@ export function* visitFiles(root: string, test?: (name: string) => boolean): Gen
 export async function maybeStat(path: string): Promise<Stats | undefined> {
   try {
     return await stat(path);
+  } catch (error) {
+    if (!isEnoent(error)) throw error;
+  }
+}
+
+/** Like fs.statSync, but returns undefined instead of throwing ENOENT if not found. */
+export function maybeStatSync(path: string): Stats | undefined {
+  try {
+    return statSync(path);
   } catch (error) {
     if (!isEnoent(error)) throw error;
   }
