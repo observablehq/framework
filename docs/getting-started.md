@@ -74,7 +74,7 @@ const digraph = dot`digraph {
   ${digraph}
 </figure>
 
-First you’ll setup your local development environment by [**creating**](#1.-create) a new project. A project contains all the source code needed to build an app. Next you’ll [**develop**](#2.-develop): an iterative process where you save changes to source files in your editor while previewing the result in your browser. When you’re ready to share, it’s time to [**publish**](#3.-publish): you can either build a static site for self-hosting or deploy directly to Observable. Lastly, you can invite people to view your app!
+First you’ll setup your local development environment by [**creating**](#1-create) a new project. A project contains all the source code needed to build an app. Next you’ll [**develop**](#2-develop): an iterative process where you save changes to source files in your editor while previewing the result in your browser. When you’re ready to share, it’s time to [**publish**](#3-publish): you can either build a static site for self-hosting or deploy directly to Observable. Lastly, you can invite people to view your app!
 
 These are just first steps. You can continue to develop apps after publishing, and republish as needed. You can also setup continuous deployment to publish your app automatically on commit or on schedule. We’ll cover these [next steps](#next-steps) briefly below.
 
@@ -535,7 +535,7 @@ The <code>build</code> command generates the `dist` directory; you can then copy
 
 <pre data-copy>npx http-server dist</pre>
 
-<div class="tip">By default, Framework generates “clean” URLs by dropping the `.html` extension from page links. Not all webhosts support this; some need the <a href="./config#cleanUrls"><b>cleanUrls</b> config option</a> set to false.</div>
+<div class="tip">By default, Framework generates “clean” URLs by dropping the `.html` extension from page links. Not all webhosts support this; some need the <a href="./config#clean-urls"><b>cleanUrls</b> config option</a> set to false.</div>
 
 <div class="tip">When deploying to GitHub Pages without using GitHub’s related actions (<a href="https://github.com/actions/configure-pages">configure-pages</a>,
 <a href="https://github.com/actions/deploy-pages">deploy-pages</a>, and

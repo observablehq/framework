@@ -14,7 +14,7 @@ For convenience, we provide a [`DatabaseClient`](https://observablehq.com/@obser
 import {DuckDBClient} from "npm:@observablehq/duckdb";
 ```
 
-To get a DuckDB client, pass zero or more named tables to `DuckDBClient.of`. Each table can be expressed as a [`FileAttachment`](../files), [Arquero table](./arquero), [Arrow table](./arrow), an array of objects, or a promise to the same. For file attachments, the following formats are supported: [CSV](./csv), [TSV](./csv), [JSON](./files#json), [Apache Arrow](./arrow), and [Apache Parquet](./arrow#apache-parquet). For example, below we load a sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) as a Parquet file:
+To get a DuckDB client, pass zero or more named tables to `DuckDBClient.of`. Each table can be expressed as a [`FileAttachment`](../files), [Arquero table](./arquero), [Arrow table](./arrow), an array of objects, or a promise to the same. For file attachments, the following formats are supported: [CSV](./csv), [TSV](./csv), [JSON](../files#json), [Apache Arrow](./arrow), and [Apache Parquet](./arrow#apache-parquet). For example, below we load a sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) as a Parquet file:
 
 ```js echo
 const db = DuckDBClient.of({gaia: FileAttachment("gaia-sample.parquet")});

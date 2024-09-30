@@ -245,10 +245,10 @@ Click on any of the imported symbols below to learn more.
 <pre><code class="language-js">import {<a href="./lib/htl">html</a>} from "npm:htl";</code></pre>
 <pre><code class="language-js">import {<a href="./lib/htl">svg</a>} from "npm:htl";</code></pre>
 <pre><code class="language-js">import * as <a href="./lib/leaflet">L</a> from "npm:leaflet";</code></pre>
-<pre><code class="language-js">import <a href="../lib/lodash">_</a> from "npm:lodash";</code></pre>
+<pre><code class="language-js">import <a href="./lib/lodash">_</a> from "npm:lodash";</code></pre>
 <pre><code class="language-js">import * as <a href="./jsx">React</a> from "npm:react";</code></pre>
 <pre><code class="language-js">import * as <a href="./jsx">ReactDOM</a> from "npm:react-dom";</code></pre>
-<pre><code class="language-js">import * as <a href="../lib/topojson">topojson</a> from "npm:topojson-client";</code></pre>
+<pre><code class="language-js">import * as <a href="./lib/topojson">topojson</a> from "npm:topojson-client";</code></pre>
 
 In addition to the above, several implicit imports have slightly more involved definitions: [`now`](./lib/generators#now), [`width`](./lib/generators#width-element), [`dark`](./lib/generators#dark), [`vg`](./lib/mosaic), and [`vl`](./lib/vega-lite).
 

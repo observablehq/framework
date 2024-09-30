@@ -99,7 +99,7 @@ For this site, routes map to files as:
 /hello → dist/hello.html → src/hello.md
 ```
 
-This assumes [“clean URLs”](./config#cleanurls) as supported by most static site servers; `/hello` can also be accessed as `/hello.html`, and `/` can be accessed as `/index` and `/index.html`. (Some static site servers automatically redirect to clean URLs, but we recommend being consistent when linking to your site.)
+This assumes [“clean URLs”](./config#clean-urls) as supported by most static site servers; `/hello` can also be accessed as `/hello.html`, and `/` can be accessed as `/index` and `/index.html`. (Some static site servers automatically redirect to clean URLs, but we recommend being consistent when linking to your site.)
 
 Apps should always have a top-level `index.md` in the source root; this is your app’s home page, and it’s what people visit by default.
 
