@@ -365,7 +365,35 @@ export async function build(
   }
   effects.logger.log("");
 
+  // Check links. TODO Have this break the build, and move this check earlier?
+  const [validLinks, brokenLinks] = validateLinks(outputs);
+  if (brokenLinks.length) {
+    effects.logger.warn(`${yellow("Warning: ")}${brokenLinks.length} broken link${brokenLinks.length === 1 ? "" : "s"} (${validLinks.length + brokenLinks.length} validated)`); // prettier-ignore
+    for (const [path, link] of brokenLinks) effects.logger.log(`${faint("↳")} ${path} ${faint("→")} ${red(link)}`);
+  } else if (validLinks.length) {
+    effects.logger.log(`${green(`${validLinks.length}`)} link${validLinks.length === 1 ? "" : "s"} validated`);
+  }
+
   Telemetry.record({event: "build", step: "finish", pageCount});
+}
+
+type Link = [path: string, target: string];
+
+function validateLinks(outputs: Map<string, {resolvers: Resolvers}>): [valid: Link[], broken: Link[]] {
+  const validTargets = new Set<string>(outputs.keys()); // e.g., "/this/page#hash";
+  for (const [path, {resolvers}] of outputs) {
+    for (const anchor of resolvers.anchors) {
+      validTargets.add(`${path}#${encodeURIComponent(anchor)}`);
+    }
+  }
+  const valid: Link[] = [];
+  const broken: Link[] = [];
+  for (const [path, {resolvers}] of outputs) {
+    for (const target of resolvers.localLinks) {
+      (validTargets.has(target) ? valid : broken).push([path, target]);
+    }
+  }
+  return [valid, broken];
 }
 
 function applyHash(path: string, hash: string): string {
