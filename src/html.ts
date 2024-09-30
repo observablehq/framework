@@ -105,8 +105,7 @@ export function findAssets(html: string, path: string): Assets {
 
   for (const element of document.querySelectorAll<HTMLElement>("[id],[name]")) {
     if (isExternal(element)) continue;
-    const id = element.getAttribute("id") ?? element.getAttribute("name");
-    anchors.add(`${path}#${id}`);
+    anchors.add(element.getAttribute("id") ?? element.getAttribute("name")!);
   }
 
   for (const a of document.querySelectorAll<HTMLAnchorElement>("a")) {
