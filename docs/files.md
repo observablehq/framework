@@ -154,7 +154,7 @@ A common gotcha with JSON is that it has no built-in date type; dates are theref
 
 ### Media
 
-To display an image, you can use a static image in [Markdown](../markdown) such as `<img src="horse.jpg">` or `![horse](horse.jpg)`. Likewise, you can use a `video` or `audio` element. Per [file-based routing](#routing), static references to these files are automatically detected and therefore these files will be included in the built output.
+To display an image, you can use a static image in [Markdown](./markdown) such as `<img src="horse.jpg">` or `![horse](horse.jpg)`. Likewise, you can use a `video` or `audio` element. Per [file-based routing](#routing), static references to these files are automatically detected and therefore these files will be included in the built output.
 
 <video src="horse.mp4" autoplay muted loop controls></video>
 

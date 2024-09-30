@@ -192,7 +192,7 @@ deckInstance.setProps({
 });
 ```
 
-Lastly, the `t` variable controls the height of the extruded hexagons with a [generator](../javascript/generators) (that can be reset with a button input):
+Lastly, the `t` variable controls the height of the extruded hexagons with a [generator](../reactivity#generators) (that can be reset with a button input):
 
 ```js echo
 const t = (function* () {

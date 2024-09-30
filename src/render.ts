@@ -79,7 +79,7 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }${data?.sql ? `\n${registerTables(data.sql, options)}` : ""}
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
-    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, params, mode, resolveImport})}`)
+    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, params, mode, resolveImport, resolveFile})}`)
     .join("")}`)}
 </script>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}
 <div id="observablehq-center">${renderHeader(page.header, resolvers)}${

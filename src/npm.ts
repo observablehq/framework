@@ -3,7 +3,7 @@ import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
 import {dirname, extname, join} from "node:path/posix";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
-import {rsort, satisfies} from "semver";
+import {maxSatisfying, rsort, satisfies, validRange} from "semver";
 import {isEnoent} from "./error.js";
 import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
 import {isImportMetaResolve, parseImports} from "./javascript/imports.js";
@@ -221,15 +221,18 @@ async function resolveNpmVersion(root: string, {name, range}: NpmSpecifier): Pro
   const cache = await getNpmVersionCache(root);
   const versions = cache.get(name);
   if (versions) for (const version of versions) if (!range || satisfies(version, range)) return version;
-  const href = `https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${range ? `?specifier=${range}` : ""}`;
+  if (range === undefined) range = "latest";
+  const disttag = validRange(range) ? null : range;
+  const href = `https://registry.npmjs.org/${name}${disttag ? `/${disttag}` : ""}`;
   let promise = npmVersionRequests.get(href);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async function () {
     const input = formatNpmSpecifier({name, range});
     process.stdout.write(`npm:${input} ${faint("→")} `);
-    const response = await fetch(href);
+    const response = await fetch(href, {...(!disttag && {headers: {Accept: "application/vnd.npm.install-v1+json"}})});
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
-    const {version} = await response.json();
+    const body = await response.json();
+    const version = disttag ? body.version : maxSatisfying(Object.keys(body.versions), range);
     if (!version) throw new Error(`unable to resolve version: ${input}`);
     const output = formatNpmSpecifier({name, range: version});
     process.stdout.write(`npm:${output}\n`);
