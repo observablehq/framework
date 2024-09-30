@@ -368,10 +368,10 @@ export async function build(
   // Check links. TODO Have this break the build, and move this check earlier?
   const [validLinks, brokenLinks] = validateLinks(outputs);
   if (brokenLinks.length) {
-    effects.logger.warn(`${yellow("Warning: ")}${brokenLinks.length} broken link${brokenLinks.length === 1 ? "" : "s"} (${validLinks.length + brokenLinks.length} checked)`); // prettier-ignore
+    effects.logger.warn(`${yellow("Warning: ")}${brokenLinks.length} broken link${brokenLinks.length === 1 ? "" : "s"} (${validLinks.length + brokenLinks.length} validated)`); // prettier-ignore
     for (const [path, link] of brokenLinks) effects.logger.log(`${faint("↳")} ${path} ${faint("→")} ${red(link)}`);
-  } else {
-    effects.logger.log(`${faint("check")} ${validLinks.length} ${faint("links:")} ${green("ok")}`);
+  } else if (validLinks.length) {
+    effects.logger.log(`${green(`${validLinks.length}`)} link${validLinks.length === 1 ? "" : "s"} validated`);
   }
 
   Telemetry.record({event: "build", step: "finish", pageCount});
