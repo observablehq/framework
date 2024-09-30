@@ -33,12 +33,16 @@ export function mockJsDelivr() {
   mockAgent();
   before(async () => {
     const agent = getCurrentAgent();
-    const dataClient = agent.get("https://data.jsdelivr.com");
+    const registryClient = agent.get("https://registry.npmjs.org");
     const cdnClient = agent.get("https://cdn.jsdelivr.net");
     for (const [name, pkg] of packages) {
-      dataClient
-        .intercept({path: new RegExp(`^/v1/packages/npm/${name}/resolved(\\?specifier=|$)`), method: "GET"})
+      registryClient
+        .intercept({path: `/${name}/latest`, method: "GET"})
         .reply(200, {version: pkg.version}, {headers: {"content-type": "application/json; charset=utf-8"}})
+        .persist();
+      registryClient
+        .intercept({path: `/${name}`, method: "GET"})
+        .reply(200, {versions: {[pkg.version]: {}}}, {headers: {"content-type": "application/json; charset=utf-8"}})
         .persist();
       cdnClient
         .intercept({path: `/npm/${name}@${pkg.version}/package.json`, method: "GET"})
