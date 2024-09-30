@@ -71,7 +71,7 @@ This is **Markdown** inside of _HTML_!
 
 ## Grids
 
-The `grid` class declares a [CSS grid](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout) container. The `grid` class is designed to pair with the [`card` class](#card) and the [`dashboard` theme](./themes) for dashboard layout.
+The `grid` class declares a [CSS grid](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout) container. The `grid` class is designed to pair with the [`card` class](#cards) and the [`dashboard` theme](./themes) for dashboard layout.
 
 ```html echo
 <div class="grid grid-cols-4">
@@ -166,7 +166,7 @@ The `card` class is used to group and delineate content. The `card` classes appl
 
 <div class="tip"><a href="./lib/plot">Observable Plot</a>’s <b>title</b> and <b>subtitle</b> options generate <code>h2</code> and <code>h3</code> elements, respectively, and so will inherit these card styles.</div>
 
-Cards can be used on their own, but they most often exist in a [grid](#grid). Cards can contain whatever you like, including text, images, charts, tables, inputs, and more.
+Cards can be used on their own, but they most often exist in a [grid](#grids). Cards can contain whatever you like, including text, images, charts, tables, inputs, and more.
 
 ```html echo
 <div class="grid grid-cols-2">
@@ -183,7 +183,7 @@ Cards can be used on their own, but they most often exist in a [grid](#grid). Ca
 
 <div class="tip">Remove the padding from a card if it contains only a table.</div>
 
-To place an input inside a card, first declare a detached input as a [top-level variable](./reactivity#top-level-variables) and use [`Generators.input`](./lib/generators#inputelement) to expose its reactive value:
+To place an input inside a card, first declare a detached input as a [top-level variable](./reactivity#top-level-variables) and use [`Generators.input`](./lib/generators#input-element) to expose its reactive value:
 
 ```js echo
 const industryInput = Inputs.select(industries.map((d) => d.industry), {unique: true, sort: true, label: "Industry:"});

@@ -126,7 +126,7 @@ Values that change over time — such as interactive inputs, animation parameter
 
 <div class="note">As with implicit await and promises, implicit iteration of generators only applies <i>across</i> code blocks, not <i>within</i> a code block.</div>
 
-As an example, here’s an HTML input element. By passing it to [`Generators.input`](<../lib/generators#input-element>), we can define a generator that yields the input’s value each time it changes.
+As an example, here’s an HTML input element. By passing it to [`Generators.input`](./lib/generators#input-element), we can define a generator that yields the input’s value each time it changes.
 
 <input id="nameInput">
 
@@ -253,7 +253,7 @@ Inputs might prompt a viewer to:
 - Select a URL from a dropdown to view traffic to a specific page
 - Choose a date range to explore data within a period of interest
 
-Inputs are typically displayed using the built-in `view` function, which [displays](../javascript#explicit-display) the given element and returns a corresponding value generator (`Generators.input`) to expose the input’s value to the page. For example, the radio input below prompts for your favorite team:
+Inputs are typically displayed using the built-in `view` function, which [displays](./javascript#explicit-display) the given element and returns a corresponding value generator (`Generators.input`) to expose the input’s value to the page. For example, the radio input below prompts for your favorite team:
 
 ```js echo
 const team = view(Inputs.radio(["Metropolis Meteors", "Rockford Peaches", "Bears"], {label: "Favorite team:", value: "Metropolis Meteors"}));
@@ -277,7 +277,7 @@ const n = view(html`<input type=range step=1 min=1 max=15>`);
 n // Try dragging the slider above
 ```
 
-<div class="tip">To be compatible with <code>view</code>, custom inputs must emit <code>input</code> events when their value changes, and expose their current value as <i>element</i>.value. See <a href="./lib/generators#input(element)"><code>Generators.input</code></a> for more.</div>
+<div class="tip">To be compatible with <code>view</code>, custom inputs must emit <code>input</code> events when their value changes, and expose their current value as <i>element</i>.value. See <a href="./lib/generators#input-element"><code>Generators.input</code></a> for more.</div>
 
 To use a chart as an input, you can use Plot’s [pointer interaction](https://observablehq.com/plot/interactions/pointer), say by setting the **tip** option on a mark. In the scatterplot below, the penguin closest to the pointer is exposed as the reactive variable `penguin`.
 
@@ -293,10 +293,10 @@ In the future, Plot will support more interaction methods, including brushing. P
 
 The `view` function does two things:
 
-1. it [displays](../javascript#explicit-display) the given DOM *element*, and then
+1. it [displays](./javascript#explicit-display) the given DOM *element*, and then
 2. returns a corresponding value generator.
 
-The `view` function uses [`Generators.input`](../lib/generators#input-element) under the hood. As shown above, you can call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it.
+The `view` function uses [`Generators.input`](./lib/generators#input-element) under the hood. As shown above, you can call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it.
 
 ```js echo
 const subjectInput = html`<input type="text" placeholder="anonymous">`;
