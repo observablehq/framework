@@ -105,7 +105,7 @@
     "@types/markdown-it": "^14.0.0",
     "@types/mime": "^4.0.0",
     "@types/mocha": "^10.0.8",
-    "@types/node": "^20.7.1",
+    "@types/node": "^18.11.9",
     "@types/send": "^0.17.4",
     "@types/tar": "^6.1.13",
     "@types/tar-stream": "^3.1.3",
