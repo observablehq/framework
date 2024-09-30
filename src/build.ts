@@ -127,28 +127,24 @@ export async function build(
 
   // Check links.
   {
-    const anchors = new Set<string>(); // e.g., "/this/page#hash";
-    for (const [path, {resolvers}] of outputs) for (const a of resolvers.anchors) anchors.add(`${path}#${a}`);
-    const REF = "proto://host/_observablehq";
-    const badLinks: any[] = [];
-    let checked = 0;
+    const anchors = new Set<string>(outputs.keys()); // e.g., "/this/page#hash";
     for (const [path, {resolvers}] of outputs) {
-      for (const link of resolvers.links) {
-        checked++;
-        const l = link.startsWith("/") ? new URL(link.slice(1), `${REF}/`) : new URL(link, `${REF}${path}`);
-        if (l.href.startsWith(`${REF}/`)) {
-          if (l.pathname.endsWith("/")) l.pathname += "index";
-          const p = l.href.slice(REF.length);
-          if (!(pagePaths.has(p) || anchors.has(p) || files.has(p))) badLinks.push({path, link});
-        } else badLinks.push({path, link});
+      for (const anchor of resolvers.anchors) {
+        anchors.add(`${path}#${encodeURIComponent(anchor)}`);
       }
     }
-    if (badLinks.length) {
-      effects.logger.warn(
-        `${yellow("Warning: ")}${badLinks.length} broken link${badLinks.length > 1 ? "s" : ""} (${checked} checked)`
-      );
-      for (const {path, link} of badLinks) effects.logger.log(`${faint("- ")}${path}${faint(" → ")}${red(link)}`);
-      // throw new Error("invalid build");
+    const broken: {path: string; link: string}[] = [];
+    let checked = 0;
+    for (const [path, {resolvers}] of outputs) {
+      for (const link of resolvers.localLinks) {
+        ++checked;
+        if (!anchors.has(link)) broken.push({path, link});
+      }
+    }
+    if (broken.length) {
+      effects.logger.warn(`${yellow("Warning: ")}${broken.length} broken link${broken.length === 1 ? "" : "s"} (${checked} checked)`); // prettier-ignore
+      for (const {path, link} of broken) effects.logger.log(`${faint("- ")}${path}${faint(" → ")}${red(link)}`);
+      // TODO throw new Error("invalid build");
     } else {
       effects.logger.log(`${faint("check ")}${checked}${faint(" links: ")}${green("ok")}`);
     }

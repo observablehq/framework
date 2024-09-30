@@ -3,7 +3,7 @@ import he from "he";
 import hljs from "highlight.js";
 import type {DOMWindow} from "jsdom";
 import {JSDOM, VirtualConsole} from "jsdom";
-import {isAssetPath, relativePath, resolveLocalPath} from "./path.js";
+import {isAssetPath, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 const ASSET_ATTRIBUTES: readonly [selector: string, src: string][] = [
   ["a[href][download]", "href"],
@@ -41,8 +41,8 @@ export function parseHtml(html: string): DOMWindow {
 
 interface Assets {
   files: Set<string>;
-  links: Set<string>;
   anchors: Set<string>;
+  localLinks: Set<string>;
   localImports: Set<string>;
   globalImports: Set<string>;
   staticImports: Set<string>;
@@ -51,8 +51,8 @@ interface Assets {
 export function findAssets(html: string, path: string): Assets {
   const {document} = parseHtml(html);
   const files = new Set<string>();
-  const links = new Set<string>();
   const anchors = new Set<string>();
+  const localLinks = new Set<string>();
   const localImports = new Set<string>();
   const globalImports = new Set<string>();
   const staticImports = new Set<string>();
@@ -108,14 +108,15 @@ export function findAssets(html: string, path: string): Assets {
     anchors.add(element.getAttribute("id") ?? element.getAttribute("name")!);
   }
 
-  for (const a of document.querySelectorAll<HTMLAnchorElement>("a")) {
-    if (isExternal(a)) continue;
-    const href = a.getAttribute("href");
-    if (!href || /^\w+:/.test(href)) continue;
-    links.add(href);
+  for (const a of document.querySelectorAll<HTMLAnchorElement>("a[href]")) {
+    if (isExternal(a) || a.hasAttribute("download")) continue;
+    const href = a.getAttribute("href")!;
+    if (/^\w+:/.test(href)) continue; // URL
+    const {pathname, search, hash} = parseRelativeUrl(href);
+    localLinks.add(resolvePath(path, pathname).replace(/\.html$/i, "").replace(/\/$/, "/index") + search + hash); // prettier-ignore
   }
 
-  return {files, localImports, globalImports, staticImports, links, anchors};
+  return {files, localImports, globalImports, staticImports, localLinks, anchors};
 }
 
 export function rewriteHtmlPaths(html: string, path: string): string {

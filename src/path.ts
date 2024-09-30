@@ -32,7 +32,7 @@ export function resolvePath(root: string, source: string, target: string): strin
 export function resolvePath(root: string, source: string, target?: string): string {
   if (target === undefined) (target = source), (source = root), (root = ".");
   const path = join(root, target === "" ? source : target.startsWith("/") ? "." : dirname(source), target);
-  return path.startsWith("../") ? path : `/${path}`;
+  return path.startsWith("../") ? path : join("/", path);
 }
 
 /**
