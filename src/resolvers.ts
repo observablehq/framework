@@ -155,11 +155,11 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     path,
     hash: hash.digest("hex"),
     assets,
+    links,
+    anchors,
     ...(await resolveResolvers(
       {
         files,
-        links,
-        anchors,
         fileMethods,
         localImports,
         globalImports,
@@ -178,6 +178,8 @@ export async function getModuleResolvers(path: string, config: Omit<ResolversCon
     path,
     hash: getModuleHash(root, path),
     assets: new Set(),
+    links: new Set(),
+    anchors: new Set(),
     ...(await resolveResolvers({localImports: [path], staticImports: [path]}, {path, ...config}))
   };
 }
@@ -185,8 +187,6 @@ export async function getModuleResolvers(path: string, config: Omit<ResolversCon
 async function resolveResolvers(
   {
     files: initialFiles,
-    links: initialLinks,
-    anchors: initialAnchors,
     fileMethods: initialFileMethods,
     localImports: initialLocalImports,
     globalImports: initialGlobalImports,
@@ -194,8 +194,6 @@ async function resolveResolvers(
     stylesheets: initialStylesheets
   }: {
     files?: Iterable<string> | null;
-    links?: Iterable<string> | null;
-    anchors?: Iterable<string> | null;
     fileMethods?: Iterable<string> | null;
     localImports?: Iterable<string> | null;
     globalImports?: Iterable<string> | null;
@@ -203,10 +201,8 @@ async function resolveResolvers(
     stylesheets?: Iterable<string> | null;
   },
   {root, path, normalizePath, loaders}: ResolversConfig
-): Promise<Omit<Resolvers, "path" | "hash" | "assets">> {
+): Promise<Omit<Resolvers, "path" | "hash" | "assets" | "links" | "anchors">> {
   const files = new Set<string>(initialFiles);
-  const links = new Set<string>(initialLinks);
-  const anchors = new Set<string>(initialAnchors);
   const fileMethods = new Set<string>(initialFileMethods);
   const localImports = new Set<string>(initialLocalImports);
   const globalImports = new Set<string>(initialGlobalImports);
@@ -420,8 +416,6 @@ async function resolveResolvers(
 
   return {
     files,
-    links,
-    anchors,
     localImports,
     globalImports,
     staticImports,
