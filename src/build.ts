@@ -125,31 +125,6 @@ export async function build(
   if (pageCount) effects.logger.log(`${faint("built")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`); // prettier-ignore
   if (assetCount) effects.logger.log(`${faint("built")} ${assetCount} ${faint(`asset${assetCount === 1 ? "" : "s"} in`)} ${root}`); // prettier-ignore
 
-  // Check links.
-  {
-    const anchors = new Set<string>(outputs.keys()); // e.g., "/this/page#hash";
-    for (const [path, {resolvers}] of outputs) {
-      for (const anchor of resolvers.anchors) {
-        anchors.add(`${path}#${encodeURIComponent(anchor)}`);
-      }
-    }
-    const broken: {path: string; link: string}[] = [];
-    let checked = 0;
-    for (const [path, {resolvers}] of outputs) {
-      for (const link of resolvers.localLinks) {
-        ++checked;
-        if (!anchors.has(link)) broken.push({path, link});
-      }
-    }
-    if (broken.length) {
-      effects.logger.warn(`${yellow("Warning: ")}${broken.length} broken link${broken.length === 1 ? "" : "s"} (${checked} checked)`); // prettier-ignore
-      for (const {path, link} of broken) effects.logger.log(`${faint("- ")}${path}${faint(" → ")}${red(link)}`);
-      // TODO throw new Error("invalid build");
-    } else {
-      effects.logger.log(`${faint("check ")}${checked}${faint(" links: ")}${green("ok")}`);
-    }
-  }
-
   // For cache-breaking we rename most assets to include content hashes.
   const aliases = new Map<string, string>();
   const cacheRoot = join(root, ".observablehq", "cache");
@@ -389,7 +364,35 @@ export async function build(
   }
   effects.logger.log("");
 
+  // Check links. TODO Have this break the build, and move this check earlier?
+  const [validLinks, brokenLinks] = validateLinks(outputs);
+  if (brokenLinks.length) {
+    effects.logger.warn(`${yellow("Warning: ")}${brokenLinks.length} broken link${brokenLinks.length === 1 ? "" : "s"} (${validLinks.length + brokenLinks.length} checked)`); // prettier-ignore
+    for (const [path, link] of brokenLinks) effects.logger.log(`${faint("↳")} ${path} ${faint("→")} ${red(link)}`);
+  } else {
+    effects.logger.log(`${faint("check")} ${validLinks.length} ${faint("links:")} ${green("ok")}`);
+  }
+
   Telemetry.record({event: "build", step: "finish", pageCount});
+}
+
+type Link = [path: string, target: string];
+
+function validateLinks(outputs: Map<string, {resolvers: Resolvers}>): [valid: Link[], broken: Link[]] {
+  const validTargets = new Set<string>(outputs.keys()); // e.g., "/this/page#hash";
+  for (const [path, {resolvers}] of outputs) {
+    for (const anchor of resolvers.anchors) {
+      validTargets.add(`${path}#${encodeURIComponent(anchor)}`);
+    }
+  }
+  const valid: Link[] = [];
+  const broken: Link[] = [];
+  for (const [path, {resolvers}] of outputs) {
+    for (const target of resolvers.localLinks) {
+      (validTargets.has(target) ? valid : broken).push([path, target]);
+    }
+  }
+  return [valid, broken];
 }
 
 function applyHash(path: string, hash: string): string {
