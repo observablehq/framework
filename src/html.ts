@@ -41,6 +41,8 @@ export function parseHtml(html: string): DOMWindow {
 
 interface Assets {
   files: Set<string>;
+  links: Set<string>;
+  anchors: Set<string>;
   localImports: Set<string>;
   globalImports: Set<string>;
   staticImports: Set<string>;
@@ -49,6 +51,8 @@ interface Assets {
 export function findAssets(html: string, path: string): Assets {
   const {document} = parseHtml(html);
   const files = new Set<string>();
+  const links = new Set<string>();
+  const anchors = new Set<string>();
   const localImports = new Set<string>();
   const globalImports = new Set<string>();
   const staticImports = new Set<string>();
@@ -99,7 +103,20 @@ export function findAssets(html: string, path: string): Assets {
     }
   }
 
-  return {files, localImports, globalImports, staticImports};
+  for (const element of document.querySelectorAll<HTMLElement>("[id],[name]")) {
+    if (isExternal(element)) continue;
+    const id = element.getAttribute("id") ?? element.getAttribute("name");
+    anchors.add(`${path}#${id}`);
+  }
+
+  for (const a of document.querySelectorAll<HTMLAnchorElement>("a")) {
+    if (isExternal(a)) continue;
+    const href = a.getAttribute("href");
+    if (!href || /^\w+:/.test(href)) continue;
+    links.add(href);
+  }
+
+  return {files, localImports, globalImports, staticImports, links, anchors};
 }
 
 export function rewriteHtmlPaths(html: string, path: string): string {

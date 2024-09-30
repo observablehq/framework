@@ -18,6 +18,8 @@ export interface Resolvers {
   hash: string;
   assets: Set<string>; // like files, but not registered for FileAttachment
   files: Set<string>;
+  links: Set<string>;
+  anchors: Set<string>;
   localImports: Set<string>;
   globalImports: Set<string>;
   staticImports: Set<string>;
@@ -86,6 +88,8 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
   const hash = createHash("sha256").update(page.body).update(JSON.stringify(page.data));
   const assets = new Set<string>();
   const files = new Set<string>();
+  const links = new Set<string>();
+  const anchors = new Set<string>();
   const fileMethods = new Set<string>();
   const localImports = new Set<string>();
   const globalImports = new Set<string>(defaultImports);
@@ -97,6 +101,8 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     if (!html) continue;
     const info = findAssets(html, path);
     for (const f of info.files) assets.add(f);
+    for (const l of info.links) links.add(l);
+    for (const a of info.anchors) anchors.add(a);
     for (const i of info.localImports) localImports.add(i);
     for (const i of info.globalImports) globalImports.add(i);
     for (const i of info.staticImports) staticImports.add(i);
@@ -152,6 +158,8 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     ...(await resolveResolvers(
       {
         files,
+        links,
+        anchors,
         fileMethods,
         localImports,
         globalImports,
@@ -177,6 +185,8 @@ export async function getModuleResolvers(path: string, config: Omit<ResolversCon
 async function resolveResolvers(
   {
     files: initialFiles,
+    links: initialLinks,
+    anchors: initialAnchors,
     fileMethods: initialFileMethods,
     localImports: initialLocalImports,
     globalImports: initialGlobalImports,
@@ -184,6 +194,8 @@ async function resolveResolvers(
     stylesheets: initialStylesheets
   }: {
     files?: Iterable<string> | null;
+    links?: Iterable<string> | null;
+    anchors?: Iterable<string> | null;
     fileMethods?: Iterable<string> | null;
     localImports?: Iterable<string> | null;
     globalImports?: Iterable<string> | null;
@@ -193,6 +205,8 @@ async function resolveResolvers(
   {root, path, normalizePath, loaders}: ResolversConfig
 ): Promise<Omit<Resolvers, "path" | "hash" | "assets">> {
   const files = new Set<string>(initialFiles);
+  const links = new Set<string>(initialLinks);
+  const anchors = new Set<string>(initialAnchors);
   const fileMethods = new Set<string>(initialFileMethods);
   const localImports = new Set<string>(initialLocalImports);
   const globalImports = new Set<string>(initialGlobalImports);
@@ -406,6 +420,8 @@ async function resolveResolvers(
 
   return {
     files,
+    links,
+    anchors,
     localImports,
     globalImports,
     staticImports,

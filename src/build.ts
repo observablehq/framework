@@ -65,6 +65,8 @@ export async function build(
   const localImports = new Set<string>(); // e.g., "/components/foo.js"
   const globalImports = new Set<string>(); // e.g., "/_observablehq/search.js"
   const stylesheets = new Set<string>(); // e.g., "/style.css"
+  const checkLinks = new Map<string, Set<string>>(); // e.g., "/this/page" => "../other/page#hash";
+  const anchors = new Set<string>(); // e.g., "/this/page#hash";
   const addFile = (path: string, f: string) => files.add(resolvePath(path, f));
   const addLocalImport = (path: string, i: string) => localImports.add(resolvePath(path, i));
   const addGlobalImport = (path: string, i: string) => isPathImport(i) && globalImports.add(resolvePath(path, i));
@@ -109,6 +111,8 @@ export async function build(
     const resolvers = await getResolvers(page, options);
     const elapsed = Math.floor(performance.now() - start);
     for (const f of resolvers.assets) addFile(path, f);
+    checkLinks.set(path, new Set(resolvers.links));
+    for (const a of resolvers.anchors) anchors.add(a);
     for (const f of resolvers.files) addFile(path, f);
     for (const i of resolvers.localImports) addLocalImport(path, i);
     for (const i of resolvers.globalImports) addGlobalImport(path, resolvers.resolveImport(i));
@@ -124,6 +128,31 @@ export async function build(
   if (!outputCount) throw new CliError(`Nothing to build: no pages found in your ${root} directory.`);
   if (pageCount) effects.logger.log(`${faint("built")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`); // prettier-ignore
   if (assetCount) effects.logger.log(`${faint("built")} ${assetCount} ${faint(`asset${assetCount === 1 ? "" : "s"} in`)} ${root}`); // prettier-ignore
+
+  // Check links.
+  const REF = "proto://host/_observablehq";
+  const badLinks: any[] = [];
+  let checked = 0;
+  for (const [path, links] of checkLinks) {
+    for (const link of links) {
+      checked++;
+      const l = link.startsWith("/") ? new URL(link.slice(1), `${REF}/`) : new URL(link, `${REF}${path}`);
+      if (l.href.startsWith(`${REF}/`)) {
+        if (l.pathname.endsWith("/")) l.pathname += "index";
+        const p = l.href.slice(REF.length);
+        if (!(pagePaths.has(p) || anchors.has(p) || files.has(p))) badLinks.push({path, link});
+      } else badLinks.push({path, link});
+    }
+  }
+  if (badLinks.length) {
+    effects.logger.warn(
+      `${yellow("Warning: ")}${badLinks.length} broken link${badLinks.length > 1 ? "s" : ""} (${checked} checked)`
+    );
+    for (const {path, link} of badLinks) effects.logger.log(`${faint("- ")}${path}${faint(" → ")}${red(link)}`);
+    // throw new Error("invalid build");
+  } else {
+    effects.logger.log(`${faint("check ")}${checked}${faint(" links: ")}${green("ok")}`);
+  }
 
   // For cache-breaking we rename most assets to include content hashes.
   const aliases = new Map<string, string>();
