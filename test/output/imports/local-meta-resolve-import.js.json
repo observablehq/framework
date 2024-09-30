@@ -85,7 +85,7 @@
     {
       "name": "./foo.js",
       "type": "local",
-      "method": "dynamic"
+      "method": "resolve"
     }
   ],
   "expression": false,

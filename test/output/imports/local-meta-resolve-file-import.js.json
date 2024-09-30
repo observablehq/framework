@@ -85,7 +85,7 @@
     {
       "name": "./fetch-local-data.json",
       "type": "local",
-      "method": "dynamic"
+      "method": "resolve"
     }
   ],
   "expression": false,

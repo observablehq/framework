@@ -23,6 +23,7 @@ import {define} from "../_observablehq/client.00000001.js";
 import {registerFile} from "../_observablehq/stdlib.00000003.js";
 
 registerFile("../top.js", {"name":"../top.js","mimeType":"text/javascript","path":"../_file/top.a53c5d5b.js","lastModified":/* ts */1706742000000,"size":26});
+registerFile("./hello.txt", {"name":"./hello.txt","mimeType":"text/plain","path":"../_file/foo/hello.5891b5b5.txt","lastModified":/* ts */1706742000000,"size":6});
 
 define({id: "261e010e", inputs: ["display","FileAttachment"], outputs: ["d3","bar","top"], body: async (display,FileAttachment) => {
 const [d3, {bar}, {top}] = await Promise.all([import("../_npm/d3@7.8.5/cd372fb8.js"), import("../_import/bar/bar.13bb8056.js"), import("../_import/top.160847a6.js")]);
@@ -37,6 +38,12 @@ define({id: "ec24b17a", inputs: ["display"], outputs: ["foobar"], body: async (d
 const {foobar} = await import("./foo%20bar.js");
 display(foobar);
 return {foobar};
+}});
+
+define({id: "2a2171cf", inputs: ["display"], body: async (display) => {
+display(await(
+new URL("../_file/foo/hello.5891b5b5.txt", location).href
+))
 }});
 
 </script>
@@ -62,6 +69,7 @@ return {foobar};
 <h1 id="foo" tabindex="-1"><a class="observablehq-header-anchor" href="#foo">Foo</a></h1>
 <div class="observablehq observablehq--block"><!--:261e010e:--></div>
 <div class="observablehq observablehq--block"><!--:ec24b17a:--></div>
+<div class="observablehq observablehq--block"><observablehq-loading></observablehq-loading><!--:2a2171cf:--></div>
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="prev" href="../script"><span>Scripts</span></a></nav>
