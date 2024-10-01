@@ -433,8 +433,8 @@ body {
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-toc {
     display: none;
   }
-  #observablehq-sidebar-toggle:checked ~ #observablehq-center #observablehq-main,
-  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-main {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center #observablehq-toc ~ #observablehq-main,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-toc ~ #observablehq-main {
     padding-right: 0;
   }
 }
@@ -445,8 +445,8 @@ body {
   #observablehq-toc {
     display: block;
   }
-  #observablehq-sidebar-toggle:checked ~ #observablehq-center #observablehq-main,
-  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-main {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center #observablehq-toc ~ #observablehq-main,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-toc ~ #observablehq-main {
     padding-right: calc(192px + 1rem);
   }
 }
