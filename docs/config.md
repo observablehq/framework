@@ -110,7 +110,7 @@ The app’s title. If specified, this text is appended to page titles with a sep
 
 Whether to show the sidebar. Defaults to true if **pages** is not empty.
 
-## home <a href="https://github.com/observablehq/framework/pull/1689" class="observablehq-version-badge" data-version="prerelease" title="Added in #1689"></a>
+## home <a href="https://github.com/observablehq/framework/releases/tag/v1.12.0" class="observablehq-version-badge" data-version="^1.12.0" title="Added in 1.12.0"></a>
 
 An HTML fragment to render the link to the home page in the top of the sidebar. Defaults to the [app’s title](#title), if any, and otherwise the word “Home”. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
 

@@ -2,7 +2,7 @@
 keywords: embedded analytics, embeds, iframe, exporting, exports
 ---
 
-# Embedding <a href="https://github.com/observablehq/framework/pull/1637" class="observablehq-version-badge" data-version="prerelease" title="Added in #1637"></a>
+# Embedding <a href="https://github.com/observablehq/framework/releases/tag/v1.12.0" class="observablehq-version-badge" data-version="^1.12.0" title="Added in 1.12.0"></a>
 
 In addition to standalone apps, you can use Framework to embed interactive views within other applications. Framework supports multiple approaches to embedding:
 
