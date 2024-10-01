@@ -129,7 +129,7 @@
     "react-dom": "^18.2.0",
     "rimraf": "^5.0.5",
     "tempy": "^3.1.0",
-    "typescript": "^5.2.2",
+    "typescript": "^5.2.2 <5.6.0",
     "undici": "^6.7.1"
   },
   "engines": {
