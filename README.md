@@ -7,7 +7,7 @@
   <img alt="Daily downloads of Observable Framework" src="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads.svg">
 </picture>
 
-<i>Daily downloads of Observable Framework</i>
+<sup><sub>Daily downloads of Observable Framework</sub></sup>
 
 ## Documentation 📚
 
