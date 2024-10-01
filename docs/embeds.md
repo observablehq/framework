@@ -2,7 +2,7 @@
 keywords: embedded analytics, embeds, iframe, exporting, exports
 ---
 
-# Embedding <a href="https://github.com/observablehq/framework/pull/1637" class="observablehq-version-badge" data-version="prerelease" title="Added in #1637"></a>
+# Embedding <a href="https://github.com/observablehq/framework/releases/tag/v1.12.0" class="observablehq-version-badge" data-version="^1.12.0" title="Added in 1.12.0"></a>
 
 In addition to standalone apps, you can use Framework to embed interactive views within other applications. Framework supports multiple approaches to embedding:
 
@@ -109,14 +109,35 @@ Some web tooling such as Vite and Webpack erroneously rewrite external dynamic i
 
 ## Exported files
 
-In addition to modules, you can declare specific files to export using the [**dynamicPaths** config option](./config#dynamic-paths). Exported files are published under a stable URL that can be linked to and loaded from an external application. Exported files can be either [static files](./files) or generated dynamically by [data loaders](./data-loaders), and can use [parameterized routes](./params). For example, to export the file `/robots.txt`:
+You can declare specific files to export using the [**dynamicPaths** config option](./config#dynamic-paths). Exported files are published under a stable URL that can be linked to and loaded from an external application. Exported files can be either [static](./files) or generated dynamically by [data loaders](./data-loaders). And you can use [parameterized routes](./params).
+
+For example, say you want to chart downloads of open-source libraries you maintain. You could use a data loader to server-side render SVG with Observable Plot. (See Plot’s [Getting Started](https://observablehq.com/plot/getting-started#plot-in-node-js) guide.) In your config file, list the charts you want to build:
 
 ```js run=false
 export default {
   dynamicPaths: [
-    "/robots.txt"
+    "/@observablehq/framework/downloads-dark.svg",
+    "/@observablehq/framework/downloads.svg",
+    "/@observablehq/plot/downloads-dark.svg",
+    "/@observablehq/plot/downloads.svg",
+    "/@observablehq/runtime/downloads-dark.svg",
+    "/@observablehq/runtime/downloads.svg"
   ]
 };
+```
+
+Once your app is deployed, you can then load the generated SVG into another app — or READMEs on GitHub — using the `img` tag. For example, below is a chart of daily downloads of Observable Framework powered by our [open-source analytics](https://github.com/observablehq/oss-analytics/).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads-dark.svg">
+  <img style="margin-top: 1rem;" alt="Daily downloads of Observable Framework" src="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads.svg">
+</picture>
+
+```html run=false
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads-dark.svg">
+  <img alt="Daily downloads of Observable Framework" src="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads.svg">
+</picture>
 ```
 
 ## Iframe embeds
