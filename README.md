@@ -2,13 +2,12 @@
 
 [**Observable Framework**](https://observablehq.com/framework/) is a free, [open-source](./LICENSE), static site generator for data apps, dashboards, reports, and more. Framework combines JavaScript on the front-end for interactive graphics with any language on the back-end for data analysis. Framework features [data loaders](https://observablehq.com/framework/loaders) that precompute static snapshots of data at build time for dashboards that load instantly.
 
-<figure>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads-dark.svg">
-    <img alt="Daily downloads of Observable Framework" src="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads.svg">
-  </picture>
-  <figcaption>Daily downloads of Observable Framework</figcaption>
-</figure>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads-dark.svg">
+  <img alt="Daily downloads of Observable Framework" src="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads.svg">
+</picture>
+
+<i>Daily downloads of Observable Framework</i>
 
 ## Documentation 📚
 
