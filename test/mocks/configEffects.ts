@@ -2,11 +2,15 @@ import {join} from "node:path/posix";
 import type {ConfigEffects} from "../../src/observableApiConfig.js";
 
 export class MockConfigEffects implements ConfigEffects {
-  public env = {};
+  public env: Record<string, string | undefined>;
 
   public _files: Map<string, string> = new Map();
   public _readLog: string[] = [];
   public _writeLog: string[] = [];
+
+  constructor({env = {}}: {env?: Record<string, string | undefined>} = {}) {
+    this.env = env;
+  }
 
   async readFile(path: string): Promise<string> {
     this._readLog.push(path);

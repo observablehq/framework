@@ -14,8 +14,12 @@ export class MockAuthEffects extends MockConfigEffects implements AuthEffects {
   public outputColumns: number = 80;
   public clack = new TestClackEffects();
 
-  constructor({apiKey = null, isTty = true}: {apiKey?: string | null; isTty?: boolean} = {}) {
-    super();
+  constructor({
+    apiKey = null,
+    isTty = true,
+    env = {}
+  }: {apiKey?: string | null; isTty?: boolean; env?: Record<string, string | undefined>} = {}) {
+    super({env});
     this.observableApiKey = apiKey;
     this.isTty = isTty;
   }

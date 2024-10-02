@@ -143,7 +143,7 @@ class ObservableApiMock {
     return this;
   }
 
-  handleGetProject({
+  handleGetProjectBySlug({
     workspaceLogin,
     projectSlug,
     projectId = "project123",
@@ -173,6 +173,41 @@ class ObservableApiMock {
     this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/@${workspaceLogin}/${projectSlug}`, headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handleGetProjectById({
+    projectId,
+    workspaceLogin = "workspace-login",
+    projectSlug = "project-slug",
+    title = "Build test case",
+    accessLevel = "private",
+    status = 200
+  }: {
+    workspaceLogin?: string;
+    projectSlug?: string;
+    projectId: string;
+    title?: string;
+    accessLevel?: string;
+    status?: number;
+  }): ObservableApiMock {
+    const response =
+      status === 200
+        ? JSON.stringify({
+            accessLevel,
+            id: projectId,
+            slug: projectSlug,
+            title,
+            creator: {id: "user-id", login: "user-login"},
+            owner: {id: "workspace-id", login: workspaceLogin}
+          } satisfies GetProjectResponse)
+        : emptyErrorBody;
+    const headers = authorizationHeader(status !== 401 && status !== 403);
+    this.addHandler((pool) =>
+      pool
+        .intercept({path: `/cli/project/${projectId}`, headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;

@@ -38,6 +38,7 @@ interface MockDeployEffectsOptions {
   fixedInputStatTime?: Date;
   fixedOutputStatTime?: Date;
   buildManifest?: BuildManifest;
+  env?: Record<string, string | undefined>;
 }
 
 class MockDeployEffects extends MockAuthEffects implements DeployEffects {
@@ -69,9 +70,10 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     debug = false,
     fixedInputStatTime,
     fixedOutputStatTime,
-    buildManifest
+    buildManifest,
+    env = {}
   }: MockDeployEffectsOptions = {}) {
-    super();
+    super({env});
     this.authEffects = new MockAuthEffects();
     this.configEffects = new MockConfigEffects();
 
@@ -84,6 +86,7 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     this.fixedInputStatTime = fixedInputStatTime;
     this.fixedOutputStatTime = fixedOutputStatTime;
     this.buildManifest = buildManifest;
+    this.env = env;
 
     this.output = new Writable({
       write: (data, _enc, callback) => {
@@ -202,7 +205,7 @@ describe("deploy", () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
+      .handleGetProjectBySlug(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -221,10 +224,12 @@ describe("deploy", () => {
   });
 
   it("makes expected API calls for an existing project and deploy", async () => {
+    const projectId = "project123";
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetDeploy({deployId, deployStatus: "created"})
+      .handleGetProjectById({projectId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId, deployStatus: "uploaded"})
@@ -233,10 +238,16 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),
-      fixedOutputStatTime: new Date("2024-03-10")
+      fixedOutputStatTime: new Date("2024-03-10"),
+      env: {
+        OBSERVABLE_CI: "true",
+        OBSERVABLE_DEPLOY_ID: deployId,
+        OBSERVABLE_PROJECT_ID: projectId
+      }
     });
     effects.clack.inputs = ["fix some bugs"]; // "what changed?"
-    await deploy({...TEST_OPTIONS, deployId}, effects);
+
+    await deploy(TEST_OPTIONS, effects);
 
     effects.close();
   });
@@ -248,12 +259,16 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),
-      fixedOutputStatTime: new Date("2024-03-10")
+      fixedOutputStatTime: new Date("2024-03-10"),
+      env: {
+        OBSERVABLE_CI: "true",
+        OBSERVABLE_DEPLOY_ID: deployId
+      }
     });
     effects.clack.inputs = ["fix some bugs"]; // "what changed?"
 
     try {
-      await deploy({...TEST_OPTIONS, deployId}, effects);
+      await deploy(TEST_OPTIONS, effects);
       assert.fail("expected error");
     } catch (error) {
       CliError.assert(error, {message: "Deploy deploy456 not found.", print: true, exitCode: 1});
@@ -269,12 +284,16 @@ describe("deploy", () => {
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),
-      fixedOutputStatTime: new Date("2024-03-10")
+      fixedOutputStatTime: new Date("2024-03-10"),
+      env: {
+        OBSERVABLE_CI: "true",
+        OBSERVABLE_DEPLOY_ID: deployId
+      }
     });
     effects.clack.inputs = ["fix some bugs"]; // "what changed?"
 
     try {
-      await deploy({...TEST_OPTIONS, deployId}, effects);
+      await deploy(TEST_OPTIONS, effects);
       assert.fail("expected error");
     } catch (error) {
       CliError.assert(error, {
@@ -292,7 +311,7 @@ describe("deploy", () => {
     const oldTitle = `${TEST_CONFIG.title!} old`;
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject({...DEPLOY_CONFIG, title: oldTitle})
+      .handleGetProjectBySlug({...DEPLOY_CONFIG, title: oldTitle})
       .handleUpdateProject({projectId: DEPLOY_CONFIG.projectId, title: TEST_CONFIG.title!})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
@@ -348,7 +367,7 @@ describe("deploy", () => {
     const message = "this is test deploy";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject(deployConfig)
+      .handleGetProjectBySlug(deployConfig)
       .handlePostDeploy({projectId: deployConfig.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -366,7 +385,7 @@ describe("deploy", () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject({...DEPLOY_CONFIG, status: 404})
+      .handleGetProjectBySlug({...DEPLOY_CONFIG, status: 404})
       .handleGetWorkspaceProjects({
         workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
         projects: [{id: DEPLOY_CONFIG.projectId, slug: DEPLOY_CONFIG.projectSlug}]
@@ -390,7 +409,7 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetWorkspaceProjects({workspaceLogin: DEPLOY_CONFIG.workspaceLogin, projects: []})
-      .handleGetProject({...DEPLOY_CONFIG, status: 404})
+      .handleGetProjectBySlug({...DEPLOY_CONFIG, status: 404})
       .start();
 
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, isTty: true});
@@ -409,7 +428,7 @@ describe("deploy", () => {
   it("makes expected API calls for configured, non-existent project; non-interactive", async () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject({...DEPLOY_CONFIG, status: 404})
+      .handleGetProjectBySlug({...DEPLOY_CONFIG, status: 404})
       .start();
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, isTty: false});
 
@@ -453,7 +472,7 @@ describe("deploy", () => {
     });
     getCurrentObservableApi()
       .handleGetCurrentUser({user: userWithZeroWorkspaces})
-      .handleGetProject({...DEPLOY_CONFIG, status: 404})
+      .handleGetProjectBySlug({...DEPLOY_CONFIG, status: 404})
       .start();
 
     const effects = new MockDeployEffects({deployConfig, isTty: true});
@@ -571,7 +590,7 @@ describe("deploy", () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject({
+      .handleGetProjectBySlug({
         ...DEPLOY_CONFIG
       })
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId, status: 500})
@@ -597,7 +616,7 @@ describe("deploy", () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
+      .handleGetProjectBySlug(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .handlePostDeployManifest({deployId, files: [{deployId, path: "index.html", action: "upload"}]})
       .handlePostDeployFile({deployId, status: 500})
@@ -621,7 +640,7 @@ describe("deploy", () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
+      .handleGetProjectBySlug(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId, status: 500})
@@ -729,7 +748,7 @@ describe("deploy", () => {
     let buildManifestPages: PostDeployUploadedRequest["pages"] | null = null;
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
+      .handleGetProjectBySlug(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({
@@ -763,7 +782,7 @@ describe("deploy", () => {
       const deployId = "deployId";
       getCurrentObservableApi()
         .handleGetCurrentUser()
-        .handleGetProject({
+        .handleGetProjectBySlug({
           ...DEPLOY_CONFIG,
           projectId: newProjectId
         })
@@ -784,7 +803,7 @@ describe("deploy", () => {
       const oldDeployConfig = {...DEPLOY_CONFIG, projectId: "oldProjectId"};
       getCurrentObservableApi()
         .handleGetCurrentUser()
-        .handleGetProject({
+        .handleGetProjectBySlug({
           ...DEPLOY_CONFIG,
           projectId: newProjectId
         })
@@ -806,7 +825,7 @@ describe("deploy", () => {
       const oldDeployConfig = {...DEPLOY_CONFIG, projectId: "oldProjectId"};
       getCurrentObservableApi()
         .handleGetCurrentUser()
-        .handleGetProject({
+        .handleGetProjectBySlug({
           ...DEPLOY_CONFIG,
           projectId: newProjectId
         })
@@ -827,7 +846,7 @@ describe("deploy", () => {
       delete deployConfig.projectId;
       getCurrentObservableApi()
         .handleGetCurrentUser()
-        .handleGetProject({
+        .handleGetProjectBySlug({
           ...DEPLOY_CONFIG,
           projectId: newProjectId
         })
@@ -850,7 +869,7 @@ describe("deploy", () => {
       .handlePostAuthRequest()
       .handlePostAuthRequestPoll("accepted")
       .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
+      .handleGetProjectBySlug(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -871,7 +890,7 @@ describe("deploy", () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
+      .handleGetProjectBySlug(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -896,7 +915,7 @@ describe("deploy", () => {
       force: null,
       config: {...TEST_OPTIONS.config, output: "test/output/does-not-exist"}
     } satisfies DeployOptions;
-    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProjectBySlug(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),
@@ -911,7 +930,7 @@ describe("deploy", () => {
       ...TEST_OPTIONS,
       force: null
     } satisfies DeployOptions;
-    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProjectBySlug(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),
@@ -929,7 +948,7 @@ describe("deploy", () => {
       ...TEST_OPTIONS,
       force: null
     } satisfies DeployOptions;
-    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProjectBySlug(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-11"),
@@ -947,7 +966,7 @@ describe("deploy", () => {
       ...TEST_OPTIONS,
       force: "build"
     } satisfies DeployOptions;
-    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProjectBySlug(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),
@@ -972,7 +991,7 @@ describe("deploy", () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
+      .handleGetProjectBySlug(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -1003,7 +1022,7 @@ describe("deploy", () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
+      .handleGetProjectBySlug(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectFileUpload({deployId, path: "index.html", action: "upload"})
       .expectFileUpload({deployId, path: "_observablehq/client.00000001.js", action: "skip"})

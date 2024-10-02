@@ -42,6 +42,7 @@ const {values, positionals, tokens} = parseArgs({
   args
 });
 
+const debug = process.env["OBSERVABLE_CI"] || values.debug;
 let command: string | undefined;
 
 // Extract the command.
@@ -268,7 +269,7 @@ try {
   } else {
     if (command && CLACKIFIED_COMMANDS.includes(command)) {
       clack.log.error(wrapAnsi(`${red("Error:")} ${error.message}`, wrapWidth));
-      if (values.debug) {
+      if (debug) {
         clack.outro("The full error follows");
         throw error;
       } else {
@@ -277,7 +278,7 @@ try {
       }
     } else {
       console.error(`\n${red("Unexpected error:")} ${error.message}`);
-      if (values.debug) {
+      if (debug) {
         console.error("The full error follows\n");
         throw error;
       } else {

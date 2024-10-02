@@ -64,6 +64,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   stat: (path: string) => Promise<Stats>;
   build: ({config}: BuildOptions, effects?: BuildEffects) => Promise<void>;
   readCacheFile: (sourceRoot: string, path: string) => Promise<string>;
+  env: Record<string, string | undefined>;
 }
 
 const defaultEffects: DeployEffects = {
@@ -78,7 +79,8 @@ const defaultEffects: DeployEffects = {
   visitFiles,
   stat,
   build,
-  readCacheFile
+  readCacheFile,
+  env: process.env
 };
 
 type DeployTargetInfo =
@@ -88,7 +90,7 @@ type DeployTargetInfo =
 /** Deploy a project to ObservableHQ */
 export async function deploy(deployOptions: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start", force: deployOptions.force});
-  effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
+  effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${effects.env.npm_package_version}`)}`);
 
   const deployInfo = await new Deployer(deployOptions, effects).deploy();
 
@@ -110,7 +112,7 @@ class Deployer {
 
   async deploy(): Promise<GetDeployResponse> {
     await this.setApiClientAndCurrentUser();
-    const deployInfo = this.deployOptions.deployId ? await this.continueExistingDeploy() : await this.startNewDeploy();
+    const deployInfo = this.deployId ? await this.continueExistingDeploy() : await this.startNewDeploy();
     return deployInfo;
   }
 
@@ -178,7 +180,7 @@ class Deployer {
   }
 
   private async continueExistingDeploy(): Promise<GetDeployResponse> {
-    const {deployId} = this.deployOptions;
+    const deployId = this.deployId;
     if (!deployId) throw new Error("invalid deploy options");
     await this.checkDeployCreated(deployId);
 
@@ -187,13 +189,14 @@ class Deployer {
     await this.uploadFiles(deployId, buildFilePaths);
     await this.markDeployUploaded(deployId);
     const deployInfo = await this.pollForProcessingCompletion(deployId);
+    await this.maybeUpdateProject();
 
     return deployInfo;
   }
 
   private async startNewDeploy(): Promise<GetDeployResponse> {
     const deployConfig = await this.getUpdatedDeployConfig();
-    const {deployTarget, projectUpdates} = await this.getDeployTarget(deployConfig);
+    const deployTarget = await this.getDeployTarget(deployConfig);
 
     const buildFilePaths = await this.getBuildFilePaths();
 
@@ -202,7 +205,7 @@ class Deployer {
     await this.uploadFiles(deployId, buildFilePaths);
     await this.markDeployUploaded(deployId);
     const deployInfo = await this.pollForProcessingCompletion(deployId);
-    await this.maybeUpdateProject(deployTarget, projectUpdates);
+    await this.maybeUpdateProject(deployTarget);
 
     return deployInfo;
   }
@@ -280,14 +283,12 @@ class Deployer {
   }
 
   // Get the deploy target, prompting the user as needed.
-  private async getDeployTarget(
-    deployConfig: DeployConfig
-  ): Promise<{deployTarget: DeployTargetInfo; projectUpdates: PostEditProjectRequest}> {
+  private async getDeployTarget(deployConfig: DeployConfig): Promise<DeployTargetInfo> {
     let deployTarget: DeployTargetInfo;
     const projectUpdates: PostEditProjectRequest = {};
     if (deployConfig.workspaceLogin && deployConfig.projectSlug) {
       try {
-        const project = await this.apiClient.getProject({
+        const project = await this.apiClient.getProjectBySlug({
           workspaceLogin: deployConfig.workspaceLogin,
           projectSlug: deployConfig.projectSlug
         });
@@ -409,7 +410,7 @@ class Deployer {
       this.effects
     );
 
-    return {deployTarget, projectUpdates};
+    return deployTarget;
   }
 
   // Create the new deploy on the server.
@@ -705,10 +706,49 @@ class Deployer {
     return deployInfo;
   }
 
-  private async maybeUpdateProject(deployTarget: DeployTargetInfo, projectUpdates: PostEditProjectRequest) {
-    if (!deployTarget.create && typeof projectUpdates?.title === "string") {
-      await this.apiClient.postEditProject(deployTarget.project.id, projectUpdates);
+  private async maybeUpdateProject(deployTarget?: DeployTargetInfo) {
+    if (deployTarget?.create) return;
+    const projectId = this.projectId ?? deployTarget?.project.id;
+    if (!projectId) return;
+
+    const localTitle = this.deployOptions.config.title;
+    if (!localTitle) return;
+
+    let remoteTitle: string;
+    if (deployTarget) {
+      remoteTitle = deployTarget.project.title;
+    } else {
+      const deployId = this.deployId;
+      if (!deployId) return;
+      const remoteProject = await this.apiClient.getProjectById(projectId);
+      remoteTitle = remoteProject.title;
     }
+
+    let anyChanges = false;
+    const projectUpdates: PostEditProjectRequest = {};
+    if (remoteTitle !== localTitle) {
+      projectUpdates.title = localTitle;
+      anyChanges = true;
+    }
+
+    if (anyChanges) {
+      await this.apiClient.postEditProject(projectId, projectUpdates);
+    }
+  }
+
+  private get deployId(): string | undefined {
+    if (!this.effects.env["OBSERVABLE_CI"]) return undefined;
+    const envVar = this.effects.env["OBSERVABLE_DEPLOY_ID"];
+    const cliFlag = this.deployOptions.deployId;
+    if (envVar && cliFlag && envVar !== cliFlag) {
+      throw new Error(`Mismatched deploy IDs, got ${envVar} from environment variable and ${cliFlag} from CLI flag`);
+    }
+    return envVar ?? cliFlag;
+  }
+
+  private get projectId(): string | undefined {
+    if (!this.effects.env["OBSERVABLE_CI"]) return undefined;
+    return this.effects.env["OBSERVABLE_PROJECT_ID"];
   }
 }
 

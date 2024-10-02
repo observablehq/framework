@@ -115,7 +115,7 @@ export class ObservableApiClient {
     return await this._fetch<GetCurrentUserResponse>(new URL("/cli/user", this._apiOrigin), {method: "GET"});
   }
 
-  async getProject({
+  async getProjectBySlug({
     workspaceLogin,
     projectSlug
   }: {
@@ -123,6 +123,11 @@ export class ObservableApiClient {
     projectSlug: string;
   }): Promise<GetProjectResponse> {
     const url = new URL(`/cli/project/@${workspaceLogin}/${projectSlug}`, this._apiOrigin);
+    return await this._fetch<GetProjectResponse>(url, {method: "GET"});
+  }
+
+  async getProjectById(projectId: string): Promise<GetProjectResponse> {
+    const url = new URL(`/cli/project/${projectId}`, this._apiOrigin);
     return await this._fetch<GetProjectResponse>(url, {method: "GET"});
   }
 
