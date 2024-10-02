@@ -215,25 +215,6 @@ class ObservableApiMock {
     return this;
   }
 
-  handleUpdateProject({
-    projectId = "project123",
-    title,
-    status = 200
-  }: {
-    projectId?: string;
-    title?: string;
-    status?: number;
-  } = {}): ObservableApiMock {
-    const response = status == 200 ? JSON.stringify({title, slug: "bi"}) : emptyErrorBody;
-    const headers = authorizationHeader(status !== 403);
-    this.addHandler((pool) =>
-      pool
-        .intercept({path: `/cli/project/${projectId}/edit`, method: "POST", headers: headersMatcher(headers)})
-        .reply(status, response, {headers: {"content-type": "application/json"}})
-    );
-    return this;
-  }
-
   handleGetWorkspaceProjects({
     workspaceLogin,
     projects,
