@@ -15,7 +15,7 @@ import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
 import {isAssetPath, resolvePath, resolveRelativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
-import {getModuleStaticImports, getResolvers} from "./resolvers.js";
+import {getModuleResolver, getModuleStaticImports, getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
 
 export interface RenderOptions extends Config {
@@ -281,16 +281,26 @@ function hasGoogleFonts(stylesheets: Set<string>): boolean {
   return false;
 }
 
+export type RenderModuleOptions = Omit<TranspileModuleOptions, "root" | "path" | "servePath" | "params">;
+
 export async function renderModule(
   root: string,
   path: string,
-  options?: Omit<TranspileModuleOptions, "root" | "path" | "servePath" | "params">
+  {resolveImport = getModuleResolver(root, path), ...options}: RenderModuleOptions = {}
 ): Promise<string> {
   const module = findModule(root, path);
   if (!module) throw enoent(path);
-  const input = `${(await getModuleStaticImports(root, path))
-    .map((i) => `import ${JSON.stringify(i)};\n`)
-    .join("")}export * from ${JSON.stringify(path)};
-`;
-  return await transpileModule(input, {root, path, servePath: path, params: module.params, ...options});
+  const imports = new Set<string>();
+  const resolutions = new Set<string>();
+  for (const i of await getModuleStaticImports(root, path)) {
+    const r = await resolveImport(i);
+    if (!resolutions.has(r)) {
+      resolutions.add(r);
+      imports.add(i);
+    }
+  }
+  const input = Array.from(imports, (i) => `import ${JSON.stringify(i)};\n`)
+    .concat(`export * from ${JSON.stringify(path)};\n`)
+    .join("");
+  return await transpileModule(input, {root, path, servePath: path, params: module.params, resolveImport, ...options});
 }
