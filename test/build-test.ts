@@ -148,6 +148,21 @@ describe("build", () => {
 
     await Promise.all([inputDir, cacheDir, outputDir].map((dir) => rm(dir, {recursive: true}))).catch(() => {});
   });
+
+  it("should include the title in the build manifest", async () => {
+    const tmpPrefix = join(os.tmpdir(), "framework-test-");
+    const inputDir = await mkdtemp(tmpPrefix + "input-");
+    await writeFile(join(inputDir, "index.md"), "# Hello, world!");
+
+    const outputDir = await mkdtemp(tmpPrefix + "output-");
+    const cacheDir = await mkdtemp(tmpPrefix + "output-");
+    const effects = new LoggingBuildEffects(outputDir, cacheDir);
+    const config = normalizeConfig({root: inputDir, output: outputDir, title: "Project Title"}, inputDir);
+    await build({config}, effects);
+
+    assert.deepEqual(effects.buildManifest?.title, "Project Title");
+    await Promise.all([inputDir, cacheDir, outputDir].map((dir) => rm(dir, {recursive: true}))).catch(() => {});
+  });
 });
 
 function* findFiles(root: string): Iterable<string> {
