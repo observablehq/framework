@@ -1,7 +1,10 @@
+import {exec} from "node:child_process";
 import {createHash} from "node:crypto";
 import type {Stats} from "node:fs";
+import {existsSync} from "node:fs";
 import {readFile, stat} from "node:fs/promises";
 import {join} from "node:path/posix";
+import {promisify} from "node:util";
 import slugify from "@sindresorhus/slugify";
 import wrapAnsi from "wrap-ansi";
 import type {BuildEffects, BuildManifest, BuildOptions} from "./build.js";
@@ -20,6 +23,7 @@ import type {
   DeployManifestFile,
   GetCurrentUserResponse,
   GetDeployResponse,
+  GetProjectEnvironmentResponse,
   GetProjectResponse,
   WorkspaceResponse
 } from "./observableApiClient.js";
@@ -32,6 +36,10 @@ import {bold, defaultEffects as defaultTtyEffects, faint, inverse, link, underli
 const DEPLOY_POLL_MAX_MS = 1000 * 60 * 5;
 const DEPLOY_POLL_INTERVAL_MS = 1000 * 5;
 const BUILD_AGE_WARNING_MS = 1000 * 60 * 5;
+
+export function formatGitUrl(url: string) {
+  return new URL(url).pathname.slice(1).replace(/\.git$/, "");
+}
 
 export interface DeployOptions {
   config: Config;
@@ -82,9 +90,14 @@ const defaultEffects: DeployEffects = {
 
 type DeployTargetInfo =
   | {create: true; workspace: {id: string; login: string}; projectSlug: string; title: string; accessLevel: string}
-  | {create: false; workspace: {id: string; login: string}; project: GetProjectResponse};
+  | {
+      create: false;
+      workspace: {id: string; login: string};
+      project: GetProjectResponse;
+      environment: GetProjectEnvironmentResponse;
+    };
 
-/** Deploy a project to ObservableHQ */
+/** Deploy a project to Observable */
 export async function deploy(deployOptions: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start", force: deployOptions.force});
   effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
@@ -190,9 +203,104 @@ class Deployer {
     return deployInfo;
   }
 
+  private async maybeCloudBuild(deployTarget: DeployTargetInfo) {
+    if (deployTarget.create) return false;
+    const confirmCloudBuild = await this.effects.clack.confirm({
+      message: "Do you want to build in the cloud?",
+      active: "Yes",
+      inactive: "No"
+    });
+    if (confirmCloudBuild) {
+      // kick off new cloud deploy w/ link to
+      const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
+      await this.apiClient.postProjectBuild(deployTarget.project.id);
+      const spinner = this.effects.clack.spinner();
+      spinner.start("Requesting deploy…");
+      const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
+      pollLoop: while (true) {
+        if (Date.now() > pollExpiration) {
+          spinner.stop("Requesting deploy timed out");
+          throw new CliError("Requesting deploy failed");
+        }
+        const {latestCreatedDeployId} = await this.apiClient.getProject({
+          workspaceLogin: deployTarget.workspace.login,
+          projectSlug: deployTarget.project.slug
+        });
+        if (latestCreatedDeployId !== deployTarget.project.latestCreatedDeployId) {
+          // TODO use observable_origin env var?
+          spinner.stop(
+            `Deploy started. Watch logs: https://observable.test:5000/projects/@${deployTarget.workspace.login}/${deployTarget.project.slug}/deploys/${latestCreatedDeployId}`
+          );
+          break pollLoop;
+        }
+        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private async maybeLinkGitHub(deployTarget: DeployTargetInfo): Promise<boolean> {
+    if (!this.effects.isTty || deployTarget.create) return false;
+    if (deployTarget.environment.build_environment_id && deployTarget.environment.source) {
+      // can do cloud build
+      return true;
+    } else {
+      // TODO Where should it look for .git?
+      // const isGit = existsSync(this.deployOptions.config.root + "/.git");
+      const isGit = existsSync(".git");
+      if (isGit) {
+        const remotes = (await promisify(exec)("git remote -v", {cwd: this.deployOptions.config.root})).stdout
+          .split("\n")
+          .filter((d) => d)
+          .map((d) => d.split(/\s/g));
+        const gitHub = remotes.find(([, url]) => url.startsWith("https://github.com/"));
+        if (gitHub) {
+          const repoName = formatGitUrl(gitHub[1]);
+          const confirmLinkGitHub = await this.effects.clack.confirm({
+            message: `Do you want to link to GitHub repo ${repoName}?`,
+            active: "Yes",
+            inactive: "No"
+          });
+          if (confirmLinkGitHub) {
+            const {repositories} = await this.apiClient.getGitHubRepositories();
+            const authedRepo = repositories.find(({url}) => formatGitUrl(url) === repoName);
+            if (authedRepo) {
+              // authed repo found
+              await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
+                source: {
+                  provider: authedRepo.provider,
+                  provider_id: authedRepo.provider_id,
+                  url: authedRepo.url,
+                  branch: null // TODO detect branch
+                }
+              });
+              return true;
+            } else {
+              // repo not auth’ed; kick off web auth flow
+              this.effects.clack.log.info(
+                "Authorize Observable to access this repo: https://github.com/apps/observable-data-apps-dev/installations/select_target"
+              );
+            }
+          }
+        } else {
+          // no github remote
+        }
+      } else {
+        // not a repo
+      }
+    }
+    return false;
+  }
+
   private async startNewDeploy(): Promise<GetDeployResponse> {
     const deployConfig = await this.getUpdatedDeployConfig();
     const deployTarget = await this.getDeployTarget(deployConfig);
+    const linkedGitHub = await this.maybeLinkGitHub(deployTarget);
+    if (linkedGitHub) {
+      const cloudBuild = await this.maybeCloudBuild(deployTarget);
+      if (cloudBuild) return true;
+    }
     const buildFilePaths = await this.getBuildFilePaths();
     const deployId = await this.createNewDeploy(deployTarget);
 
@@ -282,7 +390,8 @@ class Deployer {
           workspaceLogin: deployConfig.workspaceLogin,
           projectSlug: deployConfig.projectSlug
         });
-        deployTarget = {create: false, workspace: project.owner, project};
+        const environment = await this.apiClient.getProjectEnvironment({id: project.id});
+        deployTarget = {create: false, workspace: project.owner, project, environment};
       } catch (error) {
         if (!isHttpError(error) || error.statusCode !== 404) {
           throw error;
@@ -360,7 +469,17 @@ class Deployer {
           workspaceId: deployTarget.workspace.id,
           accessLevel: deployTarget.accessLevel
         });
-        deployTarget = {create: false, workspace: deployTarget.workspace, project};
+        // TODO(toph): initial env config
+        deployTarget = {
+          create: false,
+          workspace: deployTarget.workspace,
+          project,
+          environment: {
+            automatic_builds_enabled: null,
+            build_environment_id: null,
+            source: null
+          }
+        };
       } catch (error) {
         if (isApiError(error) && error.details.errors.some((e) => e.code === "TOO_MANY_PROJECTS")) {
           this.effects.clack.log.error(
@@ -756,7 +875,17 @@ export async function promptDeployTarget(
     if (effects.clack.isCancel(chosenProject)) {
       throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     } else if (chosenProject !== null) {
-      return {create: false, workspace, project: existingProjects.find((p) => p.slug === chosenProject)!};
+      // TODO(toph): initial env config
+      return {
+        create: false,
+        workspace,
+        project: existingProjects.find((p) => p.slug === chosenProject)!,
+        environment: {
+          automatic_builds_enabled: null,
+          build_environment_id: null,
+          source: null
+        }
+      };
     }
   } else {
     const confirmChoice = await effects.clack.confirm({

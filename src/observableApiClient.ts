@@ -126,6 +126,31 @@ export class ObservableApiClient {
     return await this._fetch<GetProjectResponse>(url, {method: "GET"});
   }
 
+  async getProjectEnvironment({id}: {id: string}): Promise<GetProjectEnvironmentResponse> {
+    const url = new URL(`/cli/project/${id}/environment`, this._apiOrigin);
+    return await this._fetch<GetProjectEnvironmentResponse>(url, {method: "GET"});
+  }
+
+  async getGitHubRepositories(): Promise<GetGitHubRepositoriesResponse> {
+    const url = new URL("/cli/github/repositories", this._apiOrigin);
+    return await this._fetch<GetGitHubRepositoriesResponse>(url, {method: "GET"});
+  }
+
+  async postProjectEnvironment(id, body): Promise<GetProjectEnvironmentResponse> {
+    const url = new URL(`/cli/project/${id}/environment`, this._apiOrigin);
+    return await this._fetch<GetProjectEnvironmentResponse>(url, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body)
+    });
+  }
+
+  async postProjectBuild(id): Promise<{id: string}> {
+    return await this._fetch<{id: string}>(new URL(`/cli/project/${id}/build`, this._apiOrigin), {
+      method: "POST"
+    });
+  }
+
   async postProject({
     title,
     slug,
@@ -264,8 +289,40 @@ export interface GetProjectResponse {
   title: string;
   owner: {id: string; login: string};
   creator: {id: string; login: string};
+  latestCreatedDeployId: string | null;
   // Available fields that we don't use
   // servingRoot: string | null;
+}
+
+export interface GetProjectEnvironmentResponse {
+  automatic_builds_enabled: boolean | null;
+  build_environment_id: string | null;
+  source: null | {
+    provider: string;
+    provider_id: string;
+    url: string;
+    branch: string | null;
+  };
+}
+
+export interface GetGitHubRepositoriesResponse {
+  installations: {
+    id: number;
+    login: string | null;
+    name: string | null;
+  }[];
+  repositories: {
+    provider: "github";
+    provider_id: string;
+    url: string;
+    default_branch: string;
+    name: string;
+    linked_projects: {
+      title: string;
+      owner_id: string;
+      owner_name: string;
+    }[];
+  }[];
 }
 
 export interface DeployInfo {
