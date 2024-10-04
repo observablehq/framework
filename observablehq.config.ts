@@ -44,6 +44,7 @@ export default {
       name: "Inputs",
       open: false,
       pager: "inputs",
+      path: "/inputs/",
       pages: [
         {name: "Button", path: "/inputs/button"},
         {name: "Checkbox", path: "/inputs/checkbox"},
@@ -81,7 +82,6 @@ export default {
         {name: "Microsoft Excel (XLSX)", path: "/lib/xlsx"},
         {name: "Mosaic vgplot", path: "/lib/mosaic"},
         {name: "Observable Generators", path: "/lib/generators"},
-        {name: "Observable Inputs", path: "/lib/inputs"},
         {name: "Observable Plot", path: "/lib/plot"},
         {name: "Shapefile", path: "/lib/shapefile"},
         {name: "SQLite", path: "/lib/sqlite"},
