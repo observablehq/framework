@@ -17,6 +17,12 @@
 
 [Source](./eia) · This dashboard visualizes electricity generation and demand across the U.S. electricity grid. The included data loaders demonstrate how to retrieve live data from the U.S. Energy Information Administration (EIA) API, while the dashboard demonstrates how to produce interactive maps, bar charts, and time-series charts with Observable Plot. A range input allows the user to rewind time to any point in the previous 24 hours, and a table shows details.
 
+### [`food-imports`](https://observablehq.observablehq.cloud/framework-example-food-imports/) - Food imports
+
+<a href="https://observablehq.observablehq.cloud/framework-example-food-imports/"><img src="../docs/assets/eia.webp" alt="U.S. electricity grid" width="312" height="237"></a>
+
+[Source](./food-imports) · This dashboard visualizes the distribution of food imports to the United States. The first visualization, a Marimekko chart built with a D3 component, illustrates the share and categories of edible goods originating from top suppliers. The second chart, a sunburst chart also built with a D3 component, shows what commodities make up each category and proportion of top imports. Finally, the third chart, a normalized stacked area time series built with Observable Plot, shows the relative share of food imports arriving from the top 16 suppliers to the US between 1999 and 2023.
+
 ### [`hotel-bookings`](https://observablehq.observablehq.cloud/framework-example-hotel-bookings) - Resort hotel bookings
 
 <a href="https://observablehq.observablehq.cloud/framework-example-hotel-bookings/"><img src="../docs/assets/hotel-bookings.webp" alt="Resort hotel bookings" width="312" height="237"></a>
