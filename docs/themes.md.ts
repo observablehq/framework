@@ -116,7 +116,7 @@ The \`alt\` theme swaps the page and card background colors. This brings [cards]
 
 <div class="grid grid-cols-2">${renderThemeSection(["light-alt", "light", "dark-alt", "dark"])}</div>
 
-The \`wide\` theme removes the maximum width constraint of the main column, which is normally 1152 pixels, allowing it to span the full width of the page. This is recommended for dashboards and is typically combined with the \`alt\` theme modifier and \`toc: false\` to disable the table of contents.
+The \`wide\` theme removes the maximum width constraint of the main column, which is normally 1440 pixels, allowing it to span the full width of the page. This is recommended for dashboards and is typically combined with the \`alt\` theme modifier and \`toc: false\` to disable the table of contents.
 
 <div class="grid grid-cols-1" style="--thumbnail-width: 1600; --thumbnail-height: 800; max-width: 640px;">${renderThemeThumbnail(
     "wide"

@@ -2,6 +2,7 @@ import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
+import {isJavaScript} from "./javascript/imports.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
 import {extractJsrSpecifier, resolveJsrImport, resolveJsrImports} from "./jsr.js";
 import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
@@ -18,6 +19,8 @@ export interface Resolvers {
   hash: string;
   assets: Set<string>; // like files, but not registered for FileAttachment
   files: Set<string>;
+  anchors: Set<string>;
+  localLinks: Set<string>;
   localImports: Set<string>;
   globalImports: Set<string>;
   staticImports: Set<string>;
@@ -87,6 +90,8 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
   const assets = new Set<string>();
   const files = new Set<string>();
   const fileMethods = new Set<string>();
+  const anchors = new Set<string>();
+  const localLinks = new Set<string>();
   const localImports = new Set<string>();
   const globalImports = new Set<string>(defaultImports);
   const staticImports = new Set<string>(defaultImports);
@@ -97,6 +102,8 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     if (!html) continue;
     const info = findAssets(html, path);
     for (const f of info.files) assets.add(f);
+    for (const a of info.anchors) anchors.add(a);
+    for (const l of info.localLinks) localLinks.add(l);
     for (const i of info.localImports) localImports.add(i);
     for (const i of info.globalImports) globalImports.add(i);
     for (const i of info.staticImports) staticImports.add(i);
@@ -114,6 +121,7 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     for (const i of node.imports) {
       (i.type === "local" ? localImports : globalImports).add(i.name);
       if (i.method === "static") staticImports.add(i.name);
+      if (i.type === "local" && i.method === "resolve" && !isJavaScript(i.name)) files.add(i.name);
     }
   }
 
@@ -149,6 +157,8 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     path,
     hash: hash.digest("hex"),
     assets,
+    anchors,
+    localLinks,
     ...(await resolveResolvers(
       {
         files,
@@ -170,6 +180,8 @@ export async function getModuleResolvers(path: string, config: Omit<ResolversCon
     path,
     hash: getModuleHash(root, path),
     assets: new Set(),
+    anchors: new Set(),
+    localLinks: new Set(),
     ...(await resolveResolvers({localImports: [path], staticImports: [path]}, {path, ...config}))
   };
 }
@@ -191,7 +203,7 @@ async function resolveResolvers(
     stylesheets?: Iterable<string> | null;
   },
   {root, path, normalizePath, loaders}: ResolversConfig
-): Promise<Omit<Resolvers, "path" | "hash" | "assets">> {
+): Promise<Omit<Resolvers, "path" | "hash" | "assets" | "anchors" | "localLinks">> {
   const files = new Set<string>(initialFiles);
   const fileMethods = new Set<string>(initialFileMethods);
   const localImports = new Set<string>(initialLocalImports);

@@ -59,8 +59,8 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
       appTitle: ({results: {rootPath}}) =>
         clack.text({
           message: "What should we title your app?",
-          placeholder: inferTitle(rootPath!),
-          defaultValue: inferTitle(rootPath!)
+          placeholder: inferTitle(rootPath),
+          defaultValue: inferTitle(rootPath)
         }),
       includeSampleFiles: () =>
         clack.select({
@@ -135,7 +135,10 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
           }
         }
         if (spinning) s.stop("Installed! 🎉");
-        const instructions = [`cd ${rootPath}`, ...(packageManager ? [] : [installCommand]), `${runCommand} dev`];
+        const instructions: string[] = [];
+        if (rootPath !== ".") instructions.push(`cd ${rootPath}`);
+        if (!packageManager) instructions.push(installCommand);
+        instructions.push(`${runCommand} dev`);
         clack.note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
         clack.outro(`Problems? ${link("https://github.com/observablehq/framework/discussions")}`);
       }
@@ -159,8 +162,8 @@ function validateRootPath(rootPath: string, defaultError?: string): string | und
   if (readdirSync(rootPath).length !== 0) return "Directory is not empty.";
 }
 
-function inferTitle(rootPath: string): string {
-  return basename(rootPath!)
+function inferTitle(rootPath = "."): string {
+  return basename(join(process.cwd(), rootPath))
     .split(/[-_\s]/)
     .map(([c, ...rest]) => c.toUpperCase() + rest.join(""))
     .join(" ");

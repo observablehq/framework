@@ -4,13 +4,16 @@ import {isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolveP
 describe("resolvePath(source, target)", () => {
   it("returns the path to the specified target within the source root", () => {
     assert.strictEqual(resolvePath("foo", "baz"), "/baz");
+    assert.strictEqual(resolvePath("foo", "./"), "/");
     assert.strictEqual(resolvePath("./foo", "./baz"), "/baz");
     assert.strictEqual(resolvePath("/foo", "baz"), "/baz");
     assert.strictEqual(resolvePath("/foo", "./baz"), "/baz");
     assert.strictEqual(resolvePath("foo/bar", "baz"), "/foo/baz");
+    assert.strictEqual(resolvePath("foo/bar", "./"), "/foo/");
     assert.strictEqual(resolvePath("./foo/bar", "./baz"), "/foo/baz");
     assert.strictEqual(resolvePath("/foo/bar", "baz"), "/foo/baz");
     assert.strictEqual(resolvePath("/foo/bar", "./baz"), "/foo/baz");
+    assert.strictEqual(resolvePath("/foo/bar", "../"), "/");
   });
   it("allows paths outside the root", () => {
     assert.strictEqual(resolvePath("foo", "../baz"), "../baz");

@@ -50,17 +50,21 @@ export function* visitFiles(root: string, test?: (name: string) => boolean): Gen
   const visited = new Set<number>();
   const queue: string[] = [(root = normalize(root))];
   for (const path of queue) {
-    const status = statSync(path);
-    if (status.isDirectory()) {
-      if (visited.has(status.ino)) continue; // circular symlink
-      visited.add(status.ino);
-      for (const entry of readdirSync(path)) {
-        if (entry === ".observablehq") continue; // ignore the .observablehq directory
-        if (test !== undefined && !test(entry)) continue;
-        queue.push(join(path, entry));
+    try {
+      const status = statSync(path);
+      if (status.isDirectory()) {
+        if (visited.has(status.ino)) continue; // circular symlink
+        visited.add(status.ino);
+        for (const entry of readdirSync(path)) {
+          if (entry === ".observablehq") continue; // ignore the .observablehq directory
+          if (test !== undefined && !test(entry)) continue;
+          queue.push(join(path, entry));
+        }
+      } else {
+        yield relative(root, path);
       }
-    } else {
-      yield relative(root, path);
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
     }
   }
 }

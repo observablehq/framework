@@ -25,7 +25,7 @@ const dt = aq.table({
 });
 ```
 
-Arquero is column-oriented: each column is an array of values of a given type. Here, numbers representing hours of sunshine per month. But an Arquero table is also iterable and as such, its contents can be displayed with [`Inputs.table`](/lib/inputs#table).
+Arquero is column-oriented: each column is an array of values of a given type. Here, numbers representing hours of sunshine per month. But an Arquero table is also iterable and as such, its contents can be displayed with [`Inputs.table`](/inputs/table).
 
 ```js echo
 Inputs.table(dt)
@@ -85,7 +85,7 @@ dt.fold(aq.all(), {as: ["city", "sun"]})
   .objects()
 ```
 
-To load an Arquero table from an Apache Arrow, Apache Parquet, CSV, TSV, or JSON file, use [`file.arquero`](../files#arquero) <a href="https://github.com/observablehq/framework/releases/tag/v1.10.0" class="observablehq-version-badge" data-version="^1.10.0" title="Added in 1.10.0"></a>:
+To load an Arquero table from an Apache Arrow, Apache Parquet, CSV, TSV, or JSON file, use [`file.arquero`](../files#supported-formats) <a href="https://github.com/observablehq/framework/releases/tag/v1.10.0" class="observablehq-version-badge" data-version="^1.10.0" title="Added in 1.10.0"></a>:
 
 ```js run=false
 const flights = FileAttachment("flights-200k.arrow").arquero();

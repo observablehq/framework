@@ -98,17 +98,21 @@ Unlike `npm:` imports, Node imports do not support semver ranges: the imported v
 
 Imports from `node_modules` are cached in `.observablehq/cache/_node` within your [source root](./config#root) (typically `src`). You shouldn’t need to clear this cache as it is automatically managed, but feel free to clear it you like.
 
-## JSR imports <a href="https://github.com/observablehq/framework/pulls/957" class="observablehq-version-badge" data-version="prerelease" title="Added in #957"></a>
+## JSR imports <a href="https://github.com/observablehq/framework/releases/tag/v1.12.0" class="observablehq-version-badge" data-version="^1.12.0" title="Added in 1.12.0"></a>
 
-You can import a package from [JSR (the JavaScript Registry)](https://jsr.io/) using the `jsr:` protocol. When you import using `jsr:`, Framework automatically downloads and self-hosts the package. (As with `npm:` imports, and unlike Node imports, you don’t have to install from `jsr:` manually.) As an example, here the number three is computed using a [pseudorandom number generator](https://jsr.io/@std/random) from the [Deno Standard Library](https://deno.com/blog/std-on-jsr):
+You can import a package from [JSR (the JavaScript Registry)](https://jsr.io/) using the `jsr:` protocol. As an example, to import a [pseudorandom number generator](https://jsr.io/@std/random) from the [Deno Standard Library](https://deno.com/blog/std-on-jsr):
 
 ```js echo
 import {randomIntegerBetween, randomSeeded} from "jsr:@std/random";
-
-const prng = randomSeeded(1n);
-
-display(randomIntegerBetween(1, 10, {prng}));
 ```
+
+And then to generate a random number:
+
+```js echo
+randomIntegerBetween(1, 10, {prng: randomSeeded(1n)})
+```
+
+JSR imports, like npm imports, are automatically [self-hosted](#self-hosting-of-npm-imports). Downloads from JSR are cached in `.observablehq/cache/_jsr` within your source root (typically `src`). An imported module is downloaded from JSR only if it is not already in the cache. You can clear the cache and restart the server to re-fetch the latest versions of libraries from JSR.  If specify the desired version of a package, add a [semver range](https://docs.npmjs.com/about-semantic-versioning) to the import specifier.
 
 ## Local imports
 
@@ -241,10 +245,10 @@ Click on any of the imported symbols below to learn more.
 <pre><code class="language-js">import {<a href="./lib/htl">html</a>} from "npm:htl";</code></pre>
 <pre><code class="language-js">import {<a href="./lib/htl">svg</a>} from "npm:htl";</code></pre>
 <pre><code class="language-js">import * as <a href="./lib/leaflet">L</a> from "npm:leaflet";</code></pre>
-<pre><code class="language-js">import <a href="../lib/lodash">_</a> from "npm:lodash";</code></pre>
+<pre><code class="language-js">import <a href="./lib/lodash">_</a> from "npm:lodash";</code></pre>
 <pre><code class="language-js">import * as <a href="./jsx">React</a> from "npm:react";</code></pre>
 <pre><code class="language-js">import * as <a href="./jsx">ReactDOM</a> from "npm:react-dom";</code></pre>
-<pre><code class="language-js">import * as <a href="../lib/topojson">topojson</a> from "npm:topojson-client";</code></pre>
+<pre><code class="language-js">import * as <a href="./lib/topojson">topojson</a> from "npm:topojson-client";</code></pre>
 
 In addition to the above, several implicit imports have slightly more involved definitions: [`now`](./lib/generators#now), [`width`](./lib/generators#width-element), [`dark`](./lib/generators#dark), [`vg`](./lib/mosaic), and [`vl`](./lib/vega-lite).
 

@@ -10,7 +10,7 @@ index: true
 import * as echarts from "npm:echarts";
 ```
 
-To use ECharts, declare a container element with the desired dimensions, [display it](../javascript#display), and then call `echarts.init`.
+To use ECharts, declare a container element with the desired dimensions, [display it](../javascript#explicit-display), and then call `echarts.init`.
 
 ```js echo
 const myChart = echarts.init(display(html`<div style="width: 600px; height:400px;"></div>`));

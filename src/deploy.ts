@@ -850,7 +850,7 @@ function formatAge(age: number): string {
     const hours = Math.round(age / 1000 / 60 / 60);
     return `${hours} hour${hours === 1 ? "" : "s"} ago`;
   }
-  return `at ${new Date(Date.now() - age).toLocaleString("en")}`;
+  return `at ${new Date(Date.now() - age).toLocaleString("sv")}`;
 }
 
 async function readCacheFile(sourceRoot: string, path: string): Promise<string> {
