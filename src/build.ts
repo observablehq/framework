@@ -321,6 +321,7 @@ export async function build(
 
   // Render pages!
   const buildManifest: BuildManifest = {pages: []};
+  if (config.title) buildManifest.title = config.title;
   for (const [path, output] of outputs) {
     effects.output.write(`${faint("render")} ${path} ${faint("→")} `);
     if (output.type === "page") {
@@ -487,5 +488,6 @@ export class FileBuildEffects implements BuildEffects {
 }
 
 export interface BuildManifest {
+  title?: string;
   pages: {path: string; title: string | null}[];
 }

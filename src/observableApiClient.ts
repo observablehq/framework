@@ -144,14 +144,6 @@ export class ObservableApiClient {
     });
   }
 
-  async postEditProject(projectId: string, updates: PostEditProjectRequest): Promise<PostEditProjectResponse> {
-    return await this._fetch<PostEditProjectResponse>(new URL(`/cli/project/${projectId}/edit`, this._apiOrigin), {
-      method: "POST",
-      headers: {"content-type": "application/json"},
-      body: JSON.stringify({...updates})
-    });
-  }
-
   async getWorkspaceProjects(workspaceLogin: string): Promise<GetProjectResponse[]> {
     const pages = await this._fetch<PaginatedList<GetProjectResponse>>(
       new URL(`/cli/workspace/@${workspaceLogin}/projects`, this._apiOrigin),
@@ -227,10 +219,6 @@ export class ObservableApiClient {
       body: JSON.stringify({id})
     });
   }
-}
-
-export interface PostEditProjectRequest {
-  title?: string;
 }
 
 export interface PostEditProjectResponse {

@@ -293,7 +293,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject({...DEPLOY_CONFIG, title: oldTitle})
-      .handleUpdateProject({projectId: DEPLOY_CONFIG.projectId, title: TEST_CONFIG.title!})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -324,7 +323,6 @@ describe("deploy", () => {
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
-      .handleUpdateProject({projectId: DEPLOY_CONFIG.projectId, title: TEST_CONFIG.title!})
       .start();
 
     const effects = new MockDeployEffects({
