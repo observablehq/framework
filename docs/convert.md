@@ -360,7 +360,7 @@ For the latter, `file.arrow` now imports `npm:apache-arrow` internally, and thus
 In Framework, implicit imports of recommended libraries are normal [npm imports](./imports#npm-imports), and thus are self-hosted, giving you control over versioning. If a requested library is not in your [npm cache](./imports#self-hosting-of-npm-imports), then by default the latest version will be downloaded. You can request a more specific version either by seeding the npm cache or by including a semver range in the import specifier (_e.g._, `import * as d3 from "npm:d3@6"`).
 
 Because Framework defaults to the latest version of recommended libraries, you will typically get a more recent version than what is available in notebooks. As of August 2024, here is a comparison of recommended library versions between notebooks and Framework:
-- [`@duckdb/duckdb-wasm`](./lib/duckdb) from 1.24.0 to 1.28.0
+- [`@duckdb/duckdb-wasm`](./lib/duckdb) from 1.24.0 to 1.29.0
 - [`apache-arrow`](./lib/arrow) from 4.0.1 to 17.0.0
 - [`arquero`](./lib/arquero) from 4.8.8 to 6.0.1
 - [`dot`](./lib/dot) from `viz.js` 2.0.0 to `@viz-js/viz` at 3.7.0
