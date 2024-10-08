@@ -80,6 +80,35 @@ export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js");
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
+    // Ref. https://github.com/duckdb/duckdb-wasm/releases/tag/v1.29.0
+    for (const extension of [
+      // "arrow",
+      "autocomplete",
+      // "aws",
+      // "azure",
+      // "delta",
+      // "excel",
+      "fts",
+      // "httpfs",
+      // "iceberg",
+      "icu",
+      "inet",
+      // "jmalloc",
+      "json",
+      // "motherduck",
+      "parquet",
+      // "postgres_scanner",
+      "spatial",
+      "sqlite_scanner",
+      "substrait",
+      "tpcds",
+      "tpch",
+      "vss"
+    ]) {
+      for (const platform of ["eh", "mvp"]) {
+        implicits.add(`https://extensions.duckdb.org/v1.1.1/wasm_${platform}/${extension}.duckdb_extension.wasm`);
+      }
+    }
   }
   if (set.has("npm:@observablehq/sqlite")) {
     implicits.add("npm:sql.js/dist/sql-wasm.js");

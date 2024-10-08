@@ -162,7 +162,7 @@ export async function getDependencyResolver(
         (name === "arquero" || name === "@uwdata/mosaic-core" || name === "@duckdb/duckdb-wasm") && depName === "apache-arrow" // prettier-ignore
           ? "latest" // force Arquero, Mosaic & DuckDB-Wasm to use the (same) latest version of Arrow
           : name === "@uwdata/mosaic-core" && depName === "@duckdb/duckdb-wasm"
-          ? "1.28.0" // force Mosaic to use the latest (stable) version of DuckDB-Wasm
+          ? "1.29.0" // force Mosaic to use the latest (stable) version of DuckDB-Wasm
           : pkg.dependencies?.[depName] ??
             pkg.devDependencies?.[depName] ??
             pkg.peerDependencies?.[depName] ??
@@ -248,9 +248,7 @@ async function resolveNpmVersion(root: string, {name, range}: NpmSpecifier): Pro
 export async function resolveNpmImport(root: string, specifier: string): Promise<string> {
   const {
     name,
-    range = name === "@duckdb/duckdb-wasm"
-      ? "1.28.0" // https://github.com/duckdb/duckdb-wasm/issues/1561
-      : undefined,
+    range = name === "@duckdb/duckdb-wasm" ? "1.29.0" : undefined,
     path = name === "mermaid"
       ? "dist/mermaid.esm.min.mjs/+esm"
       : name === "echarts"
@@ -315,4 +313,32 @@ export function fromJsDelivrPath(path: string): string {
   const namever = parts.slice(2, i).join("/"); // "mime@4.0.1" or "@observablehq/inputs@0.10.6"
   const subpath = parts.slice(i).join("/"); // "+esm" or "lite/+esm" or "lite.js/+esm"
   return `/_npm/${namever}/${subpath === "+esm" ? "_esm.js" : subpath.replace(/\/\+esm$/, "._esm.js")}`;
+}
+
+const downloadRequests = new Map<string, Promise<string>>();
+
+/**
+ * Given a URL such as
+ * https://extensions.duckdb.org/v1.1.1/wasm_eh/parquet.duckdb_extension.wasm,
+ * returns the corresponding local path such as
+ * _npm/extensions.duckdb.org/v1.1.1/wasm_eh/parquet.duckdb_extension.wasm
+ */
+export async function resolveDuckDBDownload(root: string, href: string): Promise<string> {
+  if (!href.startsWith("https://extensions.duckdb.org")) throw new Error(`invalid download path: ${href}`);
+  const path = "/_npm/" + href.slice("https://".length);
+  const outputPath = join(root, ".observablehq", "cache", "_npm", href.slice("https://".length));
+  if (existsSync(outputPath)) return path;
+  let promise = downloadRequests.get(outputPath);
+  if (promise) return promise; // coalesce concurrent requests
+  promise = (async () => {
+    console.log(`download: ${href} ${faint("→")} ${outputPath}`);
+    const response = await fetch(href);
+    if (!response.ok) throw new Error(`unable to fetch: ${href}`);
+    await mkdir(dirname(outputPath), {recursive: true});
+    await writeFile(outputPath, Buffer.from(await response.arrayBuffer()));
+    return path;
+  })();
+  promise.catch(console.error).then(() => downloadRequests.delete(outputPath));
+  downloadRequests.set(outputPath, promise);
+  return promise;
 }

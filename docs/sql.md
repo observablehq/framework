@@ -205,3 +205,5 @@ Inputs.table(await sql([`SELECT * FROM gaia WHERE source_id IN (${[source_ids]})
 When interpolating values into SQL queries, be careful to avoid [SQL injection](https://en.wikipedia.org/wiki/SQL_injection) by properly escaping or sanitizing user input. The example above is safe only because `source_ids` are known to be numeric.
 
 </div>
+
+For more information, see [DuckDB: extensions](./lib/duckdb#extensions).

@@ -12,6 +12,7 @@ import type {LoaderResolver} from "./loader.js";
 import type {MarkdownPage} from "./markdown.js";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
+import {resolveDuckDBDownload} from "./npm.js";
 import {isAssetPath, isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 export interface Resolvers {
@@ -365,6 +366,10 @@ async function resolveResolvers(
     globalImports.add(specifier);
     if (specifier.startsWith("npm:")) {
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
+      resolutions.set(specifier, path);
+      await populateNpmCache(root, path);
+    } else if (specifier.startsWith("https://extensions.duckdb.org/")) {
+      const path = await resolveDuckDBDownload(root, specifier);
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
     } else if (!specifier.startsWith("observablehq:")) {

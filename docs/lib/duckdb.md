@@ -105,3 +105,61 @@ const sql = DuckDBClient.sql({quakes: `https://earthquake.usgs.gov/earthquakes/f
 ```sql echo
 SELECT * FROM quakes ORDER BY updated DESC;
 ```
+
+## Extensions
+
+DuckDB has a flexible extension mechanism that allows for dynamically loading extensions. These may extend DuckDB's functionality by providing support for additional file formats, introducing new types, and domain-specific functionality.
+
+### Built-in extensions
+
+The built-in extensions are statically linked to the default bundle. In other words, they are immediately available to use. Currently this includes "httpfs" (and others?).
+
+### Installing extensions
+
+Installing an extension, in DuckDB-wasm, references the source file or extensions repository that holds it. Thus, you can specify:
+
+```sql echo run=false
+INSTALL h3 FROM community;
+LOAD h3;
+SELECT format('{:x}', h3_latlng_to_cell(37.77, -122.43, 9)) AS cell_id;
+```
+
+Beyond the official extensions repositories (with core extensions at `https://extensions.duckdb.org` and community extensions at `https://community.duckdb.org`), you can install an extension from an explicit URL:
+
+```sql echo run=false
+INSTALL custom FROM 'https://example.com/v1.1.1/wasm_mvp/custom.wasm';
+```
+
+### Self-hosted core extensions
+
+Framework downloads a copy of the [core extensions](https://duckdb.org/2023/12/18/duckdb-extensions-in-wasm.html), and the DuckDBClient installs them by default. This ensures that all the common extensions ("json", "inet", "spatial", etc.), are self-hosted.
+
+You can however override this (for example, if you need to test something against a new version of an extension), and install explicitly:
+
+```sql echo run=false
+INSTALL json FROM core;
+-- use JSON features
+```
+
+### Loading extensions
+
+Loading an extension actually downloads the build and makes its features available in subsequent queries. You can load an extension explicitly like so:
+
+```sql echo run=false
+LOAD spatial;
+SELECT ST_Area('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'::GEOMETRY) as area;
+```
+
+Many of the core extensions are auto-loaded when their functions are used in a query. For example, the query below transparently loads the self hosted "json" extension:
+
+```sql echo run=false
+SELECT bbox FROM read_json('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
+```
+
+Similarly, this query transparently loads the self-hosted "inet" extension:
+
+```sql echo
+SELECT '127.0.0.1'::INET AS ipv4, '2001:db8:3c4d::/48'::INET AS ipv6;
+```
+
+These features are tied to DuckDB wasm’s 1.29 version, and strongly dependent on its development cycle.
