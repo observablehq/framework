@@ -122,13 +122,13 @@ function registerFile(
   getInfo: (name: string) => FileInfo | undefined
 ): string {
   const info = getInfo(name);
-  return `\nregisterFile(${JSON.stringify(name)}, {
-    name: ${JSON.stringify(name)},
-    mimeType: ${JSON.stringify(mime.getType(name) ?? undefined)},
-    path: ${annotatePath(resolve(name))},
-    lastModified: ${JSON.stringify(info?.mtimeMs)},
-    size: ${JSON.stringify(info?.size)}
-  });`;
+  return `\nregisterFile(${JSON.stringify(name)}, ${JSON.stringify({
+    name,
+    mimeType: mime.getType(name) ?? undefined,
+    path: resolve(name),
+    lastModified: info?.mtimeMs,
+    size: info?.size
+  })});`;
 }
 
 async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink}: Resolvers): Promise<Html> {
@@ -299,17 +299,8 @@ export async function renderModule(
       imports.add(i);
     }
   }
-  const input = Array.from(imports, (i) => `import ${annotatePath(i)};\n`)
-    .concat(`export * from ${annotatePath(path)};\n`)
+  const input = Array.from(imports, (i) => `import ${JSON.stringify(i)};\n`)
+    .concat(`export * from ${JSON.stringify(path)};\n`)
     .join("");
   return await transpileModule(input, {root, path, servePath: path, params: module.params, resolveImport, ...options});
-}
-
-/**
- * Annotate a path to a local import or file so it can be reworked server-side.
- */
-export function annotatePath(uri: string): string {
-  return !uri.startsWith(".") || /(?:[.][/]|(?:[.][.][/])+)(_jsr|_node|_npm|_observablehq)[/]/.test(uri)
-    ? JSON.stringify(uri)
-    : (console.warn(`/* 👉 */${JSON.stringify(uri)}/* 👈 */`), `/* 👉 */${JSON.stringify(uri)}/* 👈 */`);
 }

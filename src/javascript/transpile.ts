@@ -4,7 +4,6 @@ import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier
 import {simple} from "acorn-walk";
 import mime from "mime";
 import {isPathImport, relativePath, resolvePath, resolveRelativePath} from "../path.js";
-import {annotatePath} from "../render.js";
 import {getModuleResolver} from "../resolvers.js";
 import type {Params} from "../route.js";
 import {Sourcemap} from "../sourcemap.js";
@@ -256,4 +255,13 @@ export function rewriteParams(output: Sourcemap, body: Node, params: Params, inp
   for (const [name, node] of findParams(body, params, input)) {
     output.replaceLeft(node.start, node.end, JSON.stringify(params[name]));
   }
+}
+
+/**
+ * Annotate a path to a local import or file so it can be reworked server-side.
+ */
+function annotatePath(uri: string): string {
+  return !uri.startsWith(".") || /(?:[.][/]|(?:[.][.][/])+)(_jsr|_node|_npm|_observablehq)[/]/.test(uri)
+    ? JSON.stringify(uri)
+    : (console.warn(`/* 👉 */${JSON.stringify(uri)}/* 👈 */`), `/* 👉 */${JSON.stringify(uri)}/* 👈 */`);
 }
