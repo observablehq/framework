@@ -4,6 +4,7 @@ import type {ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier
 import {simple} from "acorn-walk";
 import mime from "mime";
 import {isPathImport, relativePath, resolvePath, resolveRelativePath} from "../path.js";
+import {annotatePath} from "../render.js";
 import {getModuleResolver} from "../resolvers.js";
 import type {Params} from "../route.js";
 import {Sourcemap} from "../sourcemap.js";
@@ -159,7 +160,7 @@ function rewriteImportExpressions(
   resolveFile: (specifier: string) => string = String
 ): void {
   function rewriteImportSource(source: StringLiteral) {
-    output.replaceLeft(source.start, source.end, JSON.stringify(resolveImport(getStringLiteralValue(source))));
+    output.replaceLeft(source.start, source.end, annotatePath(resolveImport(getStringLiteralValue(source))));
   }
   simple(body, {
     ImportExpression(node) {
@@ -176,9 +177,7 @@ function rewriteImportExpressions(
         output.replaceLeft(
           node.start,
           node.end,
-          isPathImport(resolution)
-            ? `new URL(${JSON.stringify(resolution)}, location).href`
-            : JSON.stringify(resolution)
+          isPathImport(resolution) ? `new URL(${annotatePath(resolution)}, location).href` : JSON.stringify(resolution)
         );
       }
     }
@@ -205,7 +204,7 @@ function rewriteImportDeclarations(
   for (const node of declarations) {
     output.delete(node.start, node.end + +(output.input[node.end] === "\n"));
     specifiers.push(rewriteImportSpecifiers(node));
-    imports.push(`import(${JSON.stringify(resolve(getStringLiteralValue(node.source as StringLiteral)))})`);
+    imports.push(`import(${annotatePath(resolve(getStringLiteralValue(node.source as StringLiteral)))})`);
   }
   if (declarations.length > 1) {
     output.insertLeft(0, `const [${specifiers.join(", ")}] = await Promise.all([${imports.join(", ")}]);\n`);
