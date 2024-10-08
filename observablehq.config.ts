@@ -97,6 +97,7 @@ export default {
   ],
   dynamicPaths: [
     "/chart.js",
+    "/annotate.js",
     "/theme/dark",
     "/theme/dark-alt",
     "/theme/dashboard",
