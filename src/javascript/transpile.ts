@@ -137,7 +137,7 @@ export async function transpileModule(
     if (isImportMetaResolve(node) && isStringLiteral(source)) {
       const value = getStringLiteralValue(source);
       const resolution = isPathImport(value) && !isJavaScript(value) ? resolveFile(value) : await resolveImport(value);
-      output.replaceLeft(source.start, source.end, JSON.stringify(resolution));
+      output.replaceLeft(source.start, source.end, annotatePath(resolution));
     }
   }
 
