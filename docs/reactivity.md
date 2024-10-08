@@ -267,7 +267,7 @@ My favorite baseball team is the ${team}!
 My favorite baseball team is the ${team}!
 ```
 
-The above example uses `Inputs.radio`, which is provided by [Observable Inputs](./lib/inputs). You can also implement custom inputs using arbitrary HTML. For example, here is a [range input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/range) that lets you choose an integer between 1 and 15 (inclusive):
+The above example uses `Inputs.radio`, which is provided by [Observable Inputs](./inputs). You can also implement custom inputs using arbitrary HTML. For example, here is a [range input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/range) that lets you choose an integer between 1 and 15 (inclusive):
 
 ```js echo
 const n = view(html`<input type=range step=1 min=1 max=15>`);
