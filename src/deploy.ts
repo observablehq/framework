@@ -215,7 +215,7 @@ class Deployer {
       const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
       await this.apiClient.postProjectBuild(deployTarget.project.id);
       const spinner = this.effects.clack.spinner();
-      spinner.start("Requesting deploy…");
+      spinner.start("Requesting deploy");
       const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
       pollLoop: while (true) {
         if (Date.now() > pollExpiration) {
