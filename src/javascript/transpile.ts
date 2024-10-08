@@ -102,7 +102,7 @@ export async function transpileModule(
 
   async function rewriteImportSource(source: StringLiteral) {
     const specifier = getStringLiteralValue(source);
-    output.replaceLeft(source.start, source.end, JSON.stringify(await resolveImport(specifier)));
+    output.replaceLeft(source.start, source.end, annotatePath(await resolveImport(specifier)));
   }
 
   for (const {name, node} of findFiles(body, path, input)) {
@@ -112,17 +112,16 @@ export async function transpileModule(
     output.replaceLeft(
       source.start,
       source.end,
-      `${JSON.stringify(
+      `${
         info
-          ? {
-              name: p,
-              mimeType: mime.getType(name) ?? undefined,
-              path: relativePath(servePath, resolveFile(name)),
-              lastModified: info.mtimeMs,
-              size: info.size
-            }
-          : p
-      )}, import.meta.url`
+          ? `{
+              name: ${JSON.stringify(p)},
+              mimeType: ${JSON.stringify(mime.getType(name) ?? undefined)},
+              path: ${annotatePath(relativePath(servePath, resolveFile(name)))},
+              lastModified: ${JSON.stringify(info.mtimeMs)},
+              size: ${JSON.stringify(info.size)}`
+          : JSON.stringify(p)
+      }, import.meta.url`
     );
   }
 
