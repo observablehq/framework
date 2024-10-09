@@ -113,12 +113,11 @@ export async function transpileModule(
       source.end,
       `${
         info
-          ? `{
-              name: ${JSON.stringify(p)},
-              mimeType: ${JSON.stringify(mime.getType(name) ?? undefined)},
-              path: ${annotatePath(relativePath(servePath, resolveFile(name)))},
-              lastModified: ${JSON.stringify(info.mtimeMs)},
-              size: ${JSON.stringify(info.size)}`
+          ? `{"name":${JSON.stringify(p)},"mimeType":${JSON.stringify(
+              mime.getType(name) ?? undefined
+            )},"path":${annotatePath(relativePath(servePath, resolveFile(name)))},"lastModified":${JSON.stringify(
+              info.mtimeMs
+            )},"size":${JSON.stringify(info.size)}`
           : JSON.stringify(p)
       }, import.meta.url`
     );
