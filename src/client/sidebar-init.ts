@@ -1,6 +1,3 @@
-// Remove basic authentication in the URL, if any (to fix file attachments).
-if (Object.assign(document.createElement("a"), {href: ""}).password) location.replace(location.href);
-
 const sidebar = document.querySelector<HTMLElement>("#observablehq-sidebar")!;
 const toggle = document.querySelector<HTMLInputElement>("#observablehq-sidebar-toggle")!;
 
