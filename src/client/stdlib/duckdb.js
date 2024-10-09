@@ -58,8 +58,24 @@ export function registerTable(name, source) {
   }
 }
 
-export async function sql(strings, ...args) {
-  return (await getDefaultClient()).query(strings.join("?"), args);
+function queue(f) {
+  let current;
+  let version = 0;
+  return async function () {
+    const v = ++version;
+    try {
+      await current;
+    } catch {
+      // ignore errors
+    }
+    if (version !== v) throw new Error("invalidated");
+    return (current = f.apply(this, arguments));
+  };
+}
+
+export async function sql() {
+  const db = await getDefaultClient();
+  return db.sql.apply(db, arguments);
 }
 
 export async function getDefaultClient() {
@@ -70,7 +86,8 @@ export async function getDefaultClient() {
 export class DuckDBClient {
   constructor(db) {
     Object.defineProperties(this, {
-      _db: {value: db}
+      _db: {value: db},
+      _queue: {value: new WeakMap()}
     });
   }
 
@@ -133,7 +150,9 @@ export class DuckDBClient {
   }
 
   async sql(strings, ...args) {
-    return await this.query(strings.join("?"), args);
+    let sql = this._queue.get(strings);
+    if (!sql) this._queue.set(strings, (sql = queue((args) => this.query(strings.join("?"), args))));
+    return sql(args);
   }
 
   queryTag(strings, ...params) {
