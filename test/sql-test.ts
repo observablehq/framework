@@ -3,7 +3,7 @@ import {transpileSql} from "../src/sql.js";
 
 describe("transpileSql(content, attributes)", () => {
   it("compiles a sql expression", () => {
-    assert.strictEqual(transpileSql("SELECT 1 + 2"), "display(Inputs.table(await sql`SELECT 1 + 2`, {select: false}));");
+    assert.strictEqual(transpileSql("SELECT 1 + 2"), "display(Inputs.table(await sql`SELECT 1 + 2`, {select: false}));"); // prettier-ignore
   });
   it("compiles a sql expression with id", () => {
     assert.strictEqual(transpileSql("SELECT 1 + 2", {id: "foo"}), "const foo = await sql`SELECT 1 + 2`;");
