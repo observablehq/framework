@@ -1,3 +1,5 @@
+import type {DuckDBConfig} from "./config.js";
+
 export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
   const set = setof(methods);
   const implicits = new Set<string>();
@@ -72,7 +74,7 @@ export function getImplicitStylesheets(imports: Iterable<string>): Set<string> {
  * library used by FileAttachment) we manually enumerate the needed additional
  * downloads here. TODO Support versioned imports, too, such as "npm:leaflet@1".
  */
-export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
+export function getImplicitDownloads(imports: Iterable<string>, duckdb: DuckDBConfig): Set<string> {
   const set = setof(imports);
   const implicits = new Set<string>();
   if (set.has("npm:@observablehq/duckdb")) {
@@ -80,35 +82,7 @@ export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js");
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
-    // Ref. https://github.com/duckdb/duckdb-wasm/releases/tag/v1.29.0
-    for (const extension of [
-      // "arrow",
-      "autocomplete",
-      // "aws",
-      // "azure",
-      // "delta",
-      // "excel",
-      "fts",
-      // "httpfs",
-      // "iceberg",
-      "icu",
-      "inet",
-      // "jmalloc",
-      "json",
-      // "motherduck",
-      "parquet",
-      // "postgres_scanner",
-      "spatial",
-      "sqlite_scanner",
-      "substrait",
-      "tpcds",
-      "tpch",
-      "vss"
-    ]) {
-      for (const platform of ["eh", "mvp"]) {
-        implicits.add(`https://extensions.duckdb.org/v1.1.1/wasm_${platform}/${extension}.duckdb_extension.wasm`);
-      }
-    }
+    for (const [, url] of Object.entries(duckdb.extensions)) implicits.add(url);
   }
   if (set.has("npm:@observablehq/sqlite")) {
     implicits.add("npm:sql.js/dist/sql-wasm.js");

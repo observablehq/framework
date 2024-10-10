@@ -323,8 +323,8 @@ const downloadRequests = new Map<string, Promise<string>>();
  * returns the corresponding local path such as
  * _npm/extensions.duckdb.org/v1.1.1/wasm_eh/parquet.duckdb_extension.wasm
  */
-export async function resolveDuckDBDownload(root: string, href: string): Promise<string> {
-  if (!href.startsWith("https://extensions.duckdb.org")) throw new Error(`invalid download path: ${href}`);
+export async function resolveDownload(root: string, href: string): Promise<string> {
+  if (!href.startsWith("https://")) throw new Error(`invalid download path: ${href}`);
   const path = "/_npm/" + href.slice("https://".length);
   const outputPath = join(root, ".observablehq", "cache", "_npm", href.slice("https://".length));
   if (existsSync(outputPath)) return path;

@@ -182,40 +182,6 @@ Object.defineProperty(DuckDBClient.prototype, "dialect", {
   value: "duckdb"
 });
 
-async function installLocalExtensions(database) {
-  const repo = new URL("../../_npm/extensions.duckdb.org", import.meta.url).href;
-  const connection = await database.connect();
-  await connection.query(
-    [
-      // "arrow",
-      "autocomplete",
-      // "aws",
-      // "azure",
-      // "delta",
-      // "excel",
-      "fts",
-      // "httpfs",
-      // "iceberg",
-      "icu",
-      "inet",
-      // "jmalloc",
-      "json",
-      // "motherduck",
-      "parquet",
-      // "postgres_scanner",
-      "spatial",
-      "sqlite_scanner",
-      "substrait",
-      "tpcds",
-      "tpch",
-      "vss"
-    ]
-      .map((ext) => `INSTALL ${ext} FROM '${repo}';`)
-      .join("\n")
-  );
-  //  await connection.query(`SET custom_extension_repository = '${repo}';`);
-}
-
 async function insertSource(database, name, source) {
   source = await source;
   if (isFileAttachment(source)) return insertFile(database, name, source);
@@ -343,7 +309,6 @@ async function createDuckDB() {
   const worker = await duckdb.createWorker(bundle.mainWorker);
   const db = new duckdb.AsyncDuckDB(logger, worker);
   await db.instantiate(bundle.mainModule);
-  await installLocalExtensions(db);
   return db;
 }
 
