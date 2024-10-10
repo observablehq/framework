@@ -13,7 +13,7 @@ import type {LoaderResolver} from "./loader.js";
 import type {MarkdownPage} from "./markdown.js";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
-import {resolveDownload} from "./npm.js";
+import {resolveDuckDBExtension} from "./npm.js";
 import {isAssetPath, isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 export interface Resolvers {
@@ -371,7 +371,7 @@ async function resolveResolvers(
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
     } else if (specifier.startsWith("https://")) {
-      const path = await resolveDownload(root, specifier);
+      const path = await resolveDuckDBExtension(root, specifier);
       resolutions.set(specifier, path);
     } else if (!specifier.startsWith("observablehq:")) {
       throw new Error(`unhandled implicit download: ${specifier}`);

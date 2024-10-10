@@ -201,8 +201,8 @@ export async function build(
   }
 
   // Copy over global assets (e.g., minisearch.json, DuckDB’s WebAssembly).
-  // Anything in _observablehq also needs a content hash, but anything in _npm
-  // or _node does not (because they are already necessarily immutable).
+  // Anything in _observablehq also needs a content hash, but anything in _npm,
+  // _node or _duckdb does not (because they are already necessarily immutable).
   for (const path of globalImports) {
     if (path.endsWith(".js")) continue;
     const sourcePath = join(cacheRoot, path);

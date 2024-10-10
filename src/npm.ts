@@ -1,5 +1,6 @@
+import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
-import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
+import {copyFile, mkdir, readFile, readdir, writeFile} from "node:fs/promises";
 import {dirname, extname, join} from "node:path/posix";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
@@ -320,14 +321,15 @@ const downloadRequests = new Map<string, Promise<string>>();
 /**
  * Given a URL such as
  * https://extensions.duckdb.org/v1.1.1/wasm_eh/parquet.duckdb_extension.wasm,
- * returns the corresponding local path such as
- * _npm/extensions.duckdb.org/v1.1.1/wasm_eh/parquet.duckdb_extension.wasm
+ * saves the file to _duckdb/{hash}/v1.1.1/wasm_eh/parquet.duckdb_extension.wasm
+ * and returns _duckdb/{hash} for DuckDB to INSTALL.
  */
-export async function resolveDownload(root: string, href: string): Promise<string> {
+export async function resolveDuckDBExtension(root: string, href: string): Promise<string> {
   if (!href.startsWith("https://")) throw new Error(`invalid download path: ${href}`);
-  const path = "/_npm/" + href.slice("https://".length);
-  const outputPath = join(root, ".observablehq", "cache", "_npm", href.slice("https://".length));
-  if (existsSync(outputPath)) return path;
+  const {host, pathname} = new URL(href);
+  const cache = join(root, ".observablehq", "cache");
+  const outputPath = join(cache, host, pathname);
+  if (existsSync(outputPath)) return duckDBHash(outputPath, cache, pathname);
   let promise = downloadRequests.get(outputPath);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async () => {
@@ -336,9 +338,18 @@ export async function resolveDownload(root: string, href: string): Promise<strin
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
     await mkdir(dirname(outputPath), {recursive: true});
     await writeFile(outputPath, Buffer.from(await response.arrayBuffer()));
-    return path;
+    return duckDBHash(outputPath, cache, pathname);
   })();
   promise.catch(console.error).then(() => downloadRequests.delete(outputPath));
   downloadRequests.set(outputPath, promise);
   return promise;
+}
+
+async function duckDBHash(outputPath: string, cache: string, extension: string): Promise<string> {
+  const contents = await readFile(outputPath, "utf-8");
+  const dir = join("_duckdb", createHash("sha256").update(contents).digest("hex").slice(0, 8));
+  const targetPath = join(cache, dir, extension);
+  await mkdir(dirname(targetPath), {recursive: true});
+  await copyFile(outputPath, targetPath);
+  return join(dir, extension);
 }

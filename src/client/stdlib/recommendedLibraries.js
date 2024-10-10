@@ -20,13 +20,15 @@ export const sql = () =>
   import("observablehq:stdlib/duckdb").then(async (duckdb) => {
     const {sql} = duckdb;
     const extensions = JSON.parse(document.querySelector("#observablehq-duckdb-hosted-extensions").textContent);
-    for (const [name, ref] of extensions) {
-      const x = `INSTALL ${name} FROM '${new URL(`..${ref}`, import.meta.url).href}';`;
+    for (const [name, {ref, load}] of extensions) {
+      const x = `INSTALL ${name} FROM '${new URL(`../${ref}`, import.meta.url).href}';`;
       console.warn(import.meta.url, x);
       await sql([x]);
-      const y = `LOAD ${name};`;
-      console.warn(import.meta.url, y);
-      await sql([y]);
+      if (load) {
+        const y = `LOAD ${name};`;
+        console.warn(import.meta.url, y);
+        await sql([y]);
+      }
     }
     console.warn(extensions);
     return sql;
