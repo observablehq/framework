@@ -37,6 +37,8 @@ export async function renderPage(page: MarkdownPage, options: RenderOptions & Re
   const toc = mergeToc(data.toc, options.toc);
   const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
+<html>
+<head>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="generator" content="Observable Framework v${process.env.npm_package_version}">
@@ -85,13 +87,17 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
     .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, params, mode, resolveImport, resolveFile})}`)
     .join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}
+</script>
+</head>
+<body>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}
 <div id="observablehq-center">${renderHeader(page.header, resolvers)}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
 ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
 </div>
+</body>
+</html>
 `);
 }
 
