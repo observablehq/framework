@@ -139,7 +139,7 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await bundleStyles({path}), "text/css");
-      } else if (pathname.startsWith("/_node/") || pathname.startsWith("/_jsr/")) {
+      } else if (pathname.startsWith("/_node/") || pathname.startsWith("/_jsr/") || pathname.startsWith("/_duckdb/")) {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
         await populateNpmCache(root, pathname);
@@ -390,9 +390,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     if (path.endsWith("/")) path += "index";
     path = join(dirname(path), basename(path, ".html"));
     config = await configPromise;
-    const {root, loaders, normalizePath} = config;
+    const {root, loaders, normalizePath, duckdb} = config;
     const page = await loaders.loadPage(path, {path, ...config});
-    const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
+    const resolvers = await getResolvers(page, {root, path, loaders, normalizePath, duckdb});
     if (resolvers.hash === initialHash) send({type: "welcome"});
     else return void send({type: "reload"});
     hash = resolvers.hash;

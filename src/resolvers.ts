@@ -1,5 +1,6 @@
 import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
+import type {DuckDBConfig} from "./config.js";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {isJavaScript} from "./javascript/imports.js";
@@ -12,6 +13,7 @@ import type {LoaderResolver} from "./loader.js";
 import type {MarkdownPage} from "./markdown.js";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
+import {resolveDuckDBExtension} from "./npm.js";
 import {isAssetPath, isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 export interface Resolvers {
@@ -38,6 +40,7 @@ export interface ResolversConfig {
   normalizePath: (path: string) => string;
   globalStylesheets?: string[];
   loaders: LoaderResolver;
+  duckdb: DuckDBConfig;
 }
 
 const defaultImports = [
@@ -202,7 +205,7 @@ async function resolveResolvers(
     staticImports?: Iterable<string> | null;
     stylesheets?: Iterable<string> | null;
   },
-  {root, path, normalizePath, loaders}: ResolversConfig
+  {root, path, normalizePath, loaders, duckdb}: ResolversConfig
 ): Promise<Omit<Resolvers, "path" | "hash" | "assets" | "anchors" | "localLinks">> {
   const files = new Set<string>(initialFiles);
   const fileMethods = new Set<string>(initialFileMethods);
@@ -361,12 +364,15 @@ async function resolveResolvers(
 
   // Add implicit downloads. (This should be maybe be stored separately rather
   // than being tossed into global imports, but it works for now.)
-  for (const specifier of getImplicitDownloads(globalImports)) {
+  for (const specifier of getImplicitDownloads(globalImports, duckdb)) {
     globalImports.add(specifier);
     if (specifier.startsWith("npm:")) {
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
+    } else if (specifier.startsWith("https://")) {
+      const path = await resolveDuckDBExtension(root, specifier);
+      resolutions.set(specifier, path);
     } else if (!specifier.startsWith("observablehq:")) {
       throw new Error(`unhandled implicit download: ${specifier}`);
     }

@@ -105,3 +105,7 @@ const sql = DuckDBClient.sql({quakes: `https://earthquake.usgs.gov/earthquakes/f
 ```sql echo
 SELECT * FROM quakes ORDER BY updated DESC;
 ```
+
+## Extensions
+
+DuckDB’s [extensions](../sql#extensions) are supported.
