@@ -262,5 +262,5 @@ export function rewriteParams(output: Sourcemap, body: Node, params: Params, inp
  * Annotate a path to a local import or file so it can be reworked server-side.
  */
 function annotatePath(uri: string): string {
-  return isPathImport(uri) ? `/* 👉 */${JSON.stringify(uri)}/* 👈 */` : JSON.stringify(uri);
+  return `${JSON.stringify(uri)}${isPathImport(uri) ? "/* observablehq-file */" : ""}`;
 }
