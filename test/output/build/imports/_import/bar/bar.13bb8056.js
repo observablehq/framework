@@ -1,1 +1,1 @@
-export {bar} from "./baz.cdbfb28b.js";
+export {bar} from "./baz.cdbfb28b.js"/* observablehq-file */;
