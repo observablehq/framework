@@ -301,7 +301,18 @@ export default {
 
 The **duckdb** option specifies the list of DuckDB [extensions](./sql#extensions) that you want to self-host and make available in the `sql` and `DuckDBClient` instances.
 
-It defaults to `["json", "parquet"]`. You can specify it as an array of extension names, sources, load options. TK.
+Its **install** key is an array of the names of extensions to self-host; it defaults to `["json", "parquet"]`. The optional **load** key is an array of names of extensions to load immediately. It defaults to the empty array (since "json" and "parquet" are autoloaded, there is no reason to load them before we actually need them). Lastly, the **from** key is an object of key:value pairs representing the source repo for each extension. The source repo for any name defaults to `core`, which points to `https://extensions.duckdb.org/`. You can use `core`, `community`, or a custom repo URL:
+
+```js run=false
+duckdb: {
+  install: ["json", "spatial", "h3", "custom"],
+  load: ["spatial"],
+  from: {
+    h3: "community",
+    custom: "https://my-custom-repo.tld"
+  }
+}
+```
 
 ## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
 

@@ -501,7 +501,7 @@ export function stringOrNull(spec: unknown): string | null {
 
 function normalizeDuckDB(spec: unknown): DuckDBConfig {
   const install = spec?.["install"] ?? ["json", "parquet"];
-  const load = spec?.["load"] ?? install;
+  const load = spec?.["load"] ?? [];
   const from = new Map(Object.entries(spec?.["from"] ?? {}));
   return {
     install,
