@@ -53,13 +53,12 @@ describe("getImplicitStylesheets(imports)", () => {
 describe("getImplicitDownloads(imports)", () => {
   it("supports known imports", () => {
     assert.deepStrictEqual(
-      getImplicitDownloads(["npm:@observablehq/duckdb"], {extensions: {dummy: "https://example.tld/"}}),
+      getImplicitDownloads(["npm:@observablehq/duckdb"], {install: [], load: [], from: {}}),
       new Set([
         "npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm",
         "npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js",
         "npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm",
-        "npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js",
-        "https://example.tld/"
+        "npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js"
       ])
     );
     assert.deepStrictEqual(

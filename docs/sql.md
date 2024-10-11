@@ -225,7 +225,7 @@ Likewise, with the "spatial" extension configured, you can directly run:
 SELECT ST_Area('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'::GEOMETRY) as area;
 ```
 
-If you use an extension that is not self-hosted, DuckDB falls back to loading it directly from DuckDB’s servers. For example, this documentation does not have the "inet" extension configured for self-hosting. (If you inspect the network tab in your browser, you can see that it gets autoloaded from the official `core` extensions repository.)
+If you use an extension that is not self-hosted, DuckDB falls back to loading it directly from DuckDB’s servers. For example, this documentation does not have the "inet" extension configured for self-hosting.
 
 ```sql echo
 SELECT '127.0.0.1'::INET AS ipv4, '2001:db8:3c4d::/48'::INET AS ipv6;
@@ -245,7 +245,11 @@ However, for performance and ergonomy, we strongly recommend adding all the exte
 
 <div class="tip">
 
-Since some extensions are autoloading, it can be hard to tell which ones are effectively in use. You can inspect the network tab in your browser, or run `FROM duckdb_extensions WHERE loaded;` to read the current state of your DuckDB instance. In preview, you can also open your browser console and type `DuckDBClientReport()` — this utility offers additional information, such as the path used for self-hosted extensions.
+Since some extensions are autoloading, it can be hard to tell which ones are
+effectively in use. You can inspect the network tab in your browser, or (in
+preview only), open your browser console and type `DuckDBClientReport()` — this
+utility offers additional information, such as the path used for self-hosted
+extensions.
 
 </div>
 

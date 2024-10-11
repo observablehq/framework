@@ -79,7 +79,7 @@ export interface SearchConfigSpec {
 export interface DuckDBConfig {
   install: string[];
   load: string[];
-  from: {[name: string]: string};
+  source: {[name: string]: string};
 }
 
 export interface Config {
@@ -502,13 +502,13 @@ export function stringOrNull(spec: unknown): string | null {
 function normalizeDuckDB(spec: unknown): DuckDBConfig {
   const install = spec?.["install"] ?? ["json", "parquet"];
   const load = spec?.["load"] ?? [];
-  const from = new Map(Object.entries(spec?.["from"] ?? {}));
+  const source = new Map(Object.entries(spec?.["source"] ?? {}));
   return {
     install,
     load: load.filter((name: string) => install.includes(name)),
-    from: Object.fromEntries(
+    source: Object.fromEntries(
       install.map((name: string) => {
-        let href = from.get(name) ?? "core";
+        let href = source.get(name) ?? "core";
         if (href === "core") href = "https://extensions.duckdb.org";
         else if (href === "community") href = "https://community-extensions.duckdb.org";
         if (!href?.["startsWith"]?.("https://"))

@@ -208,7 +208,7 @@ async function registerExtensions(db) {
     await Promise.all(
       extensions.map(([name, {ref, load}]) =>
         connection
-          .query(`INSTALL ${name} FROM '${import.meta.resolve(`../../${ref}`).split("/").slice(0, -3).join("/")}'`)
+          .query(`INSTALL ${name} FROM '${import.meta.resolve(`../../${ref}`)}'`)
           .then(() => load && connection.query(`LOAD ${name}`))
       )
     );

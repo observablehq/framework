@@ -301,13 +301,13 @@ export default {
 
 The **duckdb** option specifies the list of DuckDB [extensions](./sql#extensions) that you want to self-host and make available in the `sql` and `DuckDBClient` instances.
 
-Its **install** key is an array of the names of extensions to self-host; it defaults to `["json", "parquet"]`. The optional **load** key is an array of names of extensions to load immediately. It defaults to the empty array (since "json" and "parquet" are autoloaded, there is no reason to load them before we actually need them). Lastly, the **from** key is an object of key:value pairs representing the source repo for each extension. The source repo for any name defaults to `core`, which points to `https://extensions.duckdb.org/`. You can use `core`, `community`, or a custom repo URL:
+Its **install** key is an array of the names of extensions to self-host; it defaults to `["json", "parquet"]`. The optional **load** key is an array of names of extensions to load immediately. It defaults to the empty array (since "json" and "parquet" are autoloaded, there is no reason to load them before we actually need them). Lastly, the **source** key is an object of key:value pairs representing the repo used to download each extension. The source repo for any name defaults to `core`, which points to `https://extensions.duckdb.org/`. You can use `core`, `community` (which points to `https://community-extensions.duckdb.org/`), or a custom URL:
 
 ```js run=false
 duckdb: {
   install: ["json", "spatial", "h3", "custom"],
   load: ["spatial"],
-  from: {
+  source: {
     h3: "community",
     custom: "https://my-custom-repo.tld"
   }
