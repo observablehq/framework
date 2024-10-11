@@ -109,3 +109,9 @@ SELECT * FROM quakes ORDER BY updated DESC;
 ## Extensions
 
 DuckDB’s [extensions](../sql#extensions)<a href="https://github.com/observablehq/framework/pull/1734" class="observablehq-version-badge" data-version="prerelease" title="Added in #1734"></a> are supported.
+
+By default, `DuckDBClient.of` and `DuckDBClient.sql` load the (self-hosted) extensions referenced in the [configuration](../config#duckdb). You can pass an options object with a **load** key set to a different list if you want a different environment:
+
+```js echo run=false
+const geodb = await DuckDBClient.of({}, {load: ["spatial", "h3"]});
+```

@@ -169,7 +169,7 @@ export class DuckDBClient {
       config = {...config, query: {...config.query, castBigIntToDouble: true}};
     }
     await db.open(config);
-    await registerExtensions(db);
+    await registerExtensions(db, config);
     await Promise.all(Object.entries(sources).map(([name, source]) => insertSource(db, name, source)));
     return new DuckDBClient(db);
   }
@@ -183,7 +183,7 @@ Object.defineProperty(DuckDBClient.prototype, "dialect", {
   value: "duckdb"
 });
 
-async function registerExtensions(db) {
+async function registerExtensions(db, {load}) {
   const connection = await db.connect();
   try {
     const {log, extensions} = await fetch(import.meta.resolve("observablehq:duckdb_manifest.json")).then((r) =>
@@ -206,10 +206,10 @@ async function registerExtensions(db) {
       };
     }
     await Promise.all(
-      extensions.map(([name, {ref, load}]) =>
+      extensions.map(([name, {ref, load: l}]) =>
         connection
           .query(`INSTALL ${name} FROM '${import.meta.resolve(`../../${ref}`)}'`)
-          .then(() => load && connection.query(`LOAD ${name}`))
+          .then(() => (load ? load.includes(name) : l) && connection.query(`LOAD ${name}`))
       )
     );
   } finally {
