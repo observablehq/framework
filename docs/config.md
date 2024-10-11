@@ -297,6 +297,12 @@ export default {
 };
 ```
 
+## duckdb <a href="https://github.com/observablehq/framework/pull/1734" class="observablehq-version-badge" data-version="prerelease" title="Added in #1734"></a>
+
+The **duckdb** option specifies the list of DuckDB [extensions](./sql#extensions) that you want to self-host and make available in the `sql` and `DuckDBClient` instances.
+
+It defaults to `["json", "parquet"]`. You can specify it as an array of extension names, sources, load options. TK.
+
 ## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
 
 A hook for registering additional [markdown-it](https://github.com/markdown-it/markdown-it) plugins. For example, to use [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote), first install the plugin with either `npm add markdown-it-footnote` or `yarn add markdown-it-footnote`, then register it like so:

@@ -53,36 +53,13 @@ describe("getImplicitStylesheets(imports)", () => {
 describe("getImplicitDownloads(imports)", () => {
   it("supports known imports", () => {
     assert.deepStrictEqual(
-      getImplicitDownloads(["npm:@observablehq/duckdb"]),
+      getImplicitDownloads(["npm:@observablehq/duckdb"], {extensions: {dummy: "https://example.tld/"}}),
       new Set([
         "npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm",
         "npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js",
         "npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm",
         "npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/autocomplete.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/fts.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/icu.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/inet.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/json.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/parquet.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/spatial.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/sqlite_scanner.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/substrait.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/tpcds.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/tpch.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_eh/vss.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/autocomplete.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/fts.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/icu.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/inet.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/json.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/parquet.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/spatial.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/sqlite_scanner.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/substrait.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/tpcds.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/tpch.duckdb_extension.wasm",
-        "https://extensions.duckdb.org/v1.1.1/wasm_mvp/vss.duckdb_extension.wasm"
+        "https://example.tld/"
       ])
     );
     assert.deepStrictEqual(

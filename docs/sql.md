@@ -207,7 +207,7 @@ When interpolating values into SQL queries, be careful to avoid [SQL injection](
 
 </div>
 
-## Extensions
+## Extensions <a href="https://github.com/observablehq/framework/pull/1734" class="observablehq-version-badge" data-version="prerelease" title="Added in #1734"></a>
 
 DuckDB has a flexible extension mechanism that allows for dynamically loading extensions. These may extend DuckDB's functionality by providing support for additional file formats, introducing new types, and domain-specific functionality.
 

@@ -108,4 +108,4 @@ SELECT * FROM quakes ORDER BY updated DESC;
 
 ## Extensions
 
-DuckDB’s [extensions](../sql#extensions) are supported.
+DuckDB’s [extensions](../sql#extensions)<a href="https://github.com/observablehq/framework/pull/1734" class="observablehq-version-badge" data-version="prerelease" title="Added in #1734"></a> are supported.
