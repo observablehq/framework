@@ -174,11 +174,12 @@ Plot.plot({
   marks: [
     Plot.axisY({tickFormat: (d) => d / 1000, label: "count (thousands)"}),
     Plot.rectY(await sql`
-      SELECT
-        FLOOR(phot_g_mean_mag / 0.2) * 0.2 AS mag1
-      , mag1 + 0.2 AS mag2
-      , COUNT() AS count
-      FROM gaia GROUP BY 1
+      SELECT FLOOR(phot_g_mean_mag / 0.2) * 0.2 AS mag1
+           , mag1 + 0.2 AS mag2
+           , COUNT() AS count
+        FROM gaia
+       WHERE phot_g_mean_mag IS NOT NULL
+       GROUP BY 1
     `, {x1: "mag1", x2: "mag2", y: "count", tip: true})
   ]
 })
