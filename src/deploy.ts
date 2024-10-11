@@ -203,41 +203,35 @@ class Deployer {
     return deployInfo;
   }
 
-  private async maybeCloudBuild(deployTarget: DeployTargetInfo) {
+  private async cloudBuild(deployTarget: DeployTargetInfo) {
     if (deployTarget.create) return false;
-    const confirmCloudBuild = await this.effects.clack.confirm({
-      message: "Do you want to build in the cloud?",
-      active: "Yes",
-      inactive: "No"
-    });
-    if (confirmCloudBuild) {
-      // kick off new cloud deploy w/ link to
-      const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
-      await this.apiClient.postProjectBuild(deployTarget.project.id);
-      const spinner = this.effects.clack.spinner();
-      spinner.start("Requesting deploy");
-      const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
-      pollLoop: while (true) {
-        if (Date.now() > pollExpiration) {
-          spinner.stop("Requesting deploy timed out");
-          throw new CliError("Requesting deploy failed");
-        }
-        const {latestCreatedDeployId} = await this.apiClient.getProject({
-          workspaceLogin: deployTarget.workspace.login,
-          projectSlug: deployTarget.project.slug
-        });
-        if (latestCreatedDeployId !== deployTarget.project.latestCreatedDeployId) {
-          // TODO use observable_origin env var?
-          spinner.stop(
-            `Deploy started. Watch logs: https://observable.test:5000/projects/@${deployTarget.workspace.login}/${deployTarget.project.slug}/deploys/${latestCreatedDeployId}`
-          );
-          break pollLoop;
-        }
-        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+
+    // kick off new cloud deploy w/ link to deploy details
+    const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
+    await this.apiClient.postProjectBuild(deployTarget.project.id);
+    const spinner = this.effects.clack.spinner();
+    spinner.start("Requesting deploy");
+    const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
+    pollLoop: while (true) {
+      if (Date.now() > pollExpiration) {
+        spinner.stop("Requesting deploy timed out");
+        throw new CliError("Requesting deploy failed");
       }
-      return true;
+      const {latestCreatedDeployId} = await this.apiClient.getProject({
+        workspaceLogin: deployTarget.workspace.login,
+        projectSlug: deployTarget.project.slug
+      });
+      if (latestCreatedDeployId !== deployTarget.project.latestCreatedDeployId) {
+        spinner.stop(
+          `Deploy started. Watch logs: ${process.env["OBSERVABLE_ORIGIN"] ?? "https://observablehq.com/"}projects/@${
+            deployTarget.workspace.login
+          }/${deployTarget.project.slug}/deploys/${latestCreatedDeployId}`
+        );
+        break pollLoop;
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
-    return false;
+    return true;
   }
 
   private async maybeLinkGitHub(deployTarget: DeployTargetInfo): Promise<boolean> {
@@ -258,10 +252,16 @@ class Deployer {
         if (gitHub) {
           const repoName = formatGitUrl(gitHub[1]);
           const confirmLinkGitHub = await this.effects.clack.confirm({
-            message: `Do you want to link to GitHub repo ${repoName}?`,
+            message: `Do you want to link to GitHub repository ${repoName}?`,
             active: "Yes",
             inactive: "No"
           });
+          if (this.effects.clack.isCancel(confirmLinkGitHub) || !confirmLinkGitHub) {
+            throw new CliError(
+              "Continuous deployment is enabled in deploy.json but you cannot deploy in the cloud without a GitHub repository",
+              {print: true, exitCode: 0}
+            );
+          }
           if (confirmLinkGitHub) {
             const {repositories} = await this.apiClient.getGitHubRepositories();
             const authedRepo = repositories.find(({url}) => formatGitUrl(url) === repoName);
@@ -296,16 +296,17 @@ class Deployer {
   private async startNewDeploy(): Promise<GetDeployResponse> {
     const deployConfig = await this.getUpdatedDeployConfig();
     const deployTarget = await this.getDeployTarget(deployConfig);
-    const linkedGitHub = await this.maybeLinkGitHub(deployTarget);
-    if (linkedGitHub) {
-      const cloudBuild = await this.maybeCloudBuild(deployTarget);
-      if (cloudBuild) return true;
+    const deployConfig2 = await this.getUpdatedDeployConfig(); // TODO inelegant… move cd prompt to getUpdatedDeployConfig?
+    let deployId;
+    if (deployConfig2.continuousDeployment) {
+      await this.maybeLinkGitHub(deployTarget);
+      deployId = await this.cloudBuild(deployTarget);
+    } else {
+      const buildFilePaths = await this.getBuildFilePaths();
+      deployId = await this.createNewDeploy(deployTarget);
+      await this.uploadFiles(deployId, buildFilePaths);
+      await this.markDeployUploaded(deployId);
     }
-    const buildFilePaths = await this.getBuildFilePaths();
-    const deployId = await this.createNewDeploy(deployTarget);
-
-    await this.uploadFiles(deployId, buildFilePaths);
-    await this.markDeployUploaded(deployId);
     return await this.pollForProcessingCompletion(deployId);
   }
 
@@ -349,6 +350,8 @@ class Deployer {
         }.`
       );
     }
+
+    // TODO validate continuousDeployment
 
     if (deployConfig.projectId && (!deployConfig.projectSlug || !deployConfig.workspaceLogin)) {
       const spinner = this.effects.clack.spinner();
@@ -503,13 +506,28 @@ class Deployer {
       }
     }
 
+    let continuousDeployment = deployConfig.continuousDeployment;
+    if (continuousDeployment === null) {
+      continuousDeployment = !!(await this.effects.clack.confirm({
+        message: wrapAnsi(
+          `Do you want to enable continuous deployment? ${faint(
+            "This builds in the cloud instead of on this machine and redeploys whenever you push to this repository."
+          )}`,
+          this.effects.outputColumns
+        ),
+        active: "Yes",
+        inactive: "No"
+      }));
+    }
+
     await this.effects.setDeployConfig(
       this.deployOptions.config.root,
       this.deployOptions.deployConfigPath,
       {
         projectId: deployTarget.project.id,
         projectSlug: deployTarget.project.slug,
-        workspaceLogin: deployTarget.workspace.login
+        workspaceLogin: deployTarget.workspace.login,
+        continuousDeployment
       },
       this.effects
     );
