@@ -204,15 +204,13 @@ class Deployer {
   }
 
   private async cloudBuild(deployTarget: DeployTargetInfo) {
-    if (deployTarget.create) return false;
-
-    // kick off new cloud deploy w/ link to deploy details
+    if (deployTarget.create) return false; // TODO
     const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
     await this.apiClient.postProjectBuild(deployTarget.project.id);
     const spinner = this.effects.clack.spinner();
     spinner.start("Requesting deploy");
     const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
-    pollLoop: while (true) {
+    while (true) {
       if (Date.now() > pollExpiration) {
         spinner.stop("Requesting deploy timed out");
         throw new CliError("Requesting deploy failed");
@@ -227,12 +225,10 @@ class Deployer {
             deployTarget.workspace.login
           }/${deployTarget.project.slug}/deploys/${latestCreatedDeployId}`
         );
-        // break pollLoop;
         return latestCreatedDeployId;
       }
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
-    return true;
   }
 
   private async maybeLinkGitHub(deployTarget: DeployTargetInfo): Promise<boolean> {
@@ -241,7 +237,7 @@ class Deployer {
       // can do cloud build
       return true;
     } else {
-      // TODO Where should it look for .git?
+      // TODO Where should it look for .git? only supports projects at root rn…
       // const isGit = existsSync(this.deployOptions.config.root + "/.git");
       const isGit = existsSync(".git");
       if (isGit) {
@@ -252,68 +248,54 @@ class Deployer {
         const gitHub = remotes.find(([, url]) => url.startsWith("https://github.com/"));
         if (gitHub) {
           const repoName = formatGitUrl(gitHub[1]);
-          const confirmLinkGitHub = await this.effects.clack.confirm({
-            message: `Do you want to link to GitHub repository ${repoName}?`,
-            active: "Yes",
-            inactive: "No"
-          });
-          if (this.effects.clack.isCancel(confirmLinkGitHub) || !confirmLinkGitHub) {
-            throw new CliError(
-              "Continuous deployment is enabled in deploy.json but you cannot deploy in the cloud without a GitHub repository",
-              {print: true, exitCode: 0}
-            );
-          }
-          if (confirmLinkGitHub) {
-            const {repositories} = await this.apiClient.getGitHubRepositories();
-            const authedRepo = repositories.find(({url}) => formatGitUrl(url) === repoName);
-            if (authedRepo) {
-              // authed repo found
-              await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
-                source: {
-                  provider: authedRepo.provider,
-                  provider_id: authedRepo.provider_id,
-                  url: authedRepo.url,
-                  branch: null // TODO detect branch
-                }
-              });
-              return true;
-            } else {
-              // repo not auth’ed; kick off web auth flow
-              this.effects.clack.log.info(
-                "Authorize Observable to access this repository: https://github.com/apps/observable-data-apps-dev/installations/select_target"
-              );
-              const spinner = this.effects.clack.spinner();
-              spinner.start("Waiting for repository to be authorized");
-              const pollExpiration = Date.now() + 2 * 60_000; //DEPLOY_POLL_MAX_MS; // TODO
-              pollLoop: while (true) {
-                if (Date.now() > pollExpiration) {
-                  spinner.stop("Waiting for repository to be authorized timed out");
-                  throw new CliError("Deploy failed");
-                }
-                const {repositories} = await this.apiClient.getGitHubRepositories();
-                const authedRepo = repositories.find(({url}) => formatGitUrl(url) === repoName);
-                if (authedRepo) {
-                  spinner.stop("Repository authorized");
-                  await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
-                    source: {
-                      provider: authedRepo.provider,
-                      provider_id: authedRepo.provider_id,
-                      url: authedRepo.url,
-                      branch: null // TODO detect branch
-                    }
-                  });
-                  // break pollLoop; // TODO
-                  return true;
-                }
-                await new Promise((resolve) => setTimeout(resolve, 2000));
+          const {repositories} = await this.apiClient.getGitHubRepositories();
+          const authedRepo = repositories.find(({url}) => formatGitUrl(url) === repoName);
+          if (authedRepo) {
+            // authed repo found
+            await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
+              source: {
+                provider: authedRepo.provider,
+                provider_id: authedRepo.provider_id,
+                url: authedRepo.url,
+                branch: null // TODO detect branch
               }
+            });
+            return true;
+          } else {
+            // repo not auth’ed; link to auth page and poll for auth
+            this.effects.clack.log.info(
+              `Authorize Observable to access the ${bold(repoName)} repository: ${link("https://github.com/apps/observable-data-apps-dev/installations/select_target")}`
+            );
+            const spinner = this.effects.clack.spinner();
+            spinner.start("Waiting for repository to be authorized");
+            const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
+            while (true) {
+              if (Date.now() > pollExpiration) {
+                spinner.stop("Waiting for repository to be authorized timed out");
+                throw new CliError("Deploy failed");
+              }
+              const {repositories} = await this.apiClient.getGitHubRepositories();
+              const authedRepo = repositories.find(({url}) => formatGitUrl(url) === repoName);
+              if (authedRepo) {
+                spinner.stop("Repository authorized");
+                await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
+                  source: {
+                    provider: authedRepo.provider,
+                    provider_id: authedRepo.provider_id,
+                    url: authedRepo.url,
+                    branch: null // TODO detect branch
+                  }
+                });
+                return true;
+              }
+              await new Promise((resolve) => setTimeout(resolve, 2000));
             }
           }
         } else {
-          // no github remote
+          throw new CliError("No GitHub remote"); // TODO better error
         }
       } else {
-        // not a repo
+        throw new CliError("Not at root of a git repository"); // TODO better error
       }
     }
     return false;
@@ -325,6 +307,7 @@ class Deployer {
     const deployConfig2 = await this.getUpdatedDeployConfig(); // TODO inelegant… move cd prompt to getUpdatedDeployConfig?
     let deployId;
     if (deployConfig2.continuousDeployment) {
+      // TODO move maybeLinkGitHub so that continuous deployment is only enabled if it succeeds
       await this.maybeLinkGitHub(deployTarget);
       deployId = await this.cloudBuild(deployTarget);
     } else {
