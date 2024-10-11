@@ -296,7 +296,6 @@ body {
   position: fixed;
   color: var(--theme-foreground-muted);
   font: 400 14px var(--sans-serif);
-  z-index: 1;
   top: 0;
   right: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2) + 1rem);
   bottom: 0;
