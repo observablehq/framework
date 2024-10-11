@@ -214,6 +214,8 @@ export async function build(
       const alias = applyHash(path, hash);
       aliases.set(path, alias);
       await effects.writeFile(alias, contents);
+    } else if (path.startsWith("/_duckdb/")) {
+      continue;
     } else {
       await effects.copyFile(sourcePath, path);
     }
@@ -476,6 +478,7 @@ export class FileBuildEffects implements BuildEffects {
     }
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
+    if (sourcePath === "test/input/build/only.duckdb/.observablehq/cache/_duckdb/e3b0c442") console.trace();
     const destination = join(this.outputRoot, outputPath);
     this.logger.log(destination);
     await prepareOutput(destination);

@@ -8,6 +8,7 @@ import {ascending, difference} from "d3-array";
 import type {BuildManifest} from "../src/build.js";
 import {FileBuildEffects, build} from "../src/build.js";
 import {normalizeConfig, readConfig, setCurrentDate} from "../src/config.js";
+import {mockDuckDB} from "./mocks/duckdb.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 import {mockJsr} from "./mocks/jsr.js";
 
@@ -33,6 +34,7 @@ describe("build", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   mockJsDelivr();
   mockJsr();
+  mockDuckDB();
 
   // Each sub-directory of test/input/build is a test case.
   const inputRoot = "test/input/build";
@@ -74,6 +76,7 @@ describe("build", () => {
       // update the test snapshots whenever Framework’s client code changes. We
       // make an exception for minisearch.json because to test the content.
       for (const path of findFiles(join(outputDir, "_observablehq"))) {
+        if (path === "duckdb_manifest.json") continue;
         const match = /^((.+)\.[0-9a-f]{8})\.(\w+)$/.exec(path);
         if (!match) throw new Error(`no hash found: ${path}`);
         const [, key, name, ext] = match;

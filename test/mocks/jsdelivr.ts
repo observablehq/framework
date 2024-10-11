@@ -1,7 +1,7 @@
 import {getCurrentAgent, mockAgent} from "./undici.js";
 
 const packages: [name: string, {version: string; dependencies?: Record<string, string>}][] = [
-  ["@duckdb/duckdb-wasm", {version: "1.28.0"}],
+  ["@duckdb/duckdb-wasm", {version: "1.29.0"}],
   ["@observablehq/inputs", {version: "0.10.6"}],
   ["@observablehq/plot", {version: "0.6.11"}],
   ["@observablehq/sample-datasets", {version: "1.0.1"}],
