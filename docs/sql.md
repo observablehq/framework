@@ -219,9 +219,9 @@ The self-hosted extensions are immediately available in all the `sql` code block
 SELECT bbox FROM read_json('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
 ```
 
-Likewise, with the "spatial" extension configured, you can directly run:
+Likewise, with the "spatial" extension configured, you could directly run:
 
-```sql echo
+```sql echo run=false
 SELECT ST_Area('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'::GEOMETRY) as area;
 ```
 
