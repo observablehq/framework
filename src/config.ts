@@ -77,7 +77,9 @@ export interface SearchConfigSpec {
 }
 
 export interface DuckDBConfig {
-  extensions: {[key: string]: string};
+  install: string[];
+  load: string[];
+  from: {[name: string]: string};
 }
 
 export interface Config {
@@ -498,17 +500,21 @@ export function stringOrNull(spec: unknown): string | null {
 }
 
 function normalizeDuckDB(spec: unknown): DuckDBConfig {
-  const extensions = spec?.["extensions"] ?? ["json", "parquet"];
+  const install = spec?.["install"] ?? ["json", "parquet"];
+  const load = spec?.["load"] ?? install;
+  const from = new Map(Object.entries(spec?.["from"] ?? {}));
   return {
-    extensions: Object.fromEntries(
-      Object.entries(
-        Array.isArray(extensions)
-          ? Object.fromEntries(extensions.map((name) => [name, true]))
-          : (spec as {[key: string]: string})
-      ).map(([name, value]) => [
-        name,
-        value === true ? `https://extensions.duckdb.org/v1.1.1/wasm_eh/${name}.duckdb_extension.wasm` : `${value}`
-      ])
+    install,
+    load: load.filter((name: string) => install.includes(name)),
+    from: Object.fromEntries(
+      install.map((name: string) => {
+        let href = from.get(name) ?? "core";
+        if (href === "core") href = "https://extensions.duckdb.org";
+        else if (href === "community") href = "https://community-extensions.duckdb.org";
+        if (!href?.["startsWith"]?.("https://"))
+          throw new Error(`unknown source for duckdb extension ${name}: ${href}`);
+        return [name, href];
+      })
     )
   };
 }

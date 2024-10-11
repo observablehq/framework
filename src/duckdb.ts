@@ -7,13 +7,16 @@ import {faint} from "./tty.js";
 
 const downloadRequests = new Map<string, Promise<string>>();
 
-export async function duckDBManifest({extensions}: DuckDBConfig, {root, log}: {root: string; log?: boolean}) {
+export async function duckDBManifest(duckdb: DuckDBConfig, {root, log}: {root: string; log?: boolean}) {
   return {
     log,
     extensions: await Promise.all(
-      Object.entries(extensions).map(async ([name, source]) => [
+      duckdb.install.map(async (name) => [
         name,
-        {ref: await resolveDuckDBExtension(root, source), load: true}
+        {
+          ref: await resolveDuckDBExtension(root, duckdb, name),
+          load: duckdb.load.includes(name)
+        }
       ])
     )
   };
@@ -25,8 +28,10 @@ export async function duckDBManifest({extensions}: DuckDBConfig, {root, log}: {r
  * saves the file to _duckdb/{hash}/v1.1.1/wasm_eh/parquet.duckdb_extension.wasm
  * and returns _duckdb/{hash} for DuckDB to INSTALL.
  */
-export async function resolveDuckDBExtension(root: string, href: string): Promise<string> {
-  if (!href.startsWith("https://")) throw new Error(`invalid download path: ${href}`);
+export async function resolveDuckDBExtension(root: string, duckdb: DuckDBConfig, name: string): Promise<string> {
+  const repo = duckdb.from[name];
+  if (!repo.startsWith("https://")) throw new Error(`invalid repo: ${repo}`);
+  const href = `${repo}/v1.1.1/wasm_eh/${name}.duckdb_extension.wasm`;
   const {host, pathname} = new URL(href);
   const cache = join(root, ".observablehq", "cache");
   const outputPath = join(cache, host, pathname);

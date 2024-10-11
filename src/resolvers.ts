@@ -370,8 +370,8 @@ async function resolveResolvers(
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
-    } else if (specifier.startsWith("https://")) {
-      const path = await resolveDuckDBExtension(root, specifier);
+    } else if (specifier.startsWith("duckdb:")) {
+      const path = await resolveDuckDBExtension(root, duckdb, specifier.slice("duckdb:".length));
       resolutions.set(specifier, path);
     } else if (!specifier.startsWith("observablehq:")) {
       throw new Error(`unhandled implicit download: ${specifier}`);
