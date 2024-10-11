@@ -1,4 +1,3 @@
-import {dirname} from "node:path/posix";
 import mime from "mime";
 import type {Config, Page, Section} from "./config.js";
 import {mergeToc} from "./config.js";
@@ -12,7 +11,6 @@ import {findModule} from "./javascript/module.js";
 import type {TranspileModuleOptions} from "./javascript/transpile.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
-import {resolveDuckDBExtension} from "./npm.js";
 import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
 import {isAssetPath, resolvePath, resolveRelativePath} from "./path.js";
@@ -32,7 +30,7 @@ type RenderInternalOptions =
 
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
   const {data, params} = page;
-  const {base, path, title, preview, root, duckdb} = options;
+  const {base, path, title, preview} = options;
   const {loaders, resolvers = await getResolvers(page, options)} = options;
   const {draft = false, sidebar = options.sidebar} = data;
   const toc = mergeToc(data.toc, options.toc);
@@ -61,16 +59,6 @@ if (location.pathname.endsWith("/")) {
 </script>`)
       : ""
   }
-<script type="application/json" id="observablehq-duckdb-hosted-extensions">${html.unsafe(
-    JSON.stringify(
-      await Promise.all(
-        Object.entries(duckdb.extensions).map(async ([name, source]) => [
-          name,
-          {ref: dirname(dirname(dirname(await resolveDuckDBExtension(root, source)))), load: true}
-        ])
-      )
-    )
-  )}</script>
 <script type="module">${html.unsafe(`
 
 import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(

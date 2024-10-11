@@ -237,7 +237,7 @@ At present Framework does not know which extensions your code is using. As indic
 
 <div class="tip">
 
-You can also initialize a custom [DuckDBClient](./lib/duckdb.md) with a custom list of extensions. For example, the `sql2` tagged template literal below does not load "json" or "parquet", and installs and loads "h3" directly from the community extensions repository:
+You can also initialize a custom [DuckDBClient](./lib/duckdb) with a custom list of extensions. For example, the `sql2` tagged template literal below does not load "json" or "parquet", and installs and loads "h3" directly from the community extensions repository:
 
 ```js echo run=false
 const sql2 = await DuckDBClient.sql();

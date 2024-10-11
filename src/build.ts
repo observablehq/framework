@@ -9,7 +9,7 @@ import {findModule, getModuleHash, readJavaScript} from "./javascript/module.js"
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
-import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
+import {populateNpmCache, resolveDuckDBExtension, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
@@ -53,7 +53,7 @@ export async function build(
   {config}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
-  const {root, loaders} = config;
+  const {root, loaders, duckdb} = config;
   Telemetry.record({event: "build", step: "start"});
 
   // Prepare for build (such as by emptying the existing output root).
@@ -216,6 +216,20 @@ export async function build(
     } else {
       await effects.copyFile(sourcePath, path);
     }
+  }
+
+  // Write the DuckDB extensions manifest.
+  if (globalImports.has("/_observablehq/stdlib/duckdb.js")) {
+    const path = join("_observablehq", "duckdb_manifest.json");
+    effects.output.write(`${faint("duckdb manifest")} `);
+    const manifest = await Promise.all(
+      Object.entries(duckdb.extensions).map(async ([name, source]) => [
+        name,
+        {ref: dirname(dirname(dirname(await resolveDuckDBExtension(root, source)))), load: true}
+      ])
+    );
+    await effects.writeFile(path, JSON.stringify(manifest));
+    effects.logger.log(path);
   }
 
   // Compute the hashes for global modules. By computing the hash on the file in

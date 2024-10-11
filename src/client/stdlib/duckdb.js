@@ -169,6 +169,7 @@ export class DuckDBClient {
       config = {...config, query: {...config.query, castBigIntToDouble: true}};
     }
     await db.open(config);
+    await registerExtensions(db);
     await Promise.all(Object.entries(sources).map(([name, source]) => insertSource(db, name, source)));
     return new DuckDBClient(db);
   }
@@ -181,6 +182,22 @@ export class DuckDBClient {
 Object.defineProperty(DuckDBClient.prototype, "dialect", {
   value: "duckdb"
 });
+
+async function registerExtensions(db) {
+  const connection = await db.connect();
+  try {
+    const extensions = await fetch(import.meta.resolve("observablehq:duckdb_manifest.json")).then((r) => r.json());
+    await Promise.all(
+      extensions.map(([name, {ref, load}]) =>
+        connection
+          .query(`INSTALL ${name} FROM '${import.meta.resolve(`../../${ref}`)}'`)
+          .then(() => load && connection.query(`LOAD ${name}`))
+      )
+    );
+  } finally {
+    await connection.close();
+  }
+}
 
 async function insertSource(database, name, source) {
   source = await source;

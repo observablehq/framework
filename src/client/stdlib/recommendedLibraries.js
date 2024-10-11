@@ -16,23 +16,7 @@ export const mermaid = () => import("observablehq:stdlib/mermaid").then((mermaid
 export const Plot = () => import("npm:@observablehq/plot");
 export const React = () => import("npm:react");
 export const ReactDOM = () => import("npm:react-dom");
-export const sql = () =>
-  import("observablehq:stdlib/duckdb").then(async (duckdb) => {
-    const {sql} = duckdb;
-    const extensions = JSON.parse(document.querySelector("#observablehq-duckdb-hosted-extensions").textContent);
-    for (const [name, {ref, load}] of extensions) {
-      const x = `INSTALL ${name} FROM '${new URL(`../${ref}`, import.meta.url).href}';`;
-      console.warn(import.meta.url, x);
-      await sql([x]);
-      if (load) {
-        const y = `LOAD ${name};`;
-        console.warn(import.meta.url, y);
-        await sql([y]);
-      }
-    }
-    console.warn(extensions);
-    return sql;
-  });
+export const sql = () => import("observablehq:stdlib/duckdb").then((duckdb) => duckdb.sql);
 export const SQLite = () => import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.default);
 export const SQLiteDatabaseClient = () => import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.SQLiteDatabaseClient); // prettier-ignore
 export const tex = () => import("observablehq:stdlib/tex").then((tex) => tex.default);

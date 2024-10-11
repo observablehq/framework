@@ -25,6 +25,7 @@ import {findModule, readJavaScript} from "./javascript/module.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import type {LoaderResolver} from "./loader.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
+import {resolveDuckDBExtension} from "./npm.js";
 import {populateNpmCache} from "./npm.js";
 import {isPathImport, resolvePath} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
@@ -118,7 +119,7 @@ export class PreviewServer {
 
   _handleRequest: RequestListener = async (req, res) => {
     const config = await this._readConfig();
-    const {root, loaders} = config;
+    const {root, loaders, duckdb} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
     const url = new URL(req.url!, "http://localhost");
     const {origin} = req.headers;
@@ -139,6 +140,14 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await bundleStyles({path}), "text/css");
+      } else if (pathname === "/_observablehq/duckdb_manifest.json") {
+        const manifest = await Promise.all(
+          Object.entries(duckdb.extensions).map(async ([name, source]) => [
+            name,
+            {ref: dirname(dirname(dirname(await resolveDuckDBExtension(root, source)))), load: true}
+          ])
+        );
+        end(req, res, JSON.stringify(manifest), "text/json");
       } else if (pathname.startsWith("/_node/") || pathname.startsWith("/_jsr/") || pathname.startsWith("/_duckdb/")) {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
