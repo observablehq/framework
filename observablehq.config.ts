@@ -130,17 +130,17 @@ export default {
       </a>
     </div>
     <div style="display: flex; align-items: center; gap: 1rem; font-size: 14px; ">
-      <a class="desktop-only" target="_blank" title="${
+      <a class="hide-if-small" target="_blank" title="${
         process.env.npm_package_version
       } release notes" href="https://github.com/observablehq/framework/releases"><span>${
         process.env.npm_package_version
       }</span></a>
-      <a class="desktop-only" target="_blank" data-decoration="★" title="${stargazers_count.toLocaleString(
+      <a class="hide-if-small" target="_blank" data-decoration="★" title="${stargazers_count.toLocaleString(
         "en-US"
       )} GitHub stars" href="https://github.com/observablehq/framework"><span>GitHub️ ${
         stargazers_count ? formatPrefix(".1s", 1000)(stargazers_count) : ""
       }</span></a>
-      <a class="mobile-only" target="_blank" title="${stargazers_count.toLocaleString(
+      <a class="hide-if-large" target="_blank" title="${stargazers_count.toLocaleString(
         "en-US"
       )} GitHub stars" href="https://github.com/observablehq/framework">
         <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">

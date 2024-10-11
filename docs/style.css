@@ -60,19 +60,6 @@ code:not(pre code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code) {
   color: var(--theme-foreground-focus);
 }
 
-#observablehq-header a.mobile-only {
-  display: none;
-}
-
-@media screen and (max-width: 640px) {
-  #observablehq-header a.desktop-only {
-    display: none;
-  }
-  #observablehq-header a.mobile-only {
-    display: inline;
-  }
-}
-
 .observablehq-link a[target="_blank"]:not(:hover, :focus)::after {
   color: var(--theme-foreground-faint);
 }
@@ -99,11 +86,13 @@ h1 {
   font-weight: 500;
 }
 
-#observablehq-header {
-  container-type: inline-size;
+@media (min-width: 640px) {
+  .hide-if-large {
+    display: none !important;
+  }
 }
 
-@container not (min-width: 640px) {
+@media not (min-width: 640px) {
   .hide-if-small {
     display: none !important;
   }
