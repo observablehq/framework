@@ -227,7 +227,8 @@ class Deployer {
             deployTarget.workspace.login
           }/${deployTarget.project.slug}/deploys/${latestCreatedDeployId}`
         );
-        break pollLoop;
+        // break pollLoop;
+        return latestCreatedDeployId;
       }
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
@@ -279,8 +280,33 @@ class Deployer {
             } else {
               // repo not auth’ed; kick off web auth flow
               this.effects.clack.log.info(
-                "Authorize Observable to access this repo: https://github.com/apps/observable-data-apps-dev/installations/select_target"
+                "Authorize Observable to access this repository: https://github.com/apps/observable-data-apps-dev/installations/select_target"
               );
+              const spinner = this.effects.clack.spinner();
+              spinner.start("Waiting for repository to be authorized");
+              const pollExpiration = Date.now() + 2 * 60_000; //DEPLOY_POLL_MAX_MS; // TODO
+              pollLoop: while (true) {
+                if (Date.now() > pollExpiration) {
+                  spinner.stop("Waiting for repository to be authorized timed out");
+                  throw new CliError("Deploy failed");
+                }
+                const {repositories} = await this.apiClient.getGitHubRepositories();
+                const authedRepo = repositories.find(({url}) => formatGitUrl(url) === repoName);
+                if (authedRepo) {
+                  spinner.stop("Repository authorized");
+                  await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
+                    source: {
+                      provider: authedRepo.provider,
+                      provider_id: authedRepo.provider_id,
+                      url: authedRepo.url,
+                      branch: null // TODO detect branch
+                    }
+                  });
+                  // break pollLoop; // TODO
+                  return true;
+                }
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+              }
             }
           }
         } else {
