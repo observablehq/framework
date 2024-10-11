@@ -1,6 +1,7 @@
 import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
 import type {DuckDBConfig} from "./config.js";
+import {resolveDuckDBExtension} from "./duckdb.js";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {isJavaScript} from "./javascript/imports.js";
@@ -13,7 +14,6 @@ import type {LoaderResolver} from "./loader.js";
 import type {MarkdownPage} from "./markdown.js";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
-import {resolveDuckDBExtension} from "./npm.js";
 import {isAssetPath, isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 export interface Resolvers {

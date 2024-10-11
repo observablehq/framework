@@ -211,45 +211,41 @@ When interpolating values into SQL queries, be careful to avoid [SQL injection](
 
 DuckDB has a flexible extension mechanism that allows for dynamically loading extensions. These may extend DuckDB's functionality by providing support for additional file formats, introducing new types, and domain-specific functionality.
 
-Framework can download and host the extensions of your choice. By default, only "json" and "parquet" are self-hosted, but you can add more by specifying them in the [configuration](../config). The self-hosted extensions are served from the `/_duckdb/` directory with a content-hashed URL, ensuring optimal performance and allowing you to work offline and from a server you control.
+Framework can download and host the extensions of your choice. By default, only "json" and "parquet" are self-hosted, but you can add more by specifying them in the [configuration](./config). The self-hosted extensions are served from the `/_duckdb/` directory with a content-hashed URL, ensuring optimal performance and allowing you to work offline and from a server you control.
 
-The self-hosted extensions are immediately available in all the [sql](./sql) code blocks. For instance, all these queries work instantly once you have the "json", "spatial" and "h3" extensions configured:
+The self-hosted extensions are immediately available in all the `sql` code blocks and [DuckDBClient](./lib/duckdb) instances. For example, the query below works instantly since the "json" extension is configured:
 
 ```sql echo
 SELECT bbox FROM read_json('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
 ```
 
-```sql echo run=false
+Likewise, with the "spatial" extension configured, you can directly run:
+
+```sql echo
 SELECT ST_Area('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'::GEOMETRY) as area;
 ```
 
-```sql echo run=false
-SELECT format('{:x}', h3_latlng_to_cell(37.77, -122.43, 9)) AS cell_id;
-```
-
-If you load an extension that is not self-hosted, DuckDB falls back to loading it directly from the core or community servers. For example, this documentation does not have the "inet" extension configured for self-hosting. If you inspect the network tab in your browser, you can see that it gets autoloaded from the official core extensions repository.
+If you use an extension that is not self-hosted, DuckDB falls back to loading it directly from DuckDB’s servers. For example, this documentation does not have the "inet" extension configured for self-hosting. (If you inspect the network tab in your browser, you can see that it gets autoloaded from the official `core` extensions repository.)
 
 ```sql echo
 SELECT '127.0.0.1'::INET AS ipv4, '2001:db8:3c4d::/48'::INET AS ipv6;
 ```
 
-At present Framework does not know which extensions your code is using. As indicated above, you have to inspect the network activity in your browser to see if that is the case, and you can then decide to add them to your configuration for self-hosting. (In the future, the preview server might be able to raise a warning if the list is incomplete. If you are interested in this feature, please upvote #issueTK.)
+During development, you can experiment freely with extensions that are not self-hosted. For example to try out the "h3" `community` extension:
+
+```sql echo run=false
+INSTALL "h3" FROM community;
+LOAD "h3";
+SELECT format('{:x}', h3_latlng_to_cell(37.77, -122.43, 9)) AS cell_id;
+```
+
+<small>(this returns the H3 cell [`892830828a3ffff`](https://h3geo.org/#hex=892830828a3ffff))</small>
+
+However, for performance and ergonomy, we strongly recommend adding all the extensions you actually use to your site’s configuration.
 
 <div class="tip">
 
-You can also initialize a custom [DuckDBClient](./lib/duckdb) with a custom list of extensions. For example, the `sql2` tagged template literal below does not load "json" or "parquet", and installs and loads "h3" directly from the community extensions repository:
-
-```js echo run=false
-const sql2 = await DuckDBClient.sql();
-await sql2`INSTALL h3 FROM community;`
-await sql2`LOAD h3;`
-```
-
-You can use it in JavaScript to return the cell [`892830828a3ffff`](https://h3geo.org/#hex=892830828a3ffff):
-
-```js run=false
-sql2`SELECT format('{:x}', h3_latlng_to_cell(37.77, -122.43, 9)) AS id;`
-```
+Since some extensions are autoloading, it can be hard to tell which ones are effectively in use. You can inspect the network tab in your browser, or run `FROM duckdb_extensions WHERE loaded;` to read the current state of your DuckDB instance. In preview, you can also open your browser console and type `DuckDBClientReport()` — this utility offers additional information, such as the path used for self-hosted extensions.
 
 </div>
 

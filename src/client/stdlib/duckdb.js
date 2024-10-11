@@ -186,11 +186,29 @@ Object.defineProperty(DuckDBClient.prototype, "dialect", {
 async function registerExtensions(db) {
   const connection = await db.connect();
   try {
-    const extensions = await fetch(import.meta.resolve("observablehq:duckdb_manifest.json")).then((r) => r.json());
+    const {log, extensions} = await fetch(import.meta.resolve("observablehq:duckdb_manifest.json")).then((r) =>
+      r.json()
+    );
+    // Preview adds a DuckDBClientReport utility to the console. We don’t add it
+    // in the public build so as not to pollute the window.
+    if (log) {
+      window.DuckDBClientReport = async () => {
+        const connection = await db.connect();
+        try {
+          const refs = new Map(extensions);
+          const ext = await connection.query(
+            "SELECT extension_name, description FROM duckdb_extensions() WHERE loaded;"
+          );
+          console.table(Array.from(ext, (e) => ({...e, ...refs.get(e.extension_name)})));
+        } finally {
+          await connection.close();
+        }
+      };
+    }
     await Promise.all(
       extensions.map(([name, {ref, load}]) =>
         connection
-          .query(`INSTALL ${name} FROM '${import.meta.resolve(`../../${ref}`)}'`)
+          .query(`INSTALL ${name} FROM '${import.meta.resolve(`../../${ref}`).split("/").slice(0, -3).join("/")}'`)
           .then(() => load && connection.query(`LOAD ${name}`))
       )
     );

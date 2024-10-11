@@ -16,6 +16,7 @@ import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import type {Config} from "./config.js";
 import {readConfig} from "./config.js";
+import {duckDBManifest} from "./duckdb.js";
 import {enoent, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
@@ -25,7 +26,6 @@ import {findModule, readJavaScript} from "./javascript/module.js";
 import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import type {LoaderResolver} from "./loader.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
-import {resolveDuckDBExtension} from "./npm.js";
 import {populateNpmCache} from "./npm.js";
 import {isPathImport, resolvePath} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
@@ -141,13 +141,7 @@ export class PreviewServer {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await bundleStyles({path}), "text/css");
       } else if (pathname === "/_observablehq/duckdb_manifest.json") {
-        const manifest = await Promise.all(
-          Object.entries(duckdb.extensions).map(async ([name, source]) => [
-            name,
-            {ref: dirname(dirname(dirname(await resolveDuckDBExtension(root, source)))), load: true}
-          ])
-        );
-        end(req, res, JSON.stringify(manifest), "text/json");
+        end(req, res, JSON.stringify(await duckDBManifest(duckdb, {root, log: true})), "application/json");
       } else if (pathname.startsWith("/_node/") || pathname.startsWith("/_jsr/") || pathname.startsWith("/_duckdb/")) {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {

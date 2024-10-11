@@ -3,13 +3,14 @@ import {existsSync} from "node:fs";
 import {copyFile, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
+import {duckDBManifest} from "./duckdb.js";
 import {CliError} from "./error.js";
 import {getClientPath, prepareOutput} from "./files.js";
 import {findModule, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
-import {populateNpmCache, resolveDuckDBExtension, resolveNpmImport, rewriteNpmImports} from "./npm.js";
+import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
@@ -222,13 +223,7 @@ export async function build(
   if (globalImports.has("/_observablehq/stdlib/duckdb.js")) {
     const path = join("_observablehq", "duckdb_manifest.json");
     effects.output.write(`${faint("duckdb manifest")} `);
-    const manifest = await Promise.all(
-      Object.entries(duckdb.extensions).map(async ([name, source]) => [
-        name,
-        {ref: dirname(dirname(dirname(await resolveDuckDBExtension(root, source)))), load: true}
-      ])
-    );
-    await effects.writeFile(path, JSON.stringify(manifest));
+    await effects.writeFile(path, JSON.stringify(await duckDBManifest(duckdb, {root})));
     effects.logger.log(path);
   }
 
