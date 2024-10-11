@@ -186,9 +186,9 @@ Object.defineProperty(DuckDBClient.prototype, "dialect", {
 async function registerExtensions(db, {load}) {
   const connection = await db.connect();
   try {
-    const {log, extensions} = await fetch(import.meta.resolve("observablehq:duckdb_manifest.json")).then((r) =>
-      r.json()
-    );
+    // Baked-in extensions manifest.
+    const {log, extensions} = process.DUCKDB_MANIFEST;
+
     // Preview adds a DuckDBClientReport utility to the console. We don’t add it
     // in the public build so as not to pollute the window.
     if (log) {

@@ -150,6 +150,9 @@ export async function build(
       effects.output.write(`${faint("bundle")} ${path} ${faint("→")} `);
       const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
       const define: {[key: string]: string} = {};
+      if (path === "/_observablehq/stdlib/duckdb.js") {
+        define["process.DUCKDB_MANIFEST"] = JSON.stringify(await duckDBManifest(duckdb, {root, log: true}));
+      }
       const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
       await prepareOutput(cachePath);
       await writeFile(cachePath, contents);
@@ -215,18 +218,15 @@ export async function build(
       aliases.set(path, alias);
       await effects.writeFile(alias, contents);
     } else if (path.startsWith("/_duckdb/")) {
-      continue;
+      const name = path.slice("/_duckdb/".length, -9);
+      for (const p of ["eh", "mvp"])
+        await effects.copyFile(
+          join(sourcePath, "v1.1.1", `wasm_${p}`, `${name}.duckdb_extension.wasm`),
+          join(path, "v1.1.1", `wasm_${p}`, `${name}.duckdb_extension.wasm`)
+        );
     } else {
       await effects.copyFile(sourcePath, path);
     }
-  }
-
-  // Write the DuckDB extensions manifest.
-  if (globalImports.has("/_observablehq/stdlib/duckdb.js")) {
-    const path = join("_observablehq", "duckdb_manifest.json");
-    effects.output.write(`${faint("duckdb manifest")} `);
-    await effects.writeFile(path, JSON.stringify(await duckDBManifest(duckdb, {root})));
-    effects.logger.log(path);
   }
 
   // Compute the hashes for global modules. By computing the hash on the file in
@@ -478,7 +478,6 @@ export class FileBuildEffects implements BuildEffects {
     }
   }
   async copyFile(sourcePath: string, outputPath: string): Promise<void> {
-    if (sourcePath === "test/input/build/only.duckdb/.observablehq/cache/_duckdb/e3b0c442") console.trace();
     const destination = join(this.outputRoot, outputPath);
     this.logger.log(destination);
     await prepareOutput(destination);

@@ -39,7 +39,7 @@ export async function resolveDuckDBExtension(root: string, duckdb: DuckDBConfig,
   const outputDir = join(cache, "duckdb", host);
   const files = ["eh", "mvp"].map((p) => join(outputDir, `${name}.${p}.wasm`));
   if (files.every(existsSync)) {
-    const ref = await duckDBHash(files);
+    const ref = await duckDBHash(name, files);
     if (platforms.every((p) => existsSync(join(cache, ref, "v1.1.1", `wasm_${p}`, `${name}.duckdb_extension.wasm`))))
       return ref;
   }
@@ -57,7 +57,7 @@ export async function resolveDuckDBExtension(root: string, duckdb: DuckDBConfig,
       await writeFile(outputPath, Buffer.from(await response.arrayBuffer()));
     })
   ).then(async () => {
-    const ref = await duckDBHash(files);
+    const ref = await duckDBHash(name, files);
     for (const [i, p] of platforms.entries()) {
       const targetPath = join(cache, ref, "v1.1.1", `wasm_${p}`, `${name}.duckdb_extension.wasm`);
       await mkdir(dirname(targetPath), {recursive: true});
@@ -70,8 +70,9 @@ export async function resolveDuckDBExtension(root: string, duckdb: DuckDBConfig,
   return promise;
 }
 
-async function duckDBHash(files: string[]): Promise<string> {
+async function duckDBHash(name: string, files: string[]): Promise<string> {
   const hash = createHash("sha256");
+  hash.update(name);
   for (const file of files) hash.update(await readFile(file, "utf-8"));
-  return join("_duckdb", hash.digest("hex").slice(0, 8));
+  return join("_duckdb", `${name}-${hash.digest("hex").slice(0, 8)}`);
 }

@@ -136,12 +136,14 @@ export class PreviewServer {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".js")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
-        end(req, res, await rollupClient(path, root, pathname), "text/javascript");
+        const options =
+          pathname === "/_observablehq/stdlib/duckdb.js"
+            ? {define: {"process.DUCKDB_MANIFEST": JSON.stringify(await duckDBManifest(duckdb, {root, log: true}))}}
+            : {};
+        end(req, res, await rollupClient(path, root, pathname, options), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await bundleStyles({path}), "text/css");
-      } else if (pathname === "/_observablehq/duckdb_manifest.json") {
-        end(req, res, JSON.stringify(await duckDBManifest(duckdb, {root, log: true})), "application/json");
       } else if (pathname.startsWith("/_node/") || pathname.startsWith("/_jsr/") || pathname.startsWith("/_duckdb/")) {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
