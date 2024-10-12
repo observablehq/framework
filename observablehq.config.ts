@@ -16,6 +16,11 @@ export default {
   root: "docs",
   output: "docs/.observablehq/dist",
   title: "Observable Framework",
+  defaultBlockAttributes: {
+    "*": {
+      run: "false"
+    }
+  },
   pages: [
     {name: "What is Framework?", path: "/what-is-framework"},
     {name: "Getting started", path: "/getting-started"},
