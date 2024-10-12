@@ -27,7 +27,7 @@ body {
   top: 0;
   left: calc(max(0rem, (100vw - var(--observablehq-max-width)) / 2) + var(--observablehq-inset-left) + 2rem);
   right: calc(max(0rem, (100vw - var(--observablehq-max-width)) / 2) + var(--observablehq-inset-right) + 2rem);
-  z-index: 1;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -296,6 +296,7 @@ body {
   position: fixed;
   color: var(--theme-foreground-muted);
   font: 400 14px var(--sans-serif);
+  z-index: 1;
   top: 0;
   right: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2) + 1rem);
   bottom: 0;
