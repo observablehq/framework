@@ -395,7 +395,7 @@
     htl "^0.3.1"
     isoformat "^0.2.0"
 
-"@observablehq/inspector@^5.0.0":
+"@observablehq/inspector@^5.0.0", "@observablehq/inspector@^5.0.1":
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/@observablehq/inspector/-/inspector-5.0.1.tgz#586280d0bc5da55da8e715ade86ba438dc14b056"
   integrity sha512-euwWxwDa6KccU4G3D2JBD7GI/2McJh/z7HHEzJKbj2TDa7zhI37eTbTxiwE9rgTWBagvVBel+hAmnJRYBYOv2Q==
@@ -2547,11 +2547,6 @@ is-unicode-supported@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/is-unicode-supported/-/is-unicode-supported-0.1.0.tgz#3f26c76a809593b52bfa2ecb5710ed2779b522a7"
   integrity sha512-knxG2q4UC3u8stRGyAVJCOdxFmv5DZiRcdlIaAQXAbSfJya+OhopNotLQrstBhququ4ZpuKbDc/8S6mgXgPFPw==
-
-is-unicode-supported@^1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/is-unicode-supported/-/is-unicode-supported-1.3.0.tgz#d824984b616c292a2e198207d4a609983842f714"
-  integrity sha512-43r2mRvz+8JRIKnWJ+3j8JtjRKZ6GmjzfaE/qiBJnikNnYv/6bagRJ1kUhNk8R5EX/GkobD+r+sfxCPJsiKBLQ==
 
 is-weakref@^1.0.2:
   version "1.0.2"
