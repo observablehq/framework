@@ -83,6 +83,7 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
   promise = (async () => {
     let specifier = extractNpmSpecifier(path);
     const s = parseNpmSpecifier(specifier);
+    // https://github.com/sql-js/sql.js/issues/284
     if (s.name === "sql.js" && s.path === "+esm") {
       specifier = formatNpmSpecifier({...s, path: "dist/sql-wasm.js"});
     }
