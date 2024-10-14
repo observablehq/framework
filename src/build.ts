@@ -222,7 +222,7 @@ export async function build(
   // Anything in _observablehq also needs a content hash, but anything in _npm
   // or _node does not (because they are already necessarily immutable).
   for (const path of globalImports) {
-    if (path.endsWith(".js")) continue;
+    if (path.endsWith(".js") || path.startsWith("/_duckdb/")) continue;
     const sourcePath = join(cacheRoot, path);
     effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
     if (path.startsWith("/_observablehq/")) {
@@ -416,7 +416,7 @@ function validateLinks(outputs: Map<string, {resolvers: Resolvers}>): [valid: Li
 }
 
 function applyHash(path: string, hash: string): string {
-  if (path.startsWith("/_duckdb/")) return join("/_duckdb/", hash, path.slice("/_duckdb/".length));
+  if (path.startsWith("/_duckdb/")) return join("/_duckdb/", `${hash}-${path.slice("/_duckdb/".length)}`);
   const ext = extname(path);
   let name = basename(path, ext);
   if (path.endsWith(".js")) name = name.replace(/(^|\.)_esm$/, ""); // allow hash to replace _esm
