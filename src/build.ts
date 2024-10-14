@@ -141,6 +141,20 @@ export async function build(
     effects.logger.log(cachePath);
   }
 
+  // Copy over the DuckDB extensions and create the DuckDB manifest.
+  for (const path of globalImports) {
+    if (path.startsWith("/_duckdb/")) {
+      const sourcePath = join(cacheRoot, path);
+      effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
+      const contents = await readFile(sourcePath);
+      const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+      const alias = applyHash(path, hash);
+      aliases.set(path, alias);
+      await effects.writeFile(alias, contents);
+    }
+  }
+  const duckdb_manifest = await duckDBManifest(duckdb, {root, log: true, aliases});
+
   // Generate the client bundles. These are initially generated into the cache
   // because we need to rewrite any npm and node imports to be hashed; this is
   // handled generally for all global imports below.
@@ -151,7 +165,7 @@ export async function build(
       const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
       const define: {[key: string]: string} = {};
       if (path === "/_observablehq/stdlib/duckdb.js") {
-        define["process.DUCKDB_MANIFEST"] = JSON.stringify(await duckDBManifest(duckdb, {root, log: true}));
+        define["process.DUCKDB_MANIFEST"] = JSON.stringify(duckdb_manifest);
       }
       const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
       await prepareOutput(cachePath);
@@ -205,8 +219,8 @@ export async function build(
   }
 
   // Copy over global assets (e.g., minisearch.json, DuckDB’s WebAssembly).
-  // Anything in _observablehq also needs a content hash, but anything in _npm,
-  // _node or _duckdb does not (because they are already necessarily immutable).
+  // Anything in _observablehq also needs a content hash, but anything in _npm
+  // or _node does not (because they are already necessarily immutable).
   for (const path of globalImports) {
     if (path.endsWith(".js")) continue;
     const sourcePath = join(cacheRoot, path);
@@ -217,13 +231,6 @@ export async function build(
       const alias = applyHash(path, hash);
       aliases.set(path, alias);
       await effects.writeFile(alias, contents);
-    } else if (path.startsWith("/_duckdb/")) {
-      const name = path.slice("/_duckdb/".length, -9);
-      for (const p of ["eh", "mvp"])
-        await effects.copyFile(
-          join(sourcePath, "v1.1.1", `wasm_${p}`, `${name}.duckdb_extension.wasm`),
-          join(path, "v1.1.1", `wasm_${p}`, `${name}.duckdb_extension.wasm`)
-        );
     } else {
       await effects.copyFile(sourcePath, path);
     }
@@ -409,6 +416,7 @@ function validateLinks(outputs: Map<string, {resolvers: Resolvers}>): [valid: Li
 }
 
 function applyHash(path: string, hash: string): string {
+  if (path.startsWith("/_duckdb/")) return join("/_duckdb/", hash, path.slice("/_duckdb/".length));
   const ext = extname(path);
   let name = basename(path, ext);
   if (path.endsWith(".js")) name = name.replace(/(^|\.)_esm$/, ""); // allow hash to replace _esm

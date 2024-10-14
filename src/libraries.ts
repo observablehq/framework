@@ -83,7 +83,11 @@ export function getImplicitDownloads(imports: Iterable<string>, duckdb?: DuckDBC
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
     if (!duckdb) throw new Error("Implementation error: missing duckdb configuration");
-    for (const name of duckdb.install) implicits.add(`duckdb:${name}`);
+    for (const p of duckdb.bundles) {
+      for (const name of duckdb.install) {
+        implicits.add(`duckdb:${p},${name},${duckdb.source[name]}`);
+      }
+    }
   }
   if (set.has("npm:@observablehq/sqlite")) {
     implicits.add("npm:sql.js/dist/sql-wasm.js");

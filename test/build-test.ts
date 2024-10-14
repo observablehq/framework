@@ -76,7 +76,6 @@ describe("build", () => {
       // update the test snapshots whenever Framework’s client code changes. We
       // make an exception for minisearch.json because to test the content.
       for (const path of findFiles(join(outputDir, "_observablehq"))) {
-        if (path === "duckdb_manifest.json") continue;
         const match = /^((.+)\.[0-9a-f]{8})\.(\w+)$/.exec(path);
         if (!match) throw new Error(`no hash found: ${path}`);
         const [, key, name, ext] = match;

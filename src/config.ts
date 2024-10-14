@@ -80,6 +80,7 @@ export interface DuckDBConfig {
   install: string[];
   load: string[];
   source: {[name: string]: string};
+  bundles: string[];
 }
 
 export interface Config {
@@ -504,6 +505,7 @@ function normalizeDuckDB(spec: unknown): DuckDBConfig {
   const load = spec?.["load"] ?? [];
   const source = new Map(Object.entries(spec?.["source"] ?? {}));
   return {
+    bundles: ["eh", "mvp"],
     install,
     load: load.filter((name: string) => install.includes(name)),
     source: Object.fromEntries(

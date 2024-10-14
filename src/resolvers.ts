@@ -371,7 +371,8 @@ async function resolveResolvers(
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
     } else if (specifier.startsWith("duckdb:")) {
-      const path = await resolveDuckDBExtension(root, duckdb, specifier.slice("duckdb:".length));
+      const [p, name, repo] = specifier.slice("duckdb:".length).split(",");
+      const path = await resolveDuckDBExtension(root, p, repo, name);
       resolutions.set(specifier, path);
     } else if (!specifier.startsWith("observablehq:")) {
       throw new Error(`unhandled implicit download: ${specifier}`);

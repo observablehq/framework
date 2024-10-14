@@ -45,6 +45,7 @@ describe("readConfig(undefined, root)", () => {
       search: null,
       watchPath: resolve("test/input/build/config/observablehq.config.js"),
       duckdb: {
+        bundles: ["eh", "mvp"],
         install: ["json", "parquet"],
         load: [],
         source: {json: "https://extensions.duckdb.org", parquet: "https://extensions.duckdb.org"}
@@ -78,6 +79,7 @@ describe("readConfig(undefined, root)", () => {
       search: null,
       watchPath: undefined,
       duckdb: {
+        bundles: ["eh", "mvp"],
         install: ["json", "parquet"],
         load: [],
         source: {json: "https://extensions.duckdb.org", parquet: "https://extensions.duckdb.org"}

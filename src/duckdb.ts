@@ -1,24 +1,33 @@
-import {createHash} from "node:crypto";
 import {existsSync} from "node:fs";
-import {copyFile, mkdir, readFile, writeFile} from "node:fs/promises";
+import {mkdir, writeFile} from "node:fs/promises";
 import {dirname, join} from "node:path/posix";
+import {cross} from "d3-array";
 import type {DuckDBConfig} from "./config.js";
 import {faint} from "./tty.js";
 
 const downloadRequests = new Map<string, Promise<string>>();
 
-export async function duckDBManifest(duckdb: DuckDBConfig, {root, log}: {root: string; log?: boolean}) {
+export async function duckDBManifest(
+  duckdb: DuckDBConfig,
+  {root, log, aliases}: {root: string; log?: boolean; aliases?: Map<string, string>}
+) {
   return {
-    log,
+    bundles: duckdb.bundles,
     extensions: await Promise.all(
-      duckdb.install.map(async (name) => [
-        name,
-        {
-          ref: await resolveDuckDBExtension(root, duckdb, name),
-          load: duckdb.load.includes(name)
-        }
-      ])
-    )
+      cross(duckdb.bundles, duckdb.install).map(async ([p, name]) => {
+        let ext = await resolveDuckDBExtension(root, p, duckdb.source[name], name);
+        if (aliases?.has(ext)) ext = aliases.get(ext)!;
+        return [
+          name,
+          {
+            ref: dirname(dirname(dirname(ext))),
+            load: duckdb.load.includes(name),
+            bundle: p
+          }
+        ];
+      })
+    ),
+    log
   };
 }
 
@@ -30,25 +39,33 @@ export async function duckDBManifest(duckdb: DuckDBConfig, {root, log}: {root: s
  * statement. The repo is structured as required by DuckDB with:
  * ${repo}/v1.1.1/wasm_{p}/${name}.duckdb_extension.wasm
  */
-export async function resolveDuckDBExtension(root: string, duckdb: DuckDBConfig, name: string): Promise<string> {
-  const platforms = ["eh", "mvp"];
-  const repo = duckdb.source[name];
+export async function resolveDuckDBExtension(root: string, p: string, repo: string, name: string): Promise<string> {
   if (!repo.startsWith("https://")) throw new Error(`invalid repo: ${repo}`);
-  const {host} = new URL(repo);
   const cache = join(root, ".observablehq", "cache");
-  const outputDir = join(cache, "duckdb", host);
-  const files = ["eh", "mvp"].map((p) => join(outputDir, `${name}.${p}.wasm`));
-  if (files.every(existsSync)) {
-    const ref = await duckDBHash(name, files);
-    if (platforms.every((p) => existsSync(join(cache, ref, "v1.1.1", `wasm_${p}`, `${name}.duckdb_extension.wasm`))))
-      return ref;
-  }
-  const key = join(outputDir, name);
-  let promise = downloadRequests.get(key);
+  const file = `${name}.duckdb_extension.wasm`;
+  const ref = `${repo}/v1.1.1/wasm_${p}/${file}`.slice("https://".length);
+  const path = join("_duckdb", ref);
+  const cachePath = join(cache, path);
+  if (existsSync(cachePath)) return `/${path}`;
+  let promise = downloadRequests.get(cachePath);
   if (promise) return promise; // coalesce concurrent requests
+  promise = (async () => {
+    const href = `https://${ref}`;
+    console.log(`duckdb:${href} ${faint("→")} ${cachePath}`);
+    const response = await fetch(href);
+    if (!response.ok) throw new Error(`unable to fetch: ${href}`);
+    await mkdir(dirname(cachePath), {recursive: true});
+    await writeFile(cachePath, Buffer.from(await response.arrayBuffer()));
+    return `/${path}`;
+  })();
+  promise.catch(console.error).then(() => downloadRequests.delete(cachePath));
+  downloadRequests.set(cachePath, promise);
+  return promise;
+}
+
+/*
   promise = Promise.all(
-    platforms.map(async (p) => {
-      const href = `${repo}/v1.1.1/wasm_${p}/${name}.duckdb_extension.wasm`;
+    bundles.map(async (p) => {
       const outputPath = join(outputDir, `${name}.${p}.wasm`);
       console.log(`download: ${href} ${faint("→")} ${outputPath}`);
       const response = await fetch(href);
@@ -58,7 +75,7 @@ export async function resolveDuckDBExtension(root: string, duckdb: DuckDBConfig,
     })
   ).then(async () => {
     const ref = await duckDBHash(name, files);
-    for (const [i, p] of platforms.entries()) {
+    for (const [i, p] of bundles.entries()) {
       const targetPath = join(cache, ref, "v1.1.1", `wasm_${p}`, `${name}.duckdb_extension.wasm`);
       await mkdir(dirname(targetPath), {recursive: true});
       await copyFile(files[i], targetPath);
@@ -76,3 +93,5 @@ async function duckDBHash(name: string, files: string[]): Promise<string> {
   for (const file of files) hash.update(await readFile(file, "utf-8"));
   return join("_duckdb", `${name}-${hash.digest("hex").slice(0, 8)}`);
 }
+
+*/
