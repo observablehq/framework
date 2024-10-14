@@ -81,14 +81,21 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
   let promise = npmRequests.get(outputPath);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async () => {
-    const specifier = extractNpmSpecifier(path);
+    let specifier = extractNpmSpecifier(path);
+    const s = parseNpmSpecifier(specifier);
+    if (s.name === "sql.js" && s.path === "+esm") {
+      specifier = formatNpmSpecifier({...s, path: "dist/sql-wasm.js"});
+    }
     const href = `https://cdn.jsdelivr.net/npm/${specifier}`;
     console.log(`npm:${specifier} ${faint("→")} ${outputPath}`);
     const response = await fetch(href);
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
     await mkdir(dirname(outputPath), {recursive: true});
     if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
-      const source = await response.text();
+      let source = await response.text();
+      if (s.name === "sql.js" && s.path === "+esm") {
+        source = "var module;\n" + source + "\nexport default initSqlJs;";
+      }
       const resolver = await getDependencyResolver(root, path, source);
       await writeFile(outputPath, rewriteNpmImports(source, resolver), "utf-8");
     } else {
