@@ -2,13 +2,13 @@
 
 [SQLite](https://sqlite.org/) is “a small, fast, self-contained, high-reliability, full-featured, SQL database engine” and “the most used database engine in the world.” Observable provides a ESM-compatible distribution of [sql.js](https://sql.js.org), a WASM-based distribution of SQLite. It is available by default as `SQLite` in Markdown, but you can import it like so:
 
-```js echo
+```js run=false
 import SQLite from "npm:@observablehq/sqlite";
 ```
 
 We also provide `SQLiteDatabaseClient`, a [`DatabaseClient`](https://observablehq.com/@observablehq/database-client-specification) implementation.
 
-```js echo
+```js run=false
 import {SQLiteDatabaseClient} from "npm:@observablehq/sqlite";
 ```
 
