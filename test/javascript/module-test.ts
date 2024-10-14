@@ -8,8 +8,8 @@ const emptyHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b
 // through the code and verifying that they consider all the relevant files.
 describe("getModuleHash(root, path)", () => {
   it("returns the transitive content hash for the specified module", () => {
-    assert.strictEqual(getModuleHash("test/input/build/imports", "foo/foo.js"), "32f934a52fa34ba1b06aa6089fe5922dc442c9bf2dcddef864bc649a39d9eace"); // prettier-ignore
-    assert.strictEqual(getModuleHash("test/input/build/imports", "bar/bar.js"), "7fe009c8bb0049d9b84d53a00b29fb172bbf07d8232d2ace5f7c6f220b23eb16"); // prettier-ignore
+    assert.strictEqual(getModuleHash("test/input/build/imports", "foo/foo.js"), "e743cc5455594df5a3bd78622594dfb7a8ddb9277957be9b9732f33a88955d82"); // prettier-ignore
+    assert.strictEqual(getModuleHash("test/input/build/imports", "bar/bar.js"), "34442bce5f38762986a81229c551723cdc3d4c1509ac14dde193555e65013d76"); // prettier-ignore
     assert.strictEqual(getModuleHash("test/input/build/imports", "top.js"), "160847a6b4890d59f8e8862911bfbe3b8066955d31f2708cafbe51945c3c57b6"); // prettier-ignore
     assert.strictEqual(getModuleHash("test/input/build/fetches", "foo/foo.js"), "3bb4a170d2f3539934168741572d4aa3cd11da649d4ca88b408edefb5c287360"); // prettier-ignore
     assert.strictEqual(getModuleHash("test/input/build/fetches", "top.js"), "6c858de52de6ff26b19508e95448288da02fac62251b7ca2710a308a0ebfd7ba"); // prettier-ignore
@@ -27,8 +27,8 @@ describe("getModuleInfo(root, path)", () => {
     assert.deepStrictEqual(redactModuleInfo("test/input/build/imports", "foo/foo.js"), {
       fileMethods: new Set(),
       files: new Set(),
-      hash: "c77c2490ea7b9a89dce7bad39973995e5158921bf8576955ae4a596c47a5a2a4",
-      globalStaticImports: new Set(["npm:d3"]),
+      hash: "17e03fbc08c28530c84ab1163901890915302d3f1d5af2c9256e3e8cab1324a9",
+      globalStaticImports: new Set(["npm:@example/url-import", "npm:d3"]),
       globalDynamicImports: new Set(),
       localDynamicImports: new Set(),
       localStaticImports: new Set(["../bar/bar.js", "../top.js"])
