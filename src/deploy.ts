@@ -204,7 +204,9 @@ class Deployer {
   }
 
   private async cloudBuild(deployTarget: DeployTargetInfo) {
-    if (deployTarget.create) return false; // TODO
+    if (deployTarget.create) {
+      throw Error("Incorrect deployTarget state");
+    }
     const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
     await this.apiClient.postProjectBuild(deployTarget.project.id);
     const spinner = this.effects.clack.spinner();
@@ -225,20 +227,25 @@ class Deployer {
             deployTarget.workspace.login
           }/${deployTarget.project.slug}/deploys/${latestCreatedDeployId}`
         );
-        return latestCreatedDeployId;
+        // latestCreatedDeployId is initially null for a new project, but once
+        // it changes to a string it can never change back; since we know it has
+        // changed, we assert here that it’s not null
+        return latestCreatedDeployId!;
       }
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
   }
 
   private async maybeLinkGitHub(deployTarget: DeployTargetInfo): Promise<boolean> {
-    if (!this.effects.isTty || deployTarget.create) return false;
+    if (deployTarget.create) {
+      throw Error("Incorrect deployTarget state");
+    }
+    if (!this.effects.isTty) return false;
     if (deployTarget.environment.build_environment_id && deployTarget.environment.source) {
       // can do cloud build
       return true;
     } else {
-      // TODO Where should it look for .git? only supports projects at root rn…
-      // const isGit = existsSync(this.deployOptions.config.root + "/.git");
+      // We only support cloud builds from the root directory so this ignores this.deployOptions.config.root
       const isGit = existsSync(".git");
       if (isGit) {
         const remotes = (await promisify(exec)("git remote -v", {cwd: this.deployOptions.config.root})).stdout
@@ -264,7 +271,9 @@ class Deployer {
           } else {
             // repo not auth’ed; link to auth page and poll for auth
             this.effects.clack.log.info(
-              `Authorize Observable to access the ${bold(repoName)} repository: ${link("https://github.com/apps/observable-data-apps-dev/installations/select_target")}`
+              `Authorize Observable to access the ${bold(repoName)} repository: ${link(
+                "https://github.com/apps/observable-data-apps-dev/installations/select_target"
+              )}`
             );
             const spinner = this.effects.clack.spinner();
             spinner.start("Waiting for repository to be authorized");
@@ -292,23 +301,19 @@ class Deployer {
             }
           }
         } else {
-          throw new CliError("No GitHub remote"); // TODO better error
+          this.effects.clack.log.error("No GitHub remote found");
         }
       } else {
-        throw new CliError("Not at root of a git repository"); // TODO better error
+        this.effects.clack.log.error("Not at root of a git repository");
       }
     }
     return false;
   }
 
   private async startNewDeploy(): Promise<GetDeployResponse> {
-    const deployConfig = await this.getUpdatedDeployConfig();
-    const deployTarget = await this.getDeployTarget(deployConfig);
-    const deployConfig2 = await this.getUpdatedDeployConfig(); // TODO inelegant… move cd prompt to getUpdatedDeployConfig?
-    let deployId;
-    if (deployConfig2.continuousDeployment) {
-      // TODO move maybeLinkGitHub so that continuous deployment is only enabled if it succeeds
-      await this.maybeLinkGitHub(deployTarget);
+    const {deployConfig, deployTarget} = await this.getDeployTarget(await this.getUpdatedDeployConfig());
+    let deployId: string | null;
+    if (deployConfig.continuousDeployment) {
       deployId = await this.cloudBuild(deployTarget);
     } else {
       const buildFilePaths = await this.getBuildFilePaths();
@@ -360,8 +365,6 @@ class Deployer {
       );
     }
 
-    // TODO validate continuousDeployment
-
     if (deployConfig.projectId && (!deployConfig.projectSlug || !deployConfig.workspaceLogin)) {
       const spinner = this.effects.clack.spinner();
       this.effects.clack.log.warn("The `projectSlug` or `workspaceLogin` is missing from your deploy.json.");
@@ -394,7 +397,9 @@ class Deployer {
   }
 
   // Get the deploy target, prompting the user as needed.
-  private async getDeployTarget(deployConfig: DeployConfig): Promise<DeployTargetInfo> {
+  private async getDeployTarget(
+    deployConfig: DeployConfig
+  ): Promise<{deployTarget: DeployTargetInfo; deployConfig: DeployConfig}> {
     let deployTarget: DeployTargetInfo;
     if (deployConfig.workspaceLogin && deployConfig.projectSlug) {
       try {
@@ -481,11 +486,11 @@ class Deployer {
           workspaceId: deployTarget.workspace.id,
           accessLevel: deployTarget.accessLevel
         });
-        // TODO(toph): initial env config
         deployTarget = {
           create: false,
           workspace: deployTarget.workspace,
           project,
+          // TODO: In the future we may have a default environment
           environment: {
             automatic_builds_enabled: null,
             build_environment_id: null,
@@ -515,33 +520,40 @@ class Deployer {
       }
     }
 
-    let continuousDeployment = deployConfig.continuousDeployment;
+    let {continuousDeployment} = deployConfig;
     if (continuousDeployment === null) {
-      continuousDeployment = !!(await this.effects.clack.confirm({
+      const enable = await this.effects.clack.confirm({
         message: wrapAnsi(
           `Do you want to enable continuous deployment? ${faint(
-            "This builds in the cloud instead of on this machine and redeploys whenever you push to this repository."
+            "This builds in the cloud and redeploys whenever you push to this repository."
           )}`,
           this.effects.outputColumns
         ),
-        active: "Yes",
-        inactive: "No"
-      }));
+        active: "Yes, enable and build in cloud",
+        inactive: "No, build locally"
+      });
+      if (this.effects.clack.isCancel(enable)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+      continuousDeployment = enable;
     }
+
+    // Disables continuous deployment if there’s no env/source & we can’t link GitHub
+    if (continuousDeployment) continuousDeployment = await this.maybeLinkGitHub(deployTarget);
+
+    const newDeployConfig = {
+      projectId: deployTarget.project.id,
+      projectSlug: deployTarget.project.slug,
+      workspaceLogin: deployTarget.workspace.login,
+      continuousDeployment
+    };
 
     await this.effects.setDeployConfig(
       this.deployOptions.config.root,
       this.deployOptions.deployConfigPath,
-      {
-        projectId: deployTarget.project.id,
-        projectSlug: deployTarget.project.slug,
-        workspaceLogin: deployTarget.workspace.login,
-        continuousDeployment
-      },
+      newDeployConfig,
       this.effects
     );
 
-    return deployTarget;
+    return {deployConfig: newDeployConfig, deployTarget};
   }
 
   // Create the new deploy on the server.
