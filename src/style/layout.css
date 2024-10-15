@@ -27,7 +27,7 @@ body {
   top: 0;
   left: calc(max(0rem, (100vw - var(--observablehq-max-width)) / 2) + var(--observablehq-inset-left) + 2rem);
   right: calc(max(0rem, (100vw - var(--observablehq-max-width)) / 2) + var(--observablehq-inset-right) + 2rem);
-  z-index: 1;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 0.5rem;

@@ -51,17 +51,13 @@ code:not(pre code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code) {
   text-decoration: underline;
 }
 
-#observablehq-header a[target="_blank"]::after,
-.observablehq-link a[target="_blank"]::after {
-  content: "\2197";
-}
-
 #observablehq-header a[target="_blank"][data-decoration]::after {
   content: attr(data-decoration);
 }
 
-#observablehq-header a[target="_blank"]:not(:hover, :focus)::after {
-  color: var(--theme-foreground-muted);
+#observablehq-header a[target="_blank"]:is(:hover, :focus),
+#observablehq-header a[target="_blank"]:is(:hover, :focus)::after {
+  color: var(--theme-foreground-focus);
 }
 
 .observablehq-link a[target="_blank"]:not(:hover, :focus)::after {
@@ -90,11 +86,13 @@ h1 {
   font-weight: 500;
 }
 
-#observablehq-header {
-  container-type: inline-size;
+@media (min-width: 640px) {
+  .hide-if-large {
+    display: none !important;
+  }
 }
 
-@container not (min-width: 640px) {
+@media not (min-width: 640px) {
   .hide-if-small {
     display: none !important;
   }

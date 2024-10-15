@@ -230,7 +230,7 @@ Click on any of the imported symbols below to learn more.
 <pre><code class="language-js">import * as <a href="./lib/duckdb">duckdb</a> from "npm:@duckdb/duckdb-wasm";</code></pre>
 <pre><code class="language-js">import {<a href="./lib/duckdb">DuckDBClient</a>} from "npm:@observablehq/duckdb";</code></pre>
 <pre><code class="language-js">import {<a href="./sql">sql</a>} from "npm:@observablehq/duckdb";</code></pre>
-<pre><code class="language-js">import * as <a href="./lib/inputs">Inputs</a> from "npm:@observablehq/inputs";</code></pre>
+<pre><code class="language-js">import * as <a href="./inputs/">Inputs</a> from "npm:@observablehq/inputs";</code></pre>
 <pre><code class="language-js">import <a href="./lib/mapbox-gl">mapboxgl</a> from "npm:mapbox-gl";</code></pre>
 <pre><code class="language-js">import <a href="./lib/mermaid">mermaid</a> from "npm:@observablehq/mermaid";</code></pre>
 <pre><code class="language-js">import * as <a href="./lib/plot">Plot</a> from "npm:@observablehq/plot";</code></pre>

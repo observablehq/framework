@@ -30,10 +30,10 @@ const checkout = view(
 checkout
 ```
 
-To demonstrate Observable Inputs, let’s look at a sample dataset of athletes from the 2016 Rio olympics via [Matt Riggott](https://flother.is/2017/olympic-games-data/). Here’s a [table input](../inputs/table) — always a good starting point for an agnostic view of the data:
+To demonstrate Observable Inputs, let’s look at a sample dataset of athletes from the 2016 Rio olympics via [Matt Riggott](https://flother.is/2017/olympic-games-data/). Here’s a [table input](./table) — always a good starting point for an agnostic view of the data:
 
 ```js
-const olympians = await d3.csv("https://static.observableusercontent.com/files/31ca24545a0603dce099d10ee89ee5ae72d29fa55e8fc7c9ffb5ded87ac83060d80f1d9e21f4ae8eb04c1e8940b7287d179fe8060d887fb1f055f430e210007c", (d) => (delete d.id, delete d.info, d3.autoType(d)));
+const olympians = await d3.csv(import.meta.resolve("npm:@observablehq/sample-datasets/olympians.csv"), (d) => (delete d.id, delete d.info, d3.autoType(d)));
 ```
 
 ```js echo
@@ -42,7 +42,7 @@ Inputs.table(olympians)
 
 <div class="tip">Tables can be inputs, too! The value of the table is the subset of rows that you select using the checkboxes in the first column.</div>
 
-Now let’s wire up the table to a [search input](../inputs/search). Type anything into the box and the search input will find the matching rows in the data. The value of the search input is the subset of rows that match the query.
+Now let’s wire up the table to a [search input](./search). Type anything into the box and the search input will find the matching rows in the data. The value of the search input is the subset of rows that match the query.
 
 A few examples to try: **[mal]** will match _sex_ = male, but also names that start with “mal”, such as Anna Malova; **[1986]** will match anyone born in 1986 (and a few other results); **[USA gym]** will match USA’s gymnastics team. Each space-separated term in your query is prefix-matched against all columns in the data.
 
@@ -80,7 +80,7 @@ Plot.plot({
 })
 ```
 
-You can pass grouped data to a [select input](../inputs/select) as a [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) from key to array of values, say using [d3.group](https://d3js.org/d3-array/group). The value of the select input in this mode is the data in the selected group. Note that _unique_ is no longer required, and that _sort_ works here, too, sorting the keys of the map returned by d3.group.
+You can pass grouped data to a [select input](./select) as a [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) from key to array of values, say using [d3.group](https://d3js.org/d3-array/group). The value of the select input in this mode is the data in the selected group. Note that _unique_ is no longer required, and that _sort_ works here, too, sorting the keys of the map returned by d3.group.
 
 ```js echo
 const sportAthletes = view(
@@ -95,7 +95,7 @@ const sportAthletes = view(
 Inputs.table(sportAthletes)
 ```
 
-The select input works well for categorical data, such as sports or nationalities, but how about quantitative dimensions such as height or weight? Here’s a [range input](../inputs/range) that lets you pick a target weight; we then filter the table rows for any athlete within 10% of the target weight. Notice that some columns, such as sport, are strongly correlated with weight.
+The select input works well for categorical data, such as sports or nationalities, but how about quantitative dimensions such as height or weight? Here’s a [range input](./range) that lets you pick a target weight; we then filter the table rows for any athlete within 10% of the target weight. Notice that some columns, such as sport, are strongly correlated with weight.
 
 ```js echo
 const weight = view(
@@ -115,16 +115,16 @@ Inputs.table(
 
 For more, see the individual input pages:
 
-- [Button](../inputs/button) - do something when a button is clicked
-- [Toggle](../inputs/toggle) - toggle between two values (on or off)
-- [Checkbox](../inputs/checkbox) - choose any from a set
-- [Radio](../inputs/radio) - choose one from a set
-- [Range](../inputs/range) or [Number](../inputs/range) - choose a number in a range (slider)
-- [Select](../inputs/select) - choose one or any from a set (drop-down menu)
-- [Text](../inputs/text) - enter freeform single-line text
-- [Textarea](../inputs/textarea) - enter freeform multi-line text
-- [Date](../inputs/date) or [Datetime](../inputs/date) - choose a date
-- [Color](../inputs/color) - choose a color
-- [File](../inputs/file) - choose a local file
-- [Search](../inputs/search) - query a tabular dataset
-- [Table](../inputs/table) - browse a tabular dataset
+- [Button](./button) - do something when a button is clicked
+- [Toggle](./toggle) - toggle between two values (on or off)
+- [Checkbox](./checkbox) - choose any from a set
+- [Radio](./radio) - choose one from a set
+- [Range](./range) or [Number](./range) - choose a number in a range (slider)
+- [Select](./select) - choose one or any from a set (drop-down menu)
+- [Text](./text) - enter freeform single-line text
+- [Textarea](./textarea) - enter freeform multi-line text
+- [Date](./date) or [Datetime](./date) - choose a date
+- [Color](./color) - choose a color
+- [File](./file) - choose a local file
+- [Search](./search) - query a tabular dataset
+- [Table](./table) - browse a tabular dataset
