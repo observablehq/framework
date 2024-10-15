@@ -131,9 +131,13 @@ export class ObservableApiClient {
     return await this._fetch<GetProjectEnvironmentResponse>(url, {method: "GET"});
   }
 
-  async getGitHubRepositories(): Promise<GetGitHubRepositoriesResponse> {
+  async getGitHubRepositories(): Promise<GetGitHubRepositoriesResponse | null> {
     const url = new URL("/cli/github/repositories", this._apiOrigin);
-    return await this._fetch<GetGitHubRepositoriesResponse>(url, {method: "GET"});
+    try {
+      return await this._fetch<GetGitHubRepositoriesResponse>(url, {method: "GET"});
+    } catch (err) {
+      return null;
+    }
   }
 
   async postProjectEnvironment(id, body): Promise<GetProjectEnvironmentResponse> {

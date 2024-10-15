@@ -214,7 +214,7 @@ class Deployer {
     const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
     while (true) {
       if (Date.now() > pollExpiration) {
-        spinner.stop("Requesting deploy timed out");
+        spinner.stop("Requesting deploy timed out.");
         throw new CliError("Requesting deploy failed");
       }
       const {latestCreatedDeployId} = await this.apiClient.getProject({
@@ -223,7 +223,7 @@ class Deployer {
       });
       if (latestCreatedDeployId !== deployTarget.project.latestCreatedDeployId) {
         spinner.stop(
-          `Deploy started. Watch logs: ${process.env["OBSERVABLE_ORIGIN"] ?? "https://observablehq.com/"}projects/@${
+          `Deploy started. Watch logs: ${process.env["OBSERVABLE_ORIGIN"] ?? "https://observablehq.com"}/projects/@${
             deployTarget.workspace.login
           }/${deployTarget.project.slug}/deploys/${latestCreatedDeployId}`
         );
@@ -255,21 +255,25 @@ class Deployer {
         const gitHub = remotes.find(([, url]) => url.startsWith("https://github.com/"));
         if (gitHub) {
           const repoName = formatGitUrl(gitHub[1]);
-          const {repositories} = await this.apiClient.getGitHubRepositories();
-          const authedRepo = repositories.find(({url}) => formatGitUrl(url) === repoName);
+          const repositories = (await this.apiClient.getGitHubRepositories())?.repositories;
+          const authedRepo = repositories?.find(({url}) => formatGitUrl(url) === repoName);
           if (authedRepo) {
-            // authed repo found
+            // Set branch to current branch
+            const branch = (
+              await promisify(exec)("git rev-parse --abbrev-ref HEAD", {cwd: this.deployOptions.config.root})
+            ).stdout;
             await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
               source: {
                 provider: authedRepo.provider,
                 provider_id: authedRepo.provider_id,
                 url: authedRepo.url,
-                branch: null // TODO detect branch
+                branch
               }
             });
             return true;
           } else {
             // repo not auth’ed; link to auth page and poll for auth
+            // TODO: link to internal page that bookends the flow and handles the no-oauth-token case more gracefully
             this.effects.clack.log.info(
               `Authorize Observable to access the ${bold(repoName)} repository: ${link(
                 "https://github.com/apps/observable-data-apps-dev/installations/select_target"
@@ -280,13 +284,13 @@ class Deployer {
             const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
             while (true) {
               if (Date.now() > pollExpiration) {
-                spinner.stop("Waiting for repository to be authorized timed out");
-                throw new CliError("Deploy failed");
+                spinner.stop("Waiting for repository to be authorized timed out.");
+                throw new CliError("Repository authorization failed");
               }
-              const {repositories} = await this.apiClient.getGitHubRepositories();
-              const authedRepo = repositories.find(({url}) => formatGitUrl(url) === repoName);
+              const repositories = (await this.apiClient.getGitHubRepositories())?.repositories;
+              const authedRepo = repositories?.find(({url}) => formatGitUrl(url) === repoName);
               if (authedRepo) {
-                spinner.stop("Repository authorized");
+                spinner.stop("Repository authorized.");
                 await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
                   source: {
                     provider: authedRepo.provider,
@@ -301,10 +305,10 @@ class Deployer {
             }
           }
         } else {
-          this.effects.clack.log.error("No GitHub remote found");
+          this.effects.clack.log.error("No GitHub remote found; cannot enable continuous deployment.");
         }
       } else {
-        this.effects.clack.log.error("Not at root of a git repository");
+        this.effects.clack.log.error("Not at root of a git repository; cannot enable continuous deployment.");
       }
     }
     return false;
