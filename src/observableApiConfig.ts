@@ -36,6 +36,7 @@ export interface DeployConfig {
   projectId?: string | null;
   projectSlug: string | null;
   workspaceLogin: string | null;
+  continuousDeployment: boolean | null;
 }
 
 export type ApiKey =
@@ -87,11 +88,12 @@ export async function getDeployConfig(
     }
   }
   // normalize
-  let {projectId, projectSlug, workspaceLogin} = config ?? ({} as any);
+  let {projectId, projectSlug, workspaceLogin, continuousDeployment} = config ?? ({} as any);
   if (typeof projectId !== "string") projectId = null;
   if (typeof projectSlug !== "string") projectSlug = null;
   if (typeof workspaceLogin !== "string") workspaceLogin = null;
-  return {projectId, projectSlug, workspaceLogin};
+  if (typeof continuousDeployment !== "boolean") continuousDeployment = null;
+  return {projectId, projectSlug, workspaceLogin, continuousDeployment};
 }
 
 export async function setDeployConfig(
