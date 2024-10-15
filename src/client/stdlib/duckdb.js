@@ -29,7 +29,7 @@ import * as duckdb from "npm:@duckdb/duckdb-wasm";
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-const bundle = await duckdb.selectBundle({
+const bundle = duckdb.selectBundle({
   mvp: {
     mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm"),
     mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js")
@@ -306,9 +306,10 @@ async function insertArray(database, name, array, options) {
 }
 
 async function createDuckDB() {
-  const worker = await duckdb.createWorker(bundle.mainWorker);
+  const {mainWorker, mainModule} = await bundle;
+  const worker = await duckdb.createWorker(mainWorker);
   const db = new duckdb.AsyncDuckDB(logger, worker);
-  await db.instantiate(bundle.mainModule);
+  await db.instantiate(mainModule);
   return db;
 }
 
