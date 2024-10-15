@@ -17,6 +17,7 @@ export const Plot = () => import("npm:@observablehq/plot");
 export const React = () => import("npm:react");
 export const ReactDOM = () => import("npm:react-dom");
 export const sql = () => import("observablehq:stdlib/duckdb").then((duckdb) => duckdb.sql);
+export const SQLite = () => import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.default);
 export const SQLiteDatabaseClient = () => import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.SQLiteDatabaseClient); // prettier-ignore
 export const tex = () => import("observablehq:stdlib/tex").then((tex) => tex.default);
 export const topojson = () => import("npm:topojson-client");

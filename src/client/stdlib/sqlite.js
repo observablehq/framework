@@ -1,6 +1,6 @@
 import initSqlJs from "npm:sql.js";
 
-const SQLite = initSqlJs({locateFile: (name) => import.meta.resolve("npm:sql.js/dist/") + name});
+export const SQLite = initSqlJs({locateFile: (name) => import.meta.resolve("npm:sql.js/dist/") + name});
 
 export class SQLiteDatabaseClient {
   constructor(db) {
@@ -9,7 +9,7 @@ export class SQLiteDatabaseClient {
     });
   }
   static async open(source) {
-    const [sqlite, data] = await Promise.all([SQLite, load(source)]);
+    const [sqlite, data] = await Promise.all([SQLite, Promise.resolve(source).then(load)]);
     return new SQLiteDatabaseClient(new sqlite.Database(data));
   }
   async query(query, params) {
@@ -118,8 +118,7 @@ function sqliteType(type) {
   }
 }
 
-async function load(source) {
-  source = await source;
+function load(source) {
   return typeof source === "string"
     ? fetch(source).then(load)
     : source && typeof source.arrayBuffer === "function" // Response, Blob, FileAttachment

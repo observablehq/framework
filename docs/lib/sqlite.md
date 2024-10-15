@@ -1,20 +1,32 @@
 # SQLite
 
-[SQLite](https://sqlite.org/) is “a small, fast, self-contained, high-reliability, full-featured, SQL database engine” and “the most used database engine in the world.” Observable provides a ESM-compatible distribution of [sql.js](https://sql.js.org), a WASM-based distribution of SQLite.
+[SQLite](https://sqlite.org/) is “a small, fast, self-contained, high-reliability, full-featured, SQL database engine” and “the most used database engine in the world.” Observable provides a ESM-compatible distribution of [sql.js](https://sql.js.org), a WASM-based distribution of SQLite. It is available by default as `SQLite` in Markdown, but you can import it like so:
 
-It is available by default as `SQLiteDatabaseClient` in Markdown, but you can import it like so:
+```js run=false
+import SQLite from "npm:@observablehq/sqlite";
+```
 
-```js echo
+If you prefer to use sql.js directly, you can import and initialize it like so:
+
+```js run=false
+import initSqlJs from "npm:sql.js";
+
+const SQLite = await initSqlJs({locateFile: (name) => import.meta.resolve("npm:sql.js/dist/") + name});
+```
+
+We also provide `SQLiteDatabaseClient`, a [`DatabaseClient`](https://observablehq.com/@observablehq/database-client-specification) implementation.
+
+```js run=false
 import {SQLiteDatabaseClient} from "npm:@observablehq/sqlite";
 ```
 
-`SQLiteDatabaseClient` is a [`DatabaseClient`](https://observablehq.com/@observablehq/database-client-specification) implementation. The easiest way to construct a SQLite database client is to declare a [`FileAttachment`](../files) and then call `file.sqlite` to load a SQLite file. This returns a promise. (Here we rely on [implicit await](../reactivity#promises).)
+The easiest way to construct a SQLite database client is to declare a [`FileAttachment`](../files) and then call `file.sqlite` to load a SQLite file. This returns a promise. (Here we rely on [implicit await](../reactivity#promises).)
 
 ```js echo
 const db = FileAttachment("chinook.db").sqlite();
 ```
 
-Alternatively you can call `SQLiteDatabaseClient.open` with a string (URL), `Blob`, `ArrayBuffer`, `Uint8Array`, `FileAttachment`, or promise to the same:
+Alternatively you can use `SQLiteDatabaseClient` and pass in a string (URL), `Blob`, `ArrayBuffer`, `Uint8Array`, `FileAttachment`, or promise to the same:
 
 ```js run=false
 const db = SQLiteDatabaseClient.open(FileAttachment("chinook.db"));
@@ -66,12 +78,4 @@ There’s also `db.queryRow` for just getting a single row.
 
 ```js echo
 db.queryRow(`SELECT sqlite_version()`)
-```
-
-If you prefer to use sql.js directly, you can import and initialize it like so:
-
-```js echo
-import initSqlJs from "npm:sql.js";
-
-const SQL = await initSqlJs({locateFile: (name) => import.meta.resolve("npm:sql.js/dist/") + name});
 ```
