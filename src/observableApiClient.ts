@@ -6,6 +6,7 @@ import type {ApiKey} from "./observableApiConfig.js";
 import {faint, red} from "./tty.js";
 
 const MIN_RATE_LIMIT_RETRY_AFTER = 1;
+const MAX_RATE_LIMIT_ATTEMPTS = 3;
 
 export function getObservableUiOrigin(env = process.env): URL {
   const urlText = env["OBSERVABLE_ORIGIN"] ?? "https://observablehq.com";
@@ -69,11 +70,18 @@ export class ObservableApiClient {
       throw error;
     }
 
-    if (response.status === 429) {
+    let rateLimitCount = 0;
+    while (response.status === 429) {
+      if (rateLimitCount >= MAX_RATE_LIMIT_ATTEMPTS) {
+        this._clack.log.error(`Rate limited ${rateLimitCount} times. Giving up.`);
+        break;
+      }
       // rate limit
       if (this._rateLimit === null) {
         let retryAfter = +response.headers.get("Retry-After");
         if (isNaN(retryAfter) || retryAfter < MIN_RATE_LIMIT_RETRY_AFTER) retryAfter = MIN_RATE_LIMIT_RETRY_AFTER;
+        retryAfter *= Math.pow(2, rateLimitCount);
+        rateLimitCount++;
         this._clack.log.warn(`Hit server rate limit. Waiting for ${retryAfter} seconds.`);
         this._rateLimit = new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
       }
