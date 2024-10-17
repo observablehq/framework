@@ -164,10 +164,10 @@ export async function build(
       effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
       if (specifier.startsWith("observablehq:theme-")) {
         const match = /^observablehq:theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(specifier);
-        contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true});
+        contents = await bundleStyles({theme: match!.groups!.theme?.split(",") ?? [], minify: true, root});
       } else {
         const clientPath = getClientPath(path.slice("/_observablehq/".length));
-        contents = await bundleStyles({path: clientPath, minify: true});
+        contents = await bundleStyles({path: clientPath, minify: true, root});
       }
       const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
       const alias = applyHash(path, hash);
@@ -181,7 +181,7 @@ export async function build(
     } else if (!/^\w+:/.test(specifier)) {
       const sourcePath = join(root, specifier);
       effects.output.write(`${faint("build")} ${sourcePath} ${faint("→")} `);
-      const contents = await bundleStyles({path: sourcePath, minify: true});
+      const contents = await bundleStyles({path: sourcePath, minify: true, root});
       const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
       const alias = applyHash(join("/_import", specifier), hash);
       aliases.set(resolveStylesheetPath(root, specifier), alias);
