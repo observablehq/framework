@@ -1,5 +1,5 @@
 import {writeFile} from "node:fs/promises";
-import {extname, resolve} from "node:path/posix";
+import {extname, join, resolve} from "node:path/posix";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {simple} from "acorn-walk";
 import {build} from "esbuild";
@@ -196,8 +196,8 @@ function importMetaResolve(path: string, resolveImport: ImportResolver): Plugin 
 // tailwind.config.js is present in the project root, we import and merge it.
 async function tailwindConfig(root: string): Promise<ESBuildPlugin> {
   const twconfig = "tailwind.config.js";
-  const configPath = `./${root}/.observablehq/cache/${twconfig}`;
-  const s = await maybeStat(`./${root}/${twconfig}`);
+  const configPath = join(root, ".observablehq", "cache", twconfig);
+  const s = await maybeStat(join(root, twconfig));
   const m = await maybeStat(configPath);
   if (!m || !s || !(m.mtimeMs > s.mtimeMs)) {
     await prepareOutput(configPath);
