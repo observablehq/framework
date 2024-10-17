@@ -87,11 +87,11 @@ type DeployTargetInfo =
 /** Deploy a project to ObservableHQ */
 export async function deploy(deployOptions: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start", force: deployOptions.force});
-  (effects.output["isaTTY"] ? effects.clack.intro : effects.logger.log)(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version ?? "(n/a)"}`)}`);
-
+  const intro = `${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version ?? "(n/a)"}`)}`;
+  effects.output["isaTTY"] ? effects.clack.intro(intro) : effects.logger.log(intro);
   const deployInfo = await new Deployer(deployOptions, effects).deploy();
-
-  (effects.output["isaTTY"] ? effects.clack.outro : effects.logger.log)(`Deployed app now visible at ${link(deployInfo.url)}`);
+  const outro = `Deployed app now visible at ${link(deployInfo.url)}`;
+  effects.output["isaTTY"] ? effects.clack.outro(outro) : effects.logger.log(outro);
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
