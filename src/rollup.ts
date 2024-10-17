@@ -214,6 +214,7 @@ export default {
       "${root}/.observablehq/cache/_import/**/*.js" /* transpiled components */
     ]
   },
+  darkMode: ["variant", "&:where([class~=dark], [class~=dark] *)"],
   prefix: 'tw-',
   ...config
 };
