@@ -76,6 +76,13 @@ export interface SearchConfigSpec {
   index?: unknown;
 }
 
+export interface DuckDBConfig {
+  install: string[];
+  load: string[];
+  source: {[name: string]: string};
+  bundles: string[];
+}
+
 export interface Config {
   root: string; // defaults to src
   output: string; // defaults to dist
@@ -98,6 +105,7 @@ export interface Config {
   normalizePath: (path: string) => string;
   loaders: LoaderResolver;
   watchPath?: string;
+  duckdb: DuckDBConfig;
 }
 
 export interface ConfigSpec {
@@ -125,6 +133,7 @@ export interface ConfigSpec {
   quotes?: unknown;
   cleanUrls?: unknown;
   markdownIt?: unknown;
+  duckdb?: unknown;
 }
 
 interface ScriptSpec {
@@ -260,6 +269,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const normalizePath = getPathNormalizer(spec.cleanUrls);
+  const duckdb = normalizeDuckDB(spec.duckdb as any);
 
   // If this path ends with a slash, then add an implicit /index to the
   // end of the path. Otherwise, remove the .html extension (we use clean
@@ -310,7 +320,8 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     md,
     normalizePath,
     loaders: new LoaderResolver({root, interpreters}),
-    watchPath
+    watchPath,
+    duckdb
   };
   if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
@@ -487,4 +498,25 @@ export function mergeStyle(
 
 export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
+}
+
+function normalizeDuckDB(spec: unknown): DuckDBConfig {
+  const install = spec?.["install"] ?? ["json", "parquet"];
+  const load = spec?.["load"] ?? [];
+  const source = new Map(Object.entries(spec?.["source"] ?? {}));
+  return {
+    bundles: ["eh", "mvp"],
+    install,
+    load: load.filter((name: string) => install.includes(name)),
+    source: Object.fromEntries(
+      install.map((name: string) => {
+        let href = source.get(name) ?? "core";
+        if (href === "core") href = "https://extensions.duckdb.org";
+        else if (href === "community") href = "https://community-extensions.duckdb.org";
+        if (!href?.["startsWith"]?.("https://"))
+          throw new Error(`unknown source for duckdb extension ${name}: ${href}`);
+        return [name, href];
+      })
+    )
+  };
 }

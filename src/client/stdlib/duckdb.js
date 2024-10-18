@@ -29,16 +29,26 @@ import * as duckdb from "npm:@duckdb/duckdb-wasm";
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-const bundle = await duckdb.selectBundle({
-  mvp: {
-    mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm"),
-    mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js")
-  },
-  eh: {
-    mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm"),
-    mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js")
-  }
-});
+// Baked-in manifest.
+const manifest = process.DUCKDB_MANIFEST;
+
+const candidates = {
+  ...(manifest.bundles.includes("mvp") && {
+    mvp: {
+      mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm"),
+      mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js")
+    }
+  }),
+  ...(manifest.bundles.includes("eh") && {
+    eh: {
+      mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm"),
+      mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js")
+    }
+  })
+};
+const bundle = await duckdb.selectBundle(candidates);
+const activeBundle = manifest.bundles.find((key) => bundle.mainModule === candidates[key].mainModule);
+const extensions = manifest.extensions.filter(([, {bundle}]) => bundle === activeBundle);
 
 const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
 
@@ -169,6 +179,7 @@ export class DuckDBClient {
       config = {...config, query: {...config.query, castBigIntToDouble: true}};
     }
     await db.open(config);
+    await registerExtensions(db, config);
     await Promise.all(Object.entries(sources).map(([name, source]) => insertSource(db, name, source)));
     return new DuckDBClient(db);
   }
@@ -178,9 +189,38 @@ export class DuckDBClient {
   }
 }
 
-Object.defineProperty(DuckDBClient.prototype, "dialect", {
-  value: "duckdb"
-});
+Object.defineProperty(DuckDBClient.prototype, "dialect", {value: "duckdb"});
+
+async function registerExtensions(db, {load}) {
+  const connection = await db.connect();
+  try {
+    // Preview adds a DuckDBClientReport utility to the console. We don’t add it
+    // in the public build so as not to pollute the window.
+    if (manifest.log) {
+      window.DuckDBClientReport = async () => {
+        const connection = await db.connect();
+        try {
+          const refs = new Map(extensions);
+          const ext = await connection.query(
+            "SELECT extension_name, description FROM duckdb_extensions() WHERE loaded;"
+          );
+          console.table(Array.from(ext, (e) => ({...e, ...refs.get(e.extension_name)})));
+        } finally {
+          await connection.close();
+        }
+      };
+    }
+    await Promise.all(
+      extensions.map(([name, {ref, load: l}]) =>
+        connection
+          .query(`INSTALL ${name} FROM '${import.meta.resolve(`../..${ref}`)}'`)
+          .then(() => (load ? load.includes(name) : l) && connection.query(`LOAD ${name}`))
+      )
+    );
+  } finally {
+    await connection.close();
+  }
+}
 
 async function insertSource(database, name, source) {
   source = await source;
