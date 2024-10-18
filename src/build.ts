@@ -255,7 +255,7 @@ export async function build(
     if (!path.endsWith(".js")) continue;
     const sourcePath = join(cacheRoot, path);
     effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
-    const resolveImport = (i: string) => relativePath(path, aliases.get((i = resolvePath(path, i))) ?? i);
+    const resolveImport = (i: string) => isPathImport(i) ? relativePath(path, aliases.get((i = resolvePath(path, i))) ?? i) : i; // prettier-ignore
     await effects.writeFile(aliases.get(path)!, rewriteNpmImports(await readFile(sourcePath, "utf-8"), resolveImport));
   }
 

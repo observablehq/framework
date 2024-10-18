@@ -14,11 +14,12 @@
 <link rel="modulepreload" href="../_observablehq/runtime.00000002.js">
 <link rel="modulepreload" href="../_observablehq/stdlib.00000003.js">
 <link rel="modulepreload" href="../_npm/d3@7.8.5/cd372fb8.js">
-<link rel="modulepreload" href="../_import/bar/bar.13bb8056.js">
+<link rel="modulepreload" href="../_import/bar/bar.4460ccc2.js">
 <link rel="modulepreload" href="../_import/top.160847a6.js">
 <link rel="modulepreload" href="../_import/foo/foo bar.b173d3de.js">
-<link rel="modulepreload" href="../_import/bar/baz.cdbfb28b.js">
-<link rel="modulepreload" href="../_import/foo/foo.5963bf78.js">
+<link rel="modulepreload" href="../_import/bar/baz.2add1dd0.js">
+<link rel="modulepreload" href="../_import/foo/foo.bcd720b2.js">
+<link rel="modulepreload" href="../_npm/@example/url-import@1.0.0/1dd108c5.js">
 <script type="module">
 
 import {define} from "../_observablehq/client.00000001.js";
@@ -28,7 +29,7 @@ registerFile("../top.js", {"name":"../top.js","mimeType":"text/javascript","path
 registerFile("./hello.txt", {"name":"./hello.txt","mimeType":"text/plain","path":"../_file/foo/hello.5891b5b5.txt","lastModified":/* ts */1706742000000,"size":6});
 
 define({id: "261e010e", inputs: ["display","FileAttachment"], outputs: ["d3","bar","top"], body: async (display,FileAttachment) => {
-const [d3, {bar}, {top}] = await Promise.all([import("../_npm/d3@7.8.5/cd372fb8.js"), import("../_import/bar/bar.13bb8056.js"), import("../_import/top.160847a6.js")]);
+const [d3, {bar}, {top}] = await Promise.all([import("../_npm/d3@7.8.5/cd372fb8.js"), import("../_import/bar/bar.4460ccc2.js"), import("../_import/top.160847a6.js")]);
 
 display(bar);
 display(top);
