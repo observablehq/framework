@@ -117,7 +117,7 @@ export async function transpileModule(
               mime.getType(name) ?? undefined
             )},"path":${annotatePath(relativePath(servePath, resolveFile(name)))},"lastModified":${JSON.stringify(
               info.mtimeMs
-            )},"size":${JSON.stringify(info.size)}`
+            )},"size":${JSON.stringify(info.size)}}`
           : JSON.stringify(p)
       }, import.meta.url`
     );
