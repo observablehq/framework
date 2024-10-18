@@ -4,7 +4,7 @@ import type {FSWatcher, WatchEventType} from "node:fs";
 import {access, constants} from "node:fs/promises";
 import {createServer} from "node:http";
 import type {IncomingMessage, RequestListener, Server, ServerResponse} from "node:http";
-import {basename, dirname, join, normalize} from "node:path/posix";
+import {basename, dirname, extname, join, normalize} from "node:path/posix";
 import {difference} from "d3-array";
 import type {PatchItem} from "fast-array-diff";
 import {getPatch} from "fast-array-diff";
@@ -176,6 +176,8 @@ export class PreviewServer {
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
 
+        const ext = extname(pathname).replace(/^\.html$/, "");
+
         // Normalize the pathname (e.g., adding ".html" if cleanUrls is false,
         // dropping ".html" if cleanUrls is true) and redirect if necessary.
         const normalizedPathname = encodeURI(config.normalizePath(pathname));
@@ -189,12 +191,26 @@ export class PreviewServer {
         // request represents a JavaScript embed (such as /chart.js), and takes
         // precedence over any page (such as /chart.js.md). Generate a wrapper
         // module that allows this JavaScript module to be embedded remotely.
-        if (pathname.endsWith(".js")) {
+        if (ext === ".js") {
           try {
             end(req, res, await renderModule(root, pathname), "text/javascript");
             return;
           } catch (error) {
             if (!isEnoent(error)) throw error;
+          }
+        }
+
+        // If an export asset (such as /robots.txt or /embed/[param].svg) exists
+        // for this path, send it. It takes priority over a page robots.txt.md.
+        if (ext && ext !== ".md") {
+          const file = loaders.find(pathname);
+          if (file) {
+            try {
+              send(req, join(root, await file.load())).pipe(res);
+              return;
+            } catch (error) {
+              if (!isEnoent(error)) throw error;
+            }
           }
         }
 
