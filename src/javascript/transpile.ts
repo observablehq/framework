@@ -101,7 +101,7 @@ export async function transpileModule(
 
   async function rewriteImportSource(source: StringLiteral) {
     const specifier = getStringLiteralValue(source);
-    output.replaceLeft(source.start, source.end, JSON.stringify(await resolveImport(specifier)));
+    output.replaceLeft(source.start, source.end, annotatePath(await resolveImport(specifier)));
   }
 
   for (const {name, node} of findFiles(body, path, input)) {
@@ -111,17 +111,15 @@ export async function transpileModule(
     output.replaceLeft(
       source.start,
       source.end,
-      `${JSON.stringify(
+      `${
         info
-          ? {
-              name: p,
-              mimeType: mime.getType(name) ?? undefined,
-              path: relativePath(servePath, resolveFile(name)),
-              lastModified: info.mtimeMs,
-              size: info.size
-            }
-          : p
-      )}, import.meta.url`
+          ? `{"name":${JSON.stringify(p)},"mimeType":${JSON.stringify(
+              mime.getType(name) ?? undefined
+            )},"path":${annotatePath(relativePath(servePath, resolveFile(name)))},"lastModified":${JSON.stringify(
+              info.mtimeMs
+            )},"size":${JSON.stringify(info.size)}}`
+          : JSON.stringify(p)
+      }, import.meta.url`
     );
   }
 
@@ -137,7 +135,7 @@ export async function transpileModule(
     if (isImportMetaResolve(node) && isStringLiteral(source)) {
       const value = getStringLiteralValue(source);
       const resolution = isPathImport(value) && !isJavaScript(value) ? resolveFile(value) : await resolveImport(value);
-      output.replaceLeft(source.start, source.end, JSON.stringify(resolution));
+      output.replaceLeft(source.start, source.end, annotatePath(resolution));
     }
   }
 
@@ -258,4 +256,11 @@ export function rewriteParams(output: Sourcemap, body: Node, params: Params, inp
   for (const [name, node] of findParams(body, params, input)) {
     output.replaceLeft(node.start, node.end, JSON.stringify(params[name]));
   }
+}
+
+/**
+ * Annotate a path to a local import or file so it can be reworked server-side.
+ */
+function annotatePath(uri: string): string {
+  return `${JSON.stringify(uri)}${isPathImport(uri) ? "/* observablehq-file */" : ""}`;
 }
