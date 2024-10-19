@@ -1,27 +1,22 @@
 import {isatty} from "node:tty";
 import * as clack from "@clack/prompts";
+import pc from "picocolors";
 import type {ClackEffects} from "./clack.js";
 import type {Logger} from "./logger.js";
 
-export const reset = color(0, 0);
-export const bold = color(1, 22);
-export const faint = color(2, 22);
-export const italic = color(3, 23);
-export const underline = color(4, 24);
-export const inverse = color(7, 27);
-export const strikethrough = color(9, 29);
-export const red = color(31, 39);
-export const green = color(32, 39);
-export const yellow = color(33, 39);
-export const blue = color(34, 39);
-export const magenta = color(35, 39);
-export const cyan = color(36, 39);
-
-export type TtyColor = (text: string) => string;
-
-function color(code: number, reset: number): TtyColor {
-  return process.stdout.isTTY ? (text: string) => `\x1b[${code}m${text}\x1b[${reset}m` : String;
-}
+export const reset = pc.reset;
+export const bold = pc.bold;
+export const faint = pc.gray;
+export const italic = pc.italic;
+export const underline = pc.underline;
+export const inverse = pc.inverse;
+export const strikethrough = pc.strikethrough;
+export const red = pc.red;
+export const green = pc.green;
+export const yellow = pc.yellow;
+export const blue = pc.blue;
+export const magenta = pc.magenta;
+export const cyan = pc.cyan;
 
 export interface TtyEffects {
   clack: ClackEffects;
