@@ -52,6 +52,8 @@ describe("route(root, path, exts)", () => {
     assert.deepStrictEqual(route("test/input/params", "[dir]/foo", [".md"]), {path: "[dir]/foo.md", ext: ".md", params: {dir: "[dir]"}}); // prettier-ignore
     assert.deepStrictEqual(route("test/input/params", "[dir]/[baz]", [".md"]), {path: "[dir]/[file].md", ext: ".md", params: {dir: "[dir]", file: "[baz]"}}); // prettier-ignore
     assert.deepStrictEqual(route("test/input/params", "foo/[file]", [".md"]), {path: "foo/[file].md", ext: ".md", params: {file: "[file]"}}); // prettier-ignore
+    assert.deepStrictEqual(route("test/input/params", "[foo]-suffix", [".js"]), {path: "[file]-suffix.js", ext: ".js", params: {file: "[foo]"}}); // prettier-ignore
+    assert.deepStrictEqual(route("test/input/params", "[file]-suffix", [".js"]), {path: "[file]-suffix.js", ext: ".js", params: {file: "[file]"}}); // prettier-ignore
   });
   it("finds the most-specific parameterized match", () => {
     assert.deepStrictEqual(route("test/input/params", "foo/foo", [".md"]), {path: "foo/foo.md", ext: ".md"}); // prettier-ignore

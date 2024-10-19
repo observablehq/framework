@@ -62,12 +62,13 @@ function routeParams(root: string, cwd: string, parts: string[], exts: string[])
       return;
     case 1: {
       const [first] = parts;
-      for (const ext of exts) {
-        const path = join(root, cwd, first + ext);
-        if (existsSync(path)) {
-          if (!statSync(path).isFile()) return; // ignore non-files
-          if (first.match(/\[.*\]/)) continue; // skip [param]
-          return {path: join(cwd, first + ext), ext};
+      if (!isParameterized(first)) {
+        for (const ext of exts) {
+          const path = join(root, cwd, first + ext);
+          if (existsSync(path)) {
+            if (!statSync(path).isFile()) return; // ignore non-files
+            return {path: join(cwd, first + ext), ext};
+          }
         }
       }
       if (first) {
@@ -85,8 +86,10 @@ function routeParams(root: string, cwd: string, parts: string[], exts: string[])
       const path = join(root, cwd, first);
       if (existsSync(path)) {
         if (!statSync(path).isDirectory()) return; // ignore non-directories
-        const found = routeParams(root, join(cwd, first), rest, exts);
-        if (found && !first.match(/\[.*\]/)) return found;
+        if (!isParameterized(first)) {
+          const found = routeParams(root, join(cwd, first), rest, exts);
+          if (found) return found;
+        }
       }
       if (first) {
         for (const dir of globSync("*\\[?*\\]*/", {cwd: join(root, cwd)})) {
