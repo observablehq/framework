@@ -1,1 +1,2 @@
-export {Inspector, Runtime, RuntimeError} from "@observablehq/runtime";
+export {Inspector} from "@observablehq/inspector";
+export {Runtime, RuntimeError} from "@observablehq/runtime";
