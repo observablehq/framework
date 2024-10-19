@@ -1,6 +1,8 @@
 import initSqlJs from "npm:sql.js";
 
-export const SQLite = initSqlJs({locateFile: (name) => import.meta.resolve("npm:sql.js/dist/") + name});
+const SQLite = initSqlJs({locateFile: (name) => import.meta.resolve("npm:sql.js/dist/") + name});
+
+export default SQLite;
 
 export class SQLiteDatabaseClient {
   constructor(db) {
