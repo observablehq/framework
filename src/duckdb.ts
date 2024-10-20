@@ -62,36 +62,3 @@ export async function resolveDuckDBExtension(root: string, p: string, repo: stri
   downloadRequests.set(cachePath, promise);
   return promise;
 }
-
-/*
-  promise = Promise.all(
-    bundles.map(async (p) => {
-      const outputPath = join(outputDir, `${name}.${p}.wasm`);
-      console.log(`download: ${href} ${faint("→")} ${outputPath}`);
-      const response = await fetch(href);
-      if (!response.ok) throw new Error(`unable to fetch: ${href}`);
-      await mkdir(dirname(outputPath), {recursive: true});
-      await writeFile(outputPath, Buffer.from(await response.arrayBuffer()));
-    })
-  ).then(async () => {
-    const ref = await duckDBHash(name, files);
-    for (const [i, p] of bundles.entries()) {
-      const targetPath = join(cache, ref, "v1.1.1", `wasm_${p}`, `${name}.duckdb_extension.wasm`);
-      await mkdir(dirname(targetPath), {recursive: true});
-      await copyFile(files[i], targetPath);
-    }
-    return ref;
-  });
-  promise.catch(console.error).then(() => files.forEach((file) => downloadRequests.delete(file)));
-  downloadRequests.set(key, promise);
-  return promise;
-}
-
-async function duckDBHash(name: string, files: string[]): Promise<string> {
-  const hash = createHash("sha256");
-  hash.update(name);
-  for (const file of files) hash.update(await readFile(file, "utf-8"));
-  return join("_duckdb", `${name}-${hash.digest("hex").slice(0, 8)}`);
-}
-
-*/
