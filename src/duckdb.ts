@@ -7,6 +7,9 @@ import {faint} from "./tty.js";
 
 const downloadRequests = new Map<string, Promise<string>>();
 
+export const DUCKDBWASMVERSION = "1.29.0";
+export const DUCKDBVERSION = "1.1.1";
+
 export async function getDuckDBManifest(
   duckdb: DuckDBConfig,
   {root, aliases}: {root: string; aliases?: Map<string, string>}
@@ -47,7 +50,7 @@ export async function resolveDuckDBExtension(
   if (!repo.startsWith("https://")) throw new Error(`invalid repo: ${repo}`);
   const cache = join(root, ".observablehq", "cache");
   const file = `${name}.duckdb_extension.wasm`;
-  const ref = `${repo}/v1.1.1/wasm_${platform}/${file}`.slice("https://".length);
+  const ref = `${repo}/v${DUCKDBVERSION}/wasm_${platform}/${file}`.slice("https://".length);
   const path = join("_duckdb", ref);
   const cachePath = join(cache, path);
   if (existsSync(cachePath)) return `/${path}`;

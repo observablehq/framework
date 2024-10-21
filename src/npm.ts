@@ -4,6 +4,7 @@ import {dirname, extname, join} from "node:path/posix";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {maxSatisfying, rsort, satisfies, validRange} from "semver";
+import {DUCKDBWASMVERSION} from "./duckdb.js";
 import {isEnoent} from "./error.js";
 import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
 import {isImportMetaResolve, parseImports} from "./javascript/imports.js";
@@ -162,7 +163,7 @@ export async function getDependencyResolver(
         (name === "arquero" || name === "@uwdata/mosaic-core" || name === "@duckdb/duckdb-wasm") && depName === "apache-arrow" // prettier-ignore
           ? "latest" // force Arquero, Mosaic & DuckDB-Wasm to use the (same) latest version of Arrow
           : name === "@uwdata/mosaic-core" && depName === "@duckdb/duckdb-wasm"
-          ? "1.29.0" // force Mosaic to use the latest (stable) version of DuckDB-Wasm
+          ? DUCKDBWASMVERSION // force Mosaic to use the latest (stable) version of DuckDB-Wasm
           : pkg.dependencies?.[depName] ??
             pkg.devDependencies?.[depName] ??
             pkg.peerDependencies?.[depName] ??
@@ -248,7 +249,7 @@ async function resolveNpmVersion(root: string, {name, range}: NpmSpecifier): Pro
 export async function resolveNpmImport(root: string, specifier: string): Promise<string> {
   const {
     name,
-    range = name === "@duckdb/duckdb-wasm" ? "1.29.0" : undefined,
+    range = name === "@duckdb/duckdb-wasm" ? DUCKDBWASMVERSION : undefined,
     path = name === "mermaid"
       ? "dist/mermaid.esm.min.mjs/+esm"
       : name === "echarts"
