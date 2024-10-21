@@ -9,7 +9,7 @@ const downloadRequests = new Map<string, Promise<string>>();
 
 export async function duckDBManifest(
   duckdb: DuckDBConfig,
-  {root, log, aliases}: {root: string; log?: boolean; aliases?: Map<string, string>}
+  {root, aliases}: {root: string; aliases?: Map<string, string>}
 ) {
   return {
     bundles: duckdb.bundles,
@@ -26,8 +26,7 @@ export async function duckDBManifest(
           }
         ];
       })
-    ),
-    log
+    )
   };
 }
 

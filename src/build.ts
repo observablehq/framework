@@ -153,7 +153,7 @@ export async function build(
       await effects.writeFile(alias, contents);
     }
   }
-  const duckdb_manifest = await duckDBManifest(duckdb, {root, log: true, aliases});
+  const duckdb_manifest = await duckDBManifest(duckdb, {root, aliases});
 
   // Generate the client bundles. These are initially generated into the cache
   // because we need to rewrite any npm and node imports to be hashed; this is

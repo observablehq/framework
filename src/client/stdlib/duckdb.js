@@ -194,22 +194,6 @@ Object.defineProperty(DuckDBClient.prototype, "dialect", {value: "duckdb"});
 async function registerExtensions(db, {load}) {
   const connection = await db.connect();
   try {
-    // Preview adds a DuckDBClientReport utility to the console. We don’t add it
-    // in the public build so as not to pollute the window.
-    if (manifest.log) {
-      window.DuckDBClientReport = async () => {
-        const connection = await db.connect();
-        try {
-          const refs = new Map(extensions);
-          const ext = await connection.query(
-            "SELECT extension_name, description FROM duckdb_extensions() WHERE loaded;"
-          );
-          console.table(Array.from(ext, (e) => ({...e, ...refs.get(e.extension_name)})));
-        } finally {
-          await connection.close();
-        }
-      };
-    }
     await Promise.all(
       extensions.map(([name, {ref, load: l}]) =>
         connection

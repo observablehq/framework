@@ -245,11 +245,7 @@ However, for performance and ergonomy, we strongly recommend adding all the exte
 
 <div class="tip">
 
-Since some extensions are autoloading, it can be hard to tell which ones are
-effectively in use. You can inspect the network tab in your browser, or (in
-preview only), open your browser console and type `DuckDBClientReport()` — this
-utility offers additional information, such as the path used for self-hosted
-extensions.
+To tell which extensions are effectively in use on a page, inspect the network tab in your browser, or run the following query: `FROM duckdb_extensions() WHERE loaded;`.
 
 </div>
 
