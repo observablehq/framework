@@ -8,6 +8,7 @@ import {pathToFileURL} from "node:url";
 import he from "he";
 import type MarkdownIt from "markdown-it";
 import wrapAnsi from "wrap-ansi";
+import {DUCKDBBUNDLES} from "./duckdb.js";
 import {visitFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
@@ -76,6 +77,11 @@ export interface SearchConfigSpec {
   index?: unknown;
 }
 
+export interface DuckDBConfig {
+  bundles: string[];
+  extensions: {[name: string]: {install?: false; load: boolean; source: string}};
+}
+
 export interface Config {
   root: string; // defaults to src
   output: string; // defaults to dist
@@ -98,6 +104,7 @@ export interface Config {
   normalizePath: (path: string) => string;
   loaders: LoaderResolver;
   watchPath?: string;
+  duckdb: DuckDBConfig;
 }
 
 export interface ConfigSpec {
@@ -125,6 +132,7 @@ export interface ConfigSpec {
   quotes?: unknown;
   cleanUrls?: unknown;
   markdownIt?: unknown;
+  duckdb?: unknown;
 }
 
 interface ScriptSpec {
@@ -260,6 +268,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const normalizePath = getPathNormalizer(spec.cleanUrls);
+  const duckdb = normalizeDuckDB(spec.duckdb as any);
 
   // If this path ends with a slash, then add an implicit /index to the
   // end of the path. Otherwise, remove the .html extension (we use clean
@@ -310,7 +319,8 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     md,
     normalizePath,
     loaders: new LoaderResolver({root, interpreters}),
-    watchPath
+    watchPath,
+    duckdb
   };
   if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
@@ -487,4 +497,35 @@ export function mergeStyle(
 
 export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
+}
+
+function duckDBExtensionSource(source?: string): string {
+  return source === undefined || source === "core"
+    ? "https://extensions.duckdb.org"
+    : source === "community"
+    ? "https://community-extensions.duckdb.org"
+    : (source = String(source)).startsWith("https://")
+    ? source
+    : (() => {
+        throw new Error(`unsupported DuckDB extension source ${source}`);
+      })();
+}
+
+function normalizeDuckDB(spec: unknown): DuckDBConfig {
+  const extensions: {[name: string]: any} = {};
+  for (const [name, config] of Object.entries(spec?.["extensions"] ?? {json: {load: false}, parquet: {load: false}})) {
+    if (!/^\w+$/.test(name)) throw new Error(`illegal extension name ${name}`);
+    if (config) {
+      extensions[name] =
+        config === true
+          ? {load: true, source: duckDBExtensionSource()}
+          : config === false
+          ? {install: false}
+          : {
+              source: duckDBExtensionSource(config["source"]),
+              load: config["load"] === undefined ? true : Boolean(config["load"])
+            };
+    }
+  }
+  return {bundles: DUCKDBBUNDLES, extensions};
 }

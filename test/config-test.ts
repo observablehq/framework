@@ -43,7 +43,20 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: null,
-      watchPath: resolve("test/input/build/config/observablehq.config.js")
+      watchPath: resolve("test/input/build/config/observablehq.config.js"),
+      duckdb: {
+        bundles: ["eh", "mvp"],
+        extensions: {
+          json: {
+            load: false,
+            source: "https://extensions.duckdb.org"
+          },
+          parquet: {
+            load: false,
+            source: "https://extensions.duckdb.org"
+          }
+        }
+      }
     });
   });
   it("returns the default config if no config file is found", async () => {
@@ -71,7 +84,20 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: null,
-      watchPath: undefined
+      watchPath: undefined,
+      duckdb: {
+        bundles: ["eh", "mvp"],
+        extensions: {
+          json: {
+            load: false,
+            source: "https://extensions.duckdb.org"
+          },
+          parquet: {
+            load: false,
+            source: "https://extensions.duckdb.org"
+          }
+        }
+      }
     });
   });
 });
