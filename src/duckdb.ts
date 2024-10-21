@@ -39,7 +39,7 @@ export async function getDuckDBManifest(
  * for every supported platform p ("eh" and "mvp"), and returns a content-hashed
  * reference (_duckdb/{hash}) to use in the corresponding DuckDB INSTALL
  * statement. The repo is structured as required by DuckDB with:
- * ${repo}/v1.1.1/wasm_{p}/${name}.duckdb_extension.wasm
+ * ${repo}/v{duckdbversion}/wasm_{platform}/${name}.duckdb_extension.wasm
  */
 export async function resolveDuckDBExtension(
   root: string,
