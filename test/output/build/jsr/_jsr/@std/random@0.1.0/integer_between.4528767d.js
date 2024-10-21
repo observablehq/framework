@@ -1,6 +1,6 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 // This module is browser compatible.
-import { randomBetween } from "./between.2ce008c6.js";
+import { randomBetween } from "./between.2ce008c6.js"/* observablehq-file */;
 /**
  * Generates a random integer between the provided minimum and maximum values.
  *
