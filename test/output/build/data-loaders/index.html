@@ -23,7 +23,7 @@ import {registerFile} from "./_observablehq/stdlib.00000003.js";
 registerFile("./test.txt", {"name":"./test.txt","mimeType":"text/plain","path":"./_file/test.f2ca1bb6.txt","lastModified":/* ts */1706742000000,"size":5});
 
 define({id: "05e74070", inputs: ["display"], outputs: ["test"], body: async (display) => {
-const {test} = await import("./_import/import-test.e7269c4e.js");
+const {test} = await import("./_import/import-test.e7269c4e.js"/* observablehq-file */);
 
 display(await test);
 return {test};

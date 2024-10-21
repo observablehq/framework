@@ -16,8 +16,8 @@
  * @experimental **UNSTABLE**: New API, yet to be vetted.
  *
  * @module
- */ export * from "./between.2ce008c6.js";
-export * from "./integer_between.4528767d.js";
-export * from "./sample.6e7cf133.js";
-export * from "./seeded.4e59f274.js";
-export * from "./shuffle.0ef8dd95.js";
+ */ export * from "./between.2ce008c6.js"/* observablehq-file */;
+export * from "./integer_between.4528767d.js"/* observablehq-file */;
+export * from "./sample.6e7cf133.js"/* observablehq-file */;
+export * from "./seeded.4e59f274.js"/* observablehq-file */;
+export * from "./shuffle.0ef8dd95.js"/* observablehq-file */;

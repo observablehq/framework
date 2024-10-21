@@ -1,6 +1,6 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 // This module is browser compatible.
-import { randomIntegerBetween } from "./integer_between.4528767d.js";
+import { randomIntegerBetween } from "./integer_between.4528767d.js"/* observablehq-file */;
 /**
  * Shuffles the provided array, returning a copy and without modifying the original array.
  *
