@@ -203,7 +203,7 @@ function rewriteImportDeclarations(
   for (const node of declarations) {
     output.delete(node.start, node.end + +(output.input[node.end] === "\n"));
     specifiers.push(rewriteImportSpecifiers(node));
-    imports.push(`import(${JSON.stringify(resolve(getStringLiteralValue(node.source as StringLiteral)))})`);
+    imports.push(`import(${annotatePath(resolve(getStringLiteralValue(node.source as StringLiteral)))})`);
   }
   if (declarations.length > 1) {
     output.insertLeft(0, `const [${specifiers.join(", ")}] = await Promise.all([${imports.join(", ")}]);\n`);
@@ -261,6 +261,6 @@ export function rewriteParams(output: Sourcemap, body: Node, params: Params, inp
 /**
  * Annotate a path to a local import or file so it can be reworked server-side.
  */
-function annotatePath(uri: string): string {
+export function annotatePath(uri: string): string {
   return `${JSON.stringify(uri)}${isPathImport(uri) ? "/* observablehq-file */" : ""}`;
 }

@@ -10,6 +10,7 @@ import {isImportMetaResolve, parseImports} from "./javascript/imports.js";
 import {parseProgram} from "./javascript/parse.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
+import {annotatePath} from "./javascript/transpile.js";
 import {relativePath} from "./path.js";
 import {Sourcemap} from "./sourcemap.js";
 import {faint, yellow} from "./tty.js";
@@ -64,7 +65,7 @@ export function rewriteNpmImports(input: string, resolve: (s: string) => string 
     const value = getStringLiteralValue(source);
     const resolved = resolve(value);
     if (resolved === undefined || value === resolved) return;
-    output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
+    output.replaceLeft(source.start, source.end, annotatePath(resolved));
   }
 
   // TODO Preserve the source map, but download it too.
