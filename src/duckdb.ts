@@ -7,7 +7,7 @@ import {faint} from "./tty.js";
 
 const downloadRequests = new Map<string, Promise<string>>();
 
-export async function duckDBManifest(
+export async function getDuckDBManifest(
   duckdb: DuckDBConfig,
   {root, aliases}: {root: string; aliases?: Map<string, string>}
 ) {

@@ -3,7 +3,7 @@ import {existsSync} from "node:fs";
 import {copyFile, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
-import {duckDBManifest} from "./duckdb.js";
+import {getDuckDBManifest} from "./duckdb.js";
 import {CliError} from "./error.js";
 import {getClientPath, prepareOutput} from "./files.js";
 import {findModule, getModuleHash, readJavaScript} from "./javascript/module.js";
@@ -153,7 +153,7 @@ export async function build(
       await effects.writeFile(alias, contents);
     }
   }
-  const duckdb_manifest = await duckDBManifest(duckdb, {root, aliases});
+  const duckDBManifest = await getDuckDBManifest(duckdb, {root, aliases});
 
   // Generate the client bundles. These are initially generated into the cache
   // because we need to rewrite any npm and node imports to be hashed; this is
@@ -165,7 +165,7 @@ export async function build(
       const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
       const define: {[key: string]: string} = {};
       if (path === "/_observablehq/stdlib/duckdb.js") {
-        define["process.DUCKDB_MANIFEST"] = JSON.stringify(duckdb_manifest);
+        define["DUCKDB_MANIFEST"] = JSON.stringify(duckDBManifest);
       }
       const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
       await prepareOutput(cachePath);

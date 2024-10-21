@@ -30,7 +30,8 @@ import * as duckdb from "npm:@duckdb/duckdb-wasm";
 // POSSIBILITY OF SUCH DAMAGE.
 
 // Baked-in manifest.
-const manifest = process.DUCKDB_MANIFEST;
+// eslint-disable-next-line no-undef
+const manifest = DUCKDB_MANIFEST;
 
 const candidates = {
   ...(manifest.bundles.includes("mvp") && {

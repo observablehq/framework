@@ -16,7 +16,7 @@ import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import type {Config} from "./config.js";
 import {readConfig} from "./config.js";
-import {duckDBManifest} from "./duckdb.js";
+import {getDuckDBManifest} from "./duckdb.js";
 import {enoent, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
@@ -138,7 +138,7 @@ export class PreviewServer {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
         const options =
           pathname === "/_observablehq/stdlib/duckdb.js"
-            ? {define: {"process.DUCKDB_MANIFEST": JSON.stringify(await duckDBManifest(duckdb, {root, log: true}))}}
+            ? {define: {DUCKDB_MANIFEST: JSON.stringify(await getDuckDBManifest(duckdb, {root}))}}
             : {};
         end(req, res, await rollupClient(path, root, pathname, options), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
