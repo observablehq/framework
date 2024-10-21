@@ -46,9 +46,16 @@ describe("readConfig(undefined, root)", () => {
       watchPath: resolve("test/input/build/config/observablehq.config.js"),
       duckdb: {
         bundles: ["eh", "mvp"],
-        install: ["json", "parquet"],
-        load: [],
-        source: {json: "https://extensions.duckdb.org", parquet: "https://extensions.duckdb.org"}
+        extensions: {
+          json: {
+            load: false,
+            source: "https://extensions.duckdb.org"
+          },
+          parquet: {
+            load: false,
+            source: "https://extensions.duckdb.org"
+          }
+        }
       }
     });
   });
@@ -80,9 +87,16 @@ describe("readConfig(undefined, root)", () => {
       watchPath: undefined,
       duckdb: {
         bundles: ["eh", "mvp"],
-        install: ["json", "parquet"],
-        load: [],
-        source: {json: "https://extensions.duckdb.org", parquet: "https://extensions.duckdb.org"}
+        extensions: {
+          json: {
+            load: false,
+            source: "https://extensions.duckdb.org"
+          },
+          parquet: {
+            load: false,
+            source: "https://extensions.duckdb.org"
+          }
+        }
       }
     });
   });
