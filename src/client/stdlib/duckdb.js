@@ -48,8 +48,7 @@ const candidates = {
   })
 };
 const bundle = await duckdb.selectBundle(candidates);
-const activeBundle = manifest.bundles.find((key) => bundle.mainModule === candidates[key].mainModule);
-const extensions = manifest.extensions.filter(([, {bundle}]) => bundle === activeBundle);
+const activePlatform = manifest.bundles.find((key) => bundle.mainModule === candidates[key].mainModule);
 
 const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
 
@@ -196,7 +195,7 @@ async function registerExtensions(db, {load}) {
   const connection = await db.connect();
   try {
     await Promise.all(
-      extensions.map(([name, {ref, load: l}]) =>
+      manifest.extensions.map(([name, {[activePlatform]: ref, load: l}]) =>
         connection
           .query(`INSTALL ${name} FROM '${import.meta.resolve(`../..${ref}`)}'`)
           .then(() => (load ? load.includes(name) : l) && connection.query(`LOAD ${name}`))

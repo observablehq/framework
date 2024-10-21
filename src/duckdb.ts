@@ -1,7 +1,6 @@
 import {existsSync} from "node:fs";
 import {mkdir, writeFile} from "node:fs/promises";
 import {dirname, join} from "node:path/posix";
-import {cross} from "d3-array";
 import type {DuckDBConfig} from "./config.js";
 import {faint} from "./tty.js";
 
@@ -10,6 +9,12 @@ const downloadRequests = new Map<string, Promise<string>>();
 export const DUCKDBWASMVERSION = "1.29.0";
 export const DUCKDBVERSION = "1.1.1";
 
+async function getDuckDBExtension(root, platform, source, name, aliases) {
+  let ext = await resolveDuckDBExtension(root, platform, source, name);
+  if (aliases?.has(ext)) ext = aliases.get(ext)!;
+  return dirname(dirname(dirname(ext)));
+}
+
 export async function getDuckDBManifest(
   duckdb: DuckDBConfig,
   {root, aliases}: {root: string; aliases?: Map<string, string>}
@@ -17,18 +22,25 @@ export async function getDuckDBManifest(
   return {
     bundles: duckdb.bundles,
     extensions: await Promise.all(
-      cross(duckdb.bundles, duckdb.install).map(async ([p, name]) => {
-        let ext = await resolveDuckDBExtension(root, p, duckdb.source[name], name);
-        if (aliases?.has(ext)) ext = aliases.get(ext)!;
-        return [
-          name,
-          {
-            ref: dirname(dirname(dirname(ext))),
-            load: duckdb.load.includes(name),
-            bundle: p
-          }
-        ];
-      })
+      Array.from(Object.entries(duckdb.extensions), ([name, {install, load, source}]) =>
+        (async () => {
+          return [
+            name,
+            {
+              install,
+              load,
+              ...Object.fromEntries(
+                await Promise.all(
+                  duckdb.bundles.map(async (platform) => [
+                    platform,
+                    await getDuckDBExtension(root, platform, source, name, aliases)
+                  ])
+                )
+              )
+            }
+          ];
+        })()
+      )
     )
   };
 }

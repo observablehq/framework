@@ -77,10 +77,8 @@ export interface SearchConfigSpec {
 }
 
 export interface DuckDBConfig {
-  install: string[];
-  load: string[];
-  source: {[name: string]: string};
   bundles: string[];
+  extensions: {[name: string]: {install?: false; load: boolean; source: string}};
 }
 
 export interface Config {
@@ -500,23 +498,38 @@ export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
 }
 
+function duckDBExtensionSource(source?: string): string {
+  return source === undefined || source === "core"
+    ? "https://extensions.duckdb.org"
+    : source === "community"
+    ? "https://community-extensions.duckdb.org"
+    : (source = String(source)).startsWith("https://")
+    ? source
+    : (() => {
+        throw new Error(`Unsupported DuckDB extension source ${source}`);
+      })();
+}
+
 function normalizeDuckDB(spec: unknown): DuckDBConfig {
-  const install = spec?.["install"] ?? ["json", "parquet"];
-  const load = spec?.["load"] ?? [];
-  const source = new Map(Object.entries(spec?.["source"] ?? {}));
+  const extensions = spec?.["extensions"] ?? {json: {load: false}, parquet: {load: false}};
   return {
     bundles: ["eh", "mvp"],
-    install,
-    load: load.filter((name: string) => install.includes(name)),
-    source: Object.fromEntries(
-      install.map((name: string) => {
-        let href = source.get(name) ?? "core";
-        if (href === "core") href = "https://extensions.duckdb.org";
-        else if (href === "community") href = "https://community-extensions.duckdb.org";
-        if (!href?.["startsWith"]?.("https://"))
-          throw new Error(`unknown source for duckdb extension ${name}: ${href}`);
-        return [name, href];
-      })
+    extensions: Object.fromEntries(
+      Array.from(Object.entries(extensions), ([key, config]) => {
+        return [
+          key,
+          !config
+            ? null
+            : config === true
+            ? {load: true, source: duckDBExtensionSource()}
+            : config === false
+            ? {install: false}
+            : {
+                source: duckDBExtensionSource(config["source"]),
+                load: config["load"] === undefined ? true : Boolean(config["load"])
+              }
+        ];
+      }).filter(([, config]) => config !== null)
     )
   };
 }
