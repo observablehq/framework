@@ -103,37 +103,37 @@ describe("fromJsDelivrPath(path)", () => {
 // prettier-ignore
 describe("rewriteNpmImports(input, resolve)", () => {
   it("rewrites /npm/ imports to /_npm/", () => {
-    assert.strictEqual(rewriteNpmImports('export * from "/npm/d3-array@3.2.4/dist/d3-array.js";\n', (v) => resolve("/_npm/d3@7.8.5/dist/d3.js", v)), 'export * from "../../d3-array@3.2.4/dist/d3-array.js";\n');
+    assert.strictEqual(rewriteNpmImports('export * from "/npm/d3-array@3.2.4/dist/d3-array.js";\n', (v) => resolve("/_npm/d3@7.8.5/dist/d3.js", v)), 'export * from "../../d3-array@3.2.4/dist/d3-array.js"/* observablehq-file */;\n');
   });
   it("rewrites /npm/…+esm imports to _esm.js", () => {
-    assert.strictEqual(rewriteNpmImports('export * from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'export * from "../d3-array@3.2.4/_esm.js";\n');
+    assert.strictEqual(rewriteNpmImports('export * from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'export * from "../d3-array@3.2.4/_esm.js"/* observablehq-file */;\n');
   });
   it("rewrites /npm/ imports to a relative path", () => {
-    assert.strictEqual(rewriteNpmImports('import "/npm/d3-array@3.2.4/dist/d3-array.js";\n', (v) => resolve("/_npm/d3@7.8.5/dist/d3.js", v)), 'import "../../d3-array@3.2.4/dist/d3-array.js";\n');
-    assert.strictEqual(rewriteNpmImports('import "/npm/d3-array@3.2.4/dist/d3-array.js";\n', (v) => resolve("/_npm/d3@7.8.5/d3.js", v)), 'import "../d3-array@3.2.4/dist/d3-array.js";\n');
+    assert.strictEqual(rewriteNpmImports('import "/npm/d3-array@3.2.4/dist/d3-array.js";\n', (v) => resolve("/_npm/d3@7.8.5/dist/d3.js", v)), 'import "../../d3-array@3.2.4/dist/d3-array.js"/* observablehq-file */;\n');
+    assert.strictEqual(rewriteNpmImports('import "/npm/d3-array@3.2.4/dist/d3-array.js";\n', (v) => resolve("/_npm/d3@7.8.5/d3.js", v)), 'import "../d3-array@3.2.4/dist/d3-array.js"/* observablehq-file */;\n');
   });
   it("rewrites named imports", () => {
-    assert.strictEqual(rewriteNpmImports('import {sort} from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import {sort} from "../d3-array@3.2.4/_esm.js";\n');
+    assert.strictEqual(rewriteNpmImports('import {sort} from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import {sort} from "../d3-array@3.2.4/_esm.js"/* observablehq-file */;\n');
   });
   it("rewrites empty imports", () => {
-    assert.strictEqual(rewriteNpmImports('import "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import "../d3-array@3.2.4/_esm.js";\n');
+    assert.strictEqual(rewriteNpmImports('import "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import "../d3-array@3.2.4/_esm.js"/* observablehq-file */;\n');
   });
   it("rewrites default imports", () => {
-    assert.strictEqual(rewriteNpmImports('import d3 from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import d3 from "../d3-array@3.2.4/_esm.js";\n');
+    assert.strictEqual(rewriteNpmImports('import d3 from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import d3 from "../d3-array@3.2.4/_esm.js"/* observablehq-file */;\n');
   });
   it("rewrites namespace imports", () => {
-    assert.strictEqual(rewriteNpmImports('import * as d3 from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import * as d3 from "../d3-array@3.2.4/_esm.js";\n');
+    assert.strictEqual(rewriteNpmImports('import * as d3 from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import * as d3 from "../d3-array@3.2.4/_esm.js"/* observablehq-file */;\n');
   });
   it("rewrites named exports", () => {
-    assert.strictEqual(rewriteNpmImports('export {sort} from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'export {sort} from "../d3-array@3.2.4/_esm.js";\n');
+    assert.strictEqual(rewriteNpmImports('export {sort} from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'export {sort} from "../d3-array@3.2.4/_esm.js"/* observablehq-file */;\n');
   });
   it("rewrites namespace exports", () => {
-    assert.strictEqual(rewriteNpmImports('export * from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'export * from "../d3-array@3.2.4/_esm.js";\n');
+    assert.strictEqual(rewriteNpmImports('export * from "/npm/d3-array@3.2.4/+esm";\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'export * from "../d3-array@3.2.4/_esm.js"/* observablehq-file */;\n');
   });
   it("rewrites dynamic imports with static module specifiers", () => {
-    assert.strictEqual(rewriteNpmImports('import("/npm/d3-array@3.2.4/+esm");\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js");\n');
-    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@3.2.4/+esm`);\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js");\n');
-    assert.strictEqual(rewriteNpmImports("import('/npm/d3-array@3.2.4/+esm');\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js");\n');
+    assert.strictEqual(rewriteNpmImports('import("/npm/d3-array@3.2.4/+esm");\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js"/* observablehq-file */);\n');
+    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@3.2.4/+esm`);\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js"/* observablehq-file */);\n');
+    assert.strictEqual(rewriteNpmImports("import('/npm/d3-array@3.2.4/+esm');\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js"/* observablehq-file */);\n');
   });
   it("ignores dynamic imports with dynamic module specifiers", () => {
     assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@${version}/+esm`);\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), "import(`/npm/d3-array@${version}/+esm`);\n");
@@ -142,8 +142,8 @@ describe("rewriteNpmImports(input, resolve)", () => {
     assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@${version}/+esm`);\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), "import(`/npm/d3-array@${version}/+esm`);\n");
   });
   it("strips the sourceMappingURL declaration", () => {
-    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@3.2.4/+esm`);\n//# sourceMappingURL=index.js.map", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js");\n');
-    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@3.2.4/+esm`);\n//# sourceMappingURL=index.js.map\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js");\n');
+    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@3.2.4/+esm`);\n//# sourceMappingURL=index.js.map", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js"/* observablehq-file */);\n');
+    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@3.2.4/+esm`);\n//# sourceMappingURL=index.js.map\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js"/* observablehq-file */);\n');
   });
 });
 
