@@ -38,11 +38,16 @@ export async function getDuckDBManifest(
  * statement. The repo is structured as required by DuckDB with:
  * ${repo}/v1.1.1/wasm_{p}/${name}.duckdb_extension.wasm
  */
-export async function resolveDuckDBExtension(root: string, p: string, repo: string, name: string): Promise<string> {
+export async function resolveDuckDBExtension(
+  root: string,
+  platform: string,
+  repo: string,
+  name: string
+): Promise<string> {
   if (!repo.startsWith("https://")) throw new Error(`invalid repo: ${repo}`);
   const cache = join(root, ".observablehq", "cache");
   const file = `${name}.duckdb_extension.wasm`;
-  const ref = `${repo}/v1.1.1/wasm_${p}/${file}`.slice("https://".length);
+  const ref = `${repo}/v1.1.1/wasm_${platform}/${file}`.slice("https://".length);
   const path = join("_duckdb", ref);
   const cachePath = join(cache, path);
   if (existsSync(cachePath)) return `/${path}`;
