@@ -8,6 +8,7 @@ const downloadRequests = new Map<string, Promise<string>>();
 
 export const DUCKDBWASMVERSION = "1.29.0";
 export const DUCKDBVERSION = "1.1.1";
+export const DUCKDBBUNDLES = ["eh", "mvp"];
 
 async function getDuckDBExtension(root, platform, source, name, aliases) {
   let ext = await resolveDuckDBExtension(root, platform, source, name);

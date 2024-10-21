@@ -8,6 +8,7 @@ import {pathToFileURL} from "node:url";
 import he from "he";
 import type MarkdownIt from "markdown-it";
 import wrapAnsi from "wrap-ansi";
+import {DUCKDBBUNDLES} from "./duckdb.js";
 import {visitFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
@@ -506,30 +507,25 @@ function duckDBExtensionSource(source?: string): string {
     : (source = String(source)).startsWith("https://")
     ? source
     : (() => {
-        throw new Error(`Unsupported DuckDB extension source ${source}`);
+        throw new Error(`unsupported DuckDB extension source ${source}`);
       })();
 }
 
 function normalizeDuckDB(spec: unknown): DuckDBConfig {
-  const extensions = spec?.["extensions"] ?? {json: {load: false}, parquet: {load: false}};
-  return {
-    bundles: ["eh", "mvp"],
-    extensions: Object.fromEntries(
-      Array.from(Object.entries(extensions), ([key, config]) => {
-        return [
-          key,
-          !config
-            ? null
-            : config === true
-            ? {load: true, source: duckDBExtensionSource()}
-            : config === false
-            ? {install: false}
-            : {
-                source: duckDBExtensionSource(config["source"]),
-                load: config["load"] === undefined ? true : Boolean(config["load"])
-              }
-        ];
-      }).filter(([, config]) => config !== null)
-    )
-  };
+  const extensions: {[name: string]: any} = {};
+  for (const [name, config] of Object.entries(spec?.["extensions"] ?? {json: {load: false}, parquet: {load: false}})) {
+    if (!/^\w+$/.test(name)) throw new Error(`illegal extension name ${name}`);
+    if (config) {
+      extensions[name] =
+        config === true
+          ? {load: true, source: duckDBExtensionSource()}
+          : config === false
+          ? {install: false}
+          : {
+              source: duckDBExtensionSource(config["source"]),
+              load: config["load"] === undefined ? true : Boolean(config["load"])
+            };
+    }
+  }
+  return {bundles: DUCKDBBUNDLES, extensions};
 }
