@@ -90,8 +90,8 @@ export class LoaderResolver {
   async loadPage(path: string, options: LoadOptions & ParseOptions, effects?: LoadEffects): Promise<MarkdownPage> {
     const loader = this.findPage(path);
     if (!loader) throw enoent(path);
-    const source = await readFile(join(this.root, await loader.load(options, effects)), "utf8");
-    return parseMarkdown(source, {params: loader.params, ...options});
+    const input = await readFile(join(this.root, await loader.load(options, effects)), "utf8");
+    return parseMarkdown(input, {source: loader.path, params: loader.params, ...options});
   }
 
   /**
