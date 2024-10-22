@@ -48,7 +48,11 @@ describe("preview server", () => {
     expect(res.text).to.have.string("This text is not visible by default.");
   });
 
-  // TODO - tests for /_observablehq and data loader requests
+  it("serves scripts from _observablehq/", async () => {
+    const res = await chai.request(testServerUrl).get("/_observablehq/stdlib.js");
+    expect(res).to.have.status(200);
+    expect(res.text).to.have.string("class Library");
+  });
 
   it("serves local imports", async () => {
     const res = await chai.request(testServerUrl).get("/_import/format.js");
@@ -68,9 +72,27 @@ describe("preview server", () => {
     assert.ok(res.text);
   });
 
+  it("serves files built with a data loader", async () => {
+    const res = await chai.request(testServerUrl).get("/_file/asset.txt");
+    expect(res).to.have.status(200);
+    expect(res.text).to.have.string("Built by");
+  });
+
   it("handles missing files", async () => {
     const res = await chai.request(testServerUrl).get("/_file/idontexist.csv");
     expect(res).to.have.status(404);
     expect(res.text).to.have.string("File not found");
+  });
+
+  it("serves exported files", async () => {
+    const res = await chai.request(testServerUrl).get("/robots.txt");
+    expect(res).to.have.status(200);
+    expect(res.text).to.have.string("User-agent:");
+  });
+
+  it("serves exported files built with a data loader", async () => {
+    const res = await chai.request(testServerUrl).get("/asset.txt");
+    expect(res).to.have.status(200);
+    expect(res.text).to.have.string("Built by");
   });
 });
