@@ -36,9 +36,11 @@ npm run deploy -- --help
 
 </div>
 
-## Automated deploys
+## Continuous deployment
 
-After deploying an app manually at least once, Observable can handle subsequent deploys for you automatically. You can automate deploys both [on commit](https://observablehq.com/documentation/data-apps/github) (whenever you push a new commit to your project’s default branch) and [on schedule](https://observablehq.com/documentation/data-apps/schedules) (such as daily or weekly).
+<!-- TODO: decide whether to primarily use “continuous deployment” or “automatic deploys” -->
+
+You can connect your app to Observable to handle deploys automatically. You can automate deploys both [on commit](https://observablehq.com/documentation/data-apps/github) (whenever you push a new commit to your project’s default branch) and [on schedule](https://observablehq.com/documentation/data-apps/schedules) (such as daily or weekly).
 
 Automatic deploys — also called _continuous deployment_ or _CD_ — ensure that your data is always up to date, and that any changes you make to your app are immediately reflected in the deployed version.
 
@@ -88,7 +90,7 @@ To create an API key:
 
 1. Open the [API Key settings](https://observablehq.com/select-workspace?next=api-keys-settings) for your Observable workspace.
 2. Click **New API Key**.
-3. Check the **Deploy new versions of projects** checkbox. <!-- TODO apps -->
+3. Check the **Deploy new versions of data apps** checkbox.
 4. Give your key a description, such as “Deploy via GitHub Actions”.
 5. Click **Create API Key**.
 
@@ -147,7 +149,8 @@ The contents of the deploy config file look like this:
 {
   "projectId": "0123456789abcdef",
   "projectSlug": "hello-framework",
-  "workspaceLogin": "acme"
+  "workspaceLogin": "acme",
+  "continuousDeployment": true
 }
 ```
 
