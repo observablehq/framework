@@ -139,11 +139,13 @@ describe("build", () => {
     effects.buildManifest!.pages.sort((a, b) => ascending(a.path, b.path));
     assert.deepEqual(effects.buildManifest, {
       pages: [
-        {path: "/", title: "Hello, world!"},
-        {path: "/cities/", title: "Cities"},
-        {path: "/cities/portland", title: "Portland"},
-        {path: "/weather", title: "It's going to be !"}
-      ]
+        {path: "/", title: "Hello, world!", source: "/index.md"},
+        {path: "/cities/", title: "Cities", source: "/cities/index.md"},
+        {path: "/cities/portland", title: "Portland", source: "/cities/portland.md"},
+        {path: "/weather", title: "It's going to be !", source: "/weather.md"}
+      ],
+      files: [{path: "/weather.txt"}],
+      modules: []
     });
 
     await Promise.all([inputDir, cacheDir, outputDir].map((dir) => rm(dir, {recursive: true}))).catch(() => {});

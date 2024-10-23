@@ -40,7 +40,7 @@ export interface MarkdownPage {
   data: FrontMatter;
   style: string | null;
   code: MarkdownCode[];
-  source?: string;
+  path?: string;
   params?: Params;
 }
 
@@ -260,7 +260,7 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
     title,
     style: getStyle(data, options),
     code,
-    source,
+    path: source,
     params
   };
 }

@@ -74,16 +74,6 @@ export class LoaderResolver {
   }
 
   /**
-   * Loads the file at the specified path, returning a promise to the path to
-   * the (possibly generated) file relative to the source root.
-   */
-  async loadFile(path: string, options?: LoadOptions, effects?: LoadEffects): Promise<string> {
-    const loader = this.find(path);
-    if (!loader) throw enoent(path);
-    return await loader.load(options, effects);
-  }
-
-  /**
    * Loads the page at the specified path, returning a promise to the parsed
    * page object.
    */

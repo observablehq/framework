@@ -172,7 +172,10 @@ export class PreviewServer {
         }
         throw enoent(path);
       } else if (pathname.startsWith("/_file/")) {
-        send(req, await loaders.loadFile(pathname.slice("/_file".length)), {root}).pipe(res);
+        const path = pathname.slice("/_file".length);
+        const loader = loaders.find(path);
+        if (!loader) throw enoent(path);
+        send(req, await loader.load(), {root}).pipe(res);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
 
