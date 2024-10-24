@@ -8,7 +8,7 @@ import type {DeployEffects, DeployOptions} from "../src/deploy.js";
 import {deploy, promptDeployTarget} from "../src/deploy.js";
 import {CliError, isHttpError} from "../src/error.js";
 import {visitFiles} from "../src/files.js";
-import type {ObservableApiClientOptions, PostDeployUploadedRequest} from "../src/observableApiClient.js";
+import type {ObservableApiClientOptions} from "../src/observableApiClient.js";
 import type {GetCurrentUserResponse} from "../src/observableApiClient.js";
 import {ObservableApiClient} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
@@ -724,7 +724,7 @@ describe("deploy", () => {
 
   it("includes a build manifest if one was generated", async () => {
     const deployId = "deploy456";
-    let buildManifestPages: PostDeployUploadedRequest["pages"] | null = null;
+    let buildManifestPages: BuildManifest["pages"] | null = null;
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
@@ -744,7 +744,7 @@ describe("deploy", () => {
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),
       fixedOutputStatTime: new Date("2024-03-10"),
-      buildManifest: {pages: [{path: "/", title: "Build test case"}]}
+      buildManifest: {pages: [{path: "/", title: "Build test case"}], modules: [], files: []}
     });
     effects.clack.inputs = ["fix some bugs"]; // "what changed?"
     await deploy(TEST_OPTIONS, effects);

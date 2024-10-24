@@ -3,7 +3,7 @@ import {existsSync} from "node:fs";
 import {copyFile, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
-import {CliError} from "./error.js";
+import {CliError, enoent} from "./error.js";
 import {getClientPath, prepareOutput} from "./files.js";
 import {findModule, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
@@ -16,6 +16,7 @@ import type {Resolvers} from "./resolvers.js";
 import {getModuleResolvers, getResolvers} from "./resolvers.js";
 import {resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
+import type {Params} from "./route.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {tree} from "./tree.js";
@@ -74,6 +75,23 @@ export async function build(
   let assetCount = 0;
   let pageCount = 0;
   const pagePaths = new Set<string>();
+
+  const {title} = config;
+  const buildManifest: BuildManifest = {...(title && {title}), pages: [], modules: [], files: []};
+  const addToManifest = (
+    type: string,
+    file: string,
+    {title, path, params}: {title?: string | null; path?: string; params?: Params}
+  ) => {
+    const source = path == null || path === file.slice(1) ? null : join("/", path);
+    buildManifest[type].push({
+      path: config.normalizePath(file),
+      ...(title != null && {title}),
+      ...(source && {source}),
+      ...(params && {params})
+    });
+  };
+
   for await (const path of config.paths()) {
     effects.output.write(`${faint("load")} ${path} `);
     const start = performance.now();
@@ -95,6 +113,7 @@ export async function build(
     }
     const file = loaders.find(path);
     if (file) {
+      addToManifest("files", path, file);
       effects.output.write(`${faint("copy")} ${join(root, path)} ${faint("→")} `);
       const sourcePath = join(root, await file.load({useStale: true}, effects));
       await effects.copyFile(sourcePath, path);
@@ -192,7 +211,11 @@ export async function build(
   // Copy over referenced files, accumulating hashed aliases.
   for (const file of files) {
     effects.output.write(`${faint("copy")} ${join(root, file)} ${faint("→")} `);
-    const sourcePath = join(root, await loaders.loadFile(join("/", file), {useStale: true}, effects));
+    const path = join("/", file);
+    const loader = loaders.find(path);
+    if (!loader) throw enoent(path);
+    addToManifest("files", path, loader);
+    const sourcePath = join(root, await loader.load({useStale: true}, effects));
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const alias = applyHash(join("/_file", file), hash);
@@ -255,6 +278,7 @@ export async function build(
     if (!module) throw new Error(`import not found: ${path}`);
     const sourcePath = join(root, module.path);
     const importPath = join("_import", module.path);
+    addToManifest("modules", path, module);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const resolveImport = loaders.getModuleResolver(path);
     const input = await readJavaScript(sourcePath);
@@ -320,15 +344,13 @@ export async function build(
   }
 
   // Render pages!
-  const buildManifest: BuildManifest = {pages: []};
-  if (config.title) buildManifest.title = config.title;
   for (const [path, output] of outputs) {
     effects.output.write(`${faint("render")} ${path} ${faint("→")} `);
     if (output.type === "page") {
       const {page, resolvers} = output;
       const html = await renderPage(page, {...config, path, resolvers});
       await effects.writeFile(`${path}.html`, html);
-      buildManifest.pages.push({path: config.normalizePath(path), title: page.title});
+      addToManifest("pages", path, page);
     } else {
       const {resolvers} = output;
       const source = await renderModule(root, path, resolvers);
@@ -489,5 +511,7 @@ export class FileBuildEffects implements BuildEffects {
 
 export interface BuildManifest {
   title?: string;
-  pages: {path: string; title: string | null}[];
+  pages: {path: string; title?: string | null; source?: string; params?: Params}[];
+  modules: {path: string; source?: string; params?: Params}[];
+  files: {path: string; source?: string; params?: Params}[];
 }
