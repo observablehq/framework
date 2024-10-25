@@ -232,8 +232,7 @@ export default {
     screens: {
       sm: "640px",
       md: "768px",
-      lg: "calc(640px + 5rem + 192px)",
-      xl: "calc(640px + 7rem + 272px + 192px)"
+      lg: [{min: "calc(640px + 5rem + 192px)", max: "calc(912px + 6rem)"}, {min: "calc(640px + 7rem + 272px + 192px)"}]
     },
     ...theme
   },
