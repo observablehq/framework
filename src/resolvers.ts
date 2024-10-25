@@ -348,6 +348,7 @@ async function resolveResolvers(
   }
 
   // Add implicit stylesheets.
+  stylesheets.add("observablehq:tailwind.css");
   for (const specifier of getImplicitStylesheets(staticImports)) {
     stylesheets.add(specifier);
     if (specifier.startsWith("npm:")) {

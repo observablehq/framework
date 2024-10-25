@@ -20,6 +20,7 @@ import {THEMES, renderTheme} from "./theme.js";
 
 const STYLE_MODULES = {
   "observablehq:default.css": getStylePath("default.css"),
+  "observablehq:tailwind.css": getStylePath("tailwind.css"),
   ...Object.fromEntries(THEMES.map(({name, path}) => [`observablehq:theme-${name}.css`, path]))
 };
 
@@ -47,16 +48,18 @@ export async function bundleStyles({
   theme?: string[];
   root: string;
 }): Promise<string> {
+  const plugins = path === getClientPath("tailwind.css") ? [await tailwindConfig(root)] : undefined;
   const result = await build({
     bundle: true,
     ...(path ? {entryPoints: [path]} : {stdin: {contents: renderTheme(theme!), loader: "css"}}),
     write: false,
     minify,
-    plugins: [await tailwindConfig(root)],
+    plugins,
     alias: STYLE_MODULES
   });
   let text = result.outputFiles[0].text;
   if (path === getClientPath("stdlib/inputs.css")) text = rewriteInputsNamespace(text);
+
   return text;
 }
 
@@ -215,7 +218,8 @@ export default {
     ]
   },
   darkMode: ["variant", "&:where([class~=dark], [class~=dark] *)"],
-  prefix: 'tw-',
+  blocklist: ["grid", "grid-cols-2", "grid-cols-3", "grid-cols-4"],
+  prefix: "",
   ...config
 };
 `
