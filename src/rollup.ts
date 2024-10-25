@@ -59,6 +59,10 @@ export async function bundleStyles({
   });
   let text = result.outputFiles[0].text;
   if (path === getClientPath("stdlib/inputs.css")) text = rewriteInputsNamespace(text);
+  // dirty patch for tailwind: remove margin:0 and styles resets for headers
+  // etc. It should probably be a tailwind plugin instead.
+  if (path === getClientPath("tailwind.css"))
+    text = text.replaceAll(/}[^{]*h1,\n*h2,\n*h3,\n*h4,\n*h5,\n*h6[^}]+}\s*/g, "}");
 
   return text;
 }
