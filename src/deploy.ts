@@ -255,8 +255,7 @@ class Deployer {
         const gitHub = remotes.find(([, url]) => url.startsWith("https://github.com/"));
         if (gitHub) {
           const repoName = formatGitUrl(gitHub[1]);
-          const repositories = (await this.apiClient.getGitHubRepositories())?.repositories;
-          const authedRepo = repositories?.find(({url}) => formatGitUrl(url) === repoName);
+          const authedRepo = (await this.apiClient.getGitHubRepository(repoName));
           if (authedRepo) {
             // Set branch to current branch
             const branch = (
@@ -287,8 +286,7 @@ class Deployer {
                 spinner.stop("Waiting for repository to be authorized timed out.");
                 throw new CliError("Repository authorization failed");
               }
-              const repositories = (await this.apiClient.getGitHubRepositories())?.repositories;
-              const authedRepo = repositories?.find(({url}) => formatGitUrl(url) === repoName);
+              const authedRepo = (await this.apiClient.getGitHubRepository(repoName));
               if (authedRepo) {
                 spinner.stop("Repository authorized.");
                 await this.apiClient.postProjectEnvironment(deployTarget.project.id, {

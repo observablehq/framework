@@ -131,10 +131,11 @@ export class ObservableApiClient {
     return await this._fetch<GetProjectEnvironmentResponse>(url, {method: "GET"});
   }
 
-  async getGitHubRepositories(): Promise<GetGitHubRepositoriesResponse | null> {
-    const url = new URL("/cli/github/repositories", this._apiOrigin);
+  async getGitHubRepository(repoName): Promise<GetGitHubRepositoryResponse | null> {
+    const [owner, repo] = repoName.split("/");
+    const url = new URL(`/cli/github/repository?owner=${owner}&repo=${repo}`, this._apiOrigin);
     try {
-      return await this._fetch<GetGitHubRepositoriesResponse>(url, {method: "GET"});
+      return await this._fetch<GetGitHubRepositoryResponse>(url, {method: "GET"});
     } catch (err) {
       return null;
     }
@@ -309,23 +310,16 @@ export interface GetProjectEnvironmentResponse {
   };
 }
 
-export interface GetGitHubRepositoriesResponse {
-  installations: {
-    id: number;
-    login: string | null;
-    name: string | null;
-  }[];
-  repositories: {
-    provider: "github";
-    provider_id: string;
-    url: string;
-    default_branch: string;
-    name: string;
-    linked_projects: {
-      title: string;
-      owner_id: string;
-      owner_name: string;
-    }[];
+export interface GetGitHubRepositoryResponse {
+  provider: "github";
+  provider_id: string;
+  url: string;
+  default_branch: string;
+  name: string;
+  linked_projects: {
+    title: string;
+    owner_id: string;
+    owner_name: string;
   }[];
 }
 
