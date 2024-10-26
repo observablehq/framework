@@ -124,6 +124,8 @@ export interface ConfigSpec {
   typographer?: unknown;
   quotes?: unknown;
   cleanUrls?: unknown;
+  preserveIndex?: unknown;
+  preserveExtension?: unknown;
   markdownIt?: unknown;
 }
 
@@ -259,7 +261,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
   const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
-  const normalizePath = getPathNormalizer(spec.cleanUrls);
+  const normalizePath = getPathNormalizer(spec);
 
   // If this path ends with a slash, then add an implicit /index to the
   // end of the path. Otherwise, remove the .html extension (we use clean
@@ -324,13 +326,22 @@ function normalizeDynamicPaths(spec: unknown): Config["paths"] {
   return async function* () { yield* paths; }; // prettier-ignore
 }
 
-function getPathNormalizer(spec: unknown = true): (path: string) => string {
-  const cleanUrls = Boolean(spec);
+function normalizeCleanUrls(spec: unknown): boolean {
+  console.warn(`${yellow("Warning:")} the ${bold("cleanUrls")} option is deprecated; use ${bold("preserveIndex")} and ${bold("preserveExtension")} instead.`); // prettier-ignore
+  return !spec;
+}
+
+function getPathNormalizer(spec: ConfigSpec): (path: string) => string {
+  const preserveIndex = spec.preserveIndex !== undefined ? Boolean(spec.preserveIndex) : false;
+  const preserveExtension = spec.preserveExtension !== undefined ? Boolean(spec.preserveExtension) : spec.cleanUrls !== undefined ? normalizeCleanUrls(spec.cleanUrls) : false; // prettier-ignore
   return (path) => {
-    if (path && !path.endsWith("/") && !extname(path)) path += ".html";
-    if (path === "index.html") path = ".";
-    else if (path.endsWith("/index.html")) path = path.slice(0, -"index.html".length);
-    else if (cleanUrls) path = path.replace(/\.html$/, "");
+    const ext = extname(path);
+    if (path.endsWith(".")) path += "/";
+    if (ext === ".html") path = path.slice(0, -".html".length);
+    if (path.endsWith("/index")) path = path.slice(0, -"index".length);
+    if (preserveIndex && path.endsWith("/")) path += "index";
+    if (!preserveIndex && path === "index") path = ".";
+    if (preserveExtension && path && !path.endsWith(".") && !path.endsWith("/") && !extname(path)) path += ".html";
     return path;
   };
 }
