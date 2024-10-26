@@ -255,22 +255,12 @@ class Deployer {
         const gitHub = remotes.find(([, url]) => url.startsWith("https://github.com/"));
         if (gitHub) {
           const repoName = formatGitUrl(gitHub[1]);
-          const authedRepo = (await this.apiClient.getGitHubRepository(repoName));
-          if (authedRepo) {
-            // Set branch to current branch
-            const branch = (
-              await promisify(exec)("git rev-parse --abbrev-ref HEAD", {cwd: this.deployOptions.config.root})
-            ).stdout;
-            await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
-              source: {
-                provider: authedRepo.provider,
-                provider_id: authedRepo.provider_id,
-                url: authedRepo.url,
-                branch
-              }
-            });
-            return true;
-          } else {
+          // Get current branch
+          const branch = (
+            await promisify(exec)("git rev-parse --abbrev-ref HEAD", {cwd: this.deployOptions.config.root})
+          ).stdout;
+          let authedRepo = (await this.apiClient.getGitHubRepository(repoName));
+          if (!authedRepo) {
             // repo not auth’ed; link to auth page and poll for auth
             // TODO: link to internal page that bookends the flow and handles the no-oauth-token case more gracefully
             this.effects.clack.log.info(
@@ -281,27 +271,25 @@ class Deployer {
             const spinner = this.effects.clack.spinner();
             spinner.start("Waiting for repository to be authorized");
             const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
-            while (true) {
+            while (!authedRepo) {
+              await new Promise((resolve) => setTimeout(resolve, 2000));
               if (Date.now() > pollExpiration) {
                 spinner.stop("Waiting for repository to be authorized timed out.");
                 throw new CliError("Repository authorization failed");
               }
-              const authedRepo = (await this.apiClient.getGitHubRepository(repoName));
-              if (authedRepo) {
-                spinner.stop("Repository authorized.");
-                await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
-                  source: {
-                    provider: authedRepo.provider,
-                    provider_id: authedRepo.provider_id,
-                    url: authedRepo.url,
-                    branch: null // TODO detect branch
-                  }
-                });
-                return true;
-              }
-              await new Promise((resolve) => setTimeout(resolve, 2000));
+              authedRepo = (await this.apiClient.getGitHubRepository(repoName));
+              if (authedRepo) spinner.stop("Repository authorized.");
             }
           }
+          await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
+            source: {
+              provider: authedRepo.provider,
+              provider_id: authedRepo.provider_id,
+              url: authedRepo.url,
+              branch
+            }
+          });
+          return true;
         } else {
           this.effects.clack.log.error("No GitHub remote found; cannot enable continuous deployment.");
         }
