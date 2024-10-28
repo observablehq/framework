@@ -1,4 +1,5 @@
 import {exec} from "node:child_process";
+import type {UUID} from "node:crypto";
 import {createHash, randomUUID} from "node:crypto";
 import {readFile, writeFile} from "node:fs/promises";
 import os from "node:os";
@@ -6,43 +7,8 @@ import {join} from "node:path/posix";
 import {CliError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
+import type {TelemetryData, TelemetryEnvironment, TelemetryIds, TelemetryTime} from "./telemetryData.js";
 import {link, magenta} from "./tty.js";
-
-type uuid = ReturnType<typeof randomUUID>;
-
-type TelemetryIds = {
-  session: uuid | null; // random, held in memory for the duration of the process
-  device: uuid | null; // persists to ~/.observablehq
-  project: string | null; // one-way hash of private salt + repository URL or cwd
-};
-
-type TelemetryEnvironment = {
-  version: string; // version from package.json
-  userAgent: string; // npm_config_user_agent
-  node: string; // node.js version
-  systemPlatform: string; // linux, darwin, win32, ...
-  systemRelease: string; // 20.04, 11.2.3, ...
-  systemArchitecture: string; // x64, arm64, ...
-  cpuCount: number; // number of cpu cores
-  cpuModel: string | null; // cpu model name
-  cpuSpeed: number | null; // cpu speed in MHz
-  memoryInMb: number; // truncated to mb
-  isCI: string | boolean; // inside CI heuristic, name or false
-  isDocker: boolean; // inside Docker heuristic
-  isWSL: boolean; // inside WSL heuristic
-};
-
-type TelemetryTime = {
-  now: number; // performance.now
-  timeOrigin: number; // performance.timeOrigin
-  timeZoneOffset: number; // minutes from UTC
-};
-
-type TelemetryData = {
-  event: "build" | "deploy" | "preview" | "signal" | "login";
-  step?: "start" | "finish" | "error";
-  [key: string]: unknown;
-};
 
 type TelemetryEffects = {
   logger: Logger;
@@ -79,7 +45,7 @@ export class Telemetry {
   private endpoint: URL;
   private timeZoneOffset = new Date().getTimezoneOffset();
   private readonly _pending = new Set<Promise<unknown>>();
-  private _config: Promise<Record<string, uuid>> | undefined;
+  private _config: Promise<Record<string, UUID>> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
 
@@ -142,7 +108,7 @@ export class Telemetry {
     process.on(name, signaled);
   }
 
-  private async getPersistentId(name: string, generator = randomUUID): Promise<uuid | null> {
+  private async getPersistentId(name: string, generator = randomUUID): Promise<UUID | null> {
     const {readFile, writeFile} = this.effects;
     const file = join(os.homedir(), ".observablehq");
     if (!this._config) {
@@ -213,7 +179,7 @@ export class Telemetry {
   }
 
   private async showBannerIfNeeded() {
-    let called: uuid | undefined;
+    let called: UUID | undefined;
     await this.getPersistentId("cli_telemetry_banner", () => (called = randomUUID()));
     if (called) {
       this.effects.logger.error(
