@@ -210,11 +210,11 @@ describe("transpileModule(input, root, path)", () => {
   it("rewrites npm imports", async () => {
     const input = 'import "npm:d3-array";';
     const output = (await transpileModule(input, options)).split("\n").pop()!;
-    assert.strictEqual(output, 'import "../_npm/d3-array@3.2.4/_esm.js"/* observablehq-file */;');
+    assert.strictEqual(output, 'import "../_npm/d3-array@3.2.4/_esm.js";');
   });
   it("rewrites node imports", async () => {
     const input = 'import "d3-array";';
     const output = (await transpileModule(input, options)).split("\n").pop()!;
-    assert.strictEqual(output, 'import "../_node/d3-array@3.2.4/index.js"/* observablehq-file */;');
+    assert.strictEqual(output, 'import "../_node/d3-array@3.2.4/index.js";');
   });
 });

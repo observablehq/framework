@@ -6,9 +6,9 @@ import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {getClientPath, getStylePath} from "./files.js";
+import annotate from "./javascript/annotate.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
-import {annotatePath} from "./javascript/transpile.js";
 import {resolveNpmImport} from "./npm.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {isAssetPath, isPathImport, relativePath} from "./path.js";
@@ -178,7 +178,7 @@ function importMetaResolve(path: string, resolveImport: ImportResolver): Plugin 
       for (const source of resolves) {
         const specifier = getStringLiteralValue(source);
         const resolution = await resolveImport(specifier);
-        if (resolution) output.replaceLeft(source.start, source.end, annotatePath(relativePath(path, resolution)));
+        if (resolution) output.replaceLeft(source.start, source.end, annotate(relativePath(path, resolution)));
       }
 
       return {code: String(output)};

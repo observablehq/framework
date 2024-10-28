@@ -25,7 +25,7 @@
 import {define} from "./_observablehq/client.00000001.js";
 
 define({id: "0e3025ad", inputs: ["display"], outputs: ["randomIntegerBetween","randomSeeded","prng"], body: async (display) => {
-const {randomIntegerBetween, randomSeeded} = await import("./_jsr/@std/random@0.1.0/mod.e50195f4.js"/* observablehq-file */);
+const {randomIntegerBetween, randomSeeded} = await import("./_jsr/@std/random@0.1.0/mod.e50195f4.js");
 
 const prng = randomSeeded(1n);
 

@@ -1,6 +1,6 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 // This module is browser compatible.
-import { fromSeed, nextU32, seedFromU64 } from "./_pcg32.b2f4838f.js"/* observablehq-file */;
+import { fromSeed, nextU32, seedFromU64 } from "./_pcg32.b2f4838f.js";
 /**
  * Creates a pseudo-random number generator that generates random numbers in
  * the range `[0, 1)`, based on the given seed. The algorithm used for

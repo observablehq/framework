@@ -7,6 +7,7 @@ import {isPathImport, relativePath, resolvePath, resolveRelativePath} from "../p
 import {getModuleResolver} from "../resolvers.js";
 import type {Params} from "../route.js";
 import {Sourcemap} from "../sourcemap.js";
+import annotate from "./annotate.js";
 import type {FileExpression} from "./files.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
@@ -101,7 +102,7 @@ export async function transpileModule(
 
   async function rewriteImportSource(source: StringLiteral) {
     const specifier = getStringLiteralValue(source);
-    output.replaceLeft(source.start, source.end, annotatePath(await resolveImport(specifier)));
+    output.replaceLeft(source.start, source.end, annotate(await resolveImport(specifier)));
   }
 
   for (const {name, node} of findFiles(body, path, input)) {
@@ -115,7 +116,7 @@ export async function transpileModule(
         info
           ? `{"name":${JSON.stringify(p)},"mimeType":${JSON.stringify(
               mime.getType(name) ?? undefined
-            )},"path":${annotatePath(relativePath(servePath, resolveFile(name)))},"lastModified":${JSON.stringify(
+            )},"path":${annotate(relativePath(servePath, resolveFile(name)))},"lastModified":${JSON.stringify(
               info.mtimeMs
             )},"size":${JSON.stringify(info.size)}}`
           : JSON.stringify(p)
@@ -135,7 +136,7 @@ export async function transpileModule(
     if (isImportMetaResolve(node) && isStringLiteral(source)) {
       const value = getStringLiteralValue(source);
       const resolution = isPathImport(value) && !isJavaScript(value) ? resolveFile(value) : await resolveImport(value);
-      output.replaceLeft(source.start, source.end, annotatePath(resolution));
+      output.replaceLeft(source.start, source.end, annotate(resolution));
     }
   }
 
@@ -203,7 +204,7 @@ function rewriteImportDeclarations(
   for (const node of declarations) {
     output.delete(node.start, node.end + +(output.input[node.end] === "\n"));
     specifiers.push(rewriteImportSpecifiers(node));
-    imports.push(`import(${annotatePath(resolve(getStringLiteralValue(node.source as StringLiteral)))})`);
+    imports.push(`import(${annotate(resolve(getStringLiteralValue(node.source as StringLiteral)))})`);
   }
   if (declarations.length > 1) {
     output.insertLeft(0, `const [${specifiers.join(", ")}] = await Promise.all([${imports.join(", ")}]);\n`);
@@ -256,11 +257,4 @@ export function rewriteParams(output: Sourcemap, body: Node, params: Params, inp
   for (const [name, node] of findParams(body, params, input)) {
     output.replaceLeft(node.start, node.end, JSON.stringify(params[name]));
   }
-}
-
-/**
- * Annotate a path to a local import or file so it can be reworked server-side.
- */
-export function annotatePath(uri: string): string {
-  return `${JSON.stringify(uri)}${isPathImport(uri) ? "/* observablehq-file */" : ""}`;
 }
