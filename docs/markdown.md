@@ -368,3 +368,44 @@ You may also want to add `noopener noreferrer` if linking to an untrusted origin
 ![A horse](./horse.jpg)
 ![A happy kitten](https://placekitten.com/200/300)
 ```
+
+## Tailwind CSS
+
+To go beyond grids and cards, Framework integrates [Tailwind](https://tailwindcss.com/), a toolkit that predefines utility classes driving styles directly from HTML.
+
+For example, let’s create a button with several styles — like `px-*` for horizontal padding:
+
+```html echo
+<button class="px-4 py-1 text-sm font-semibold rounded-full
+  text-purple-600 border border-purple-400
+  hover:text-white hover:bg-purple-600 hover:border-transparent
+">
+  Hello, Tailwind
+</button>
+```
+
+These classes drive the text’s size, the button’s rounded corners, the border and color of the text, *etc.* Note in particular the `hover:` modifier, which applies styles *conditionally*, when the pointer is over the button. Other supported modifiers include pseudo-classes (`:hover`, `:focus`, `:first-child`, and `:required`), pseudo-elements (`::before`, `::after`, `::placeholder`, and `::selection`), attribute selectors (`[dir="rtl"]` and `[open]`)…
+
+Size modifiers adapt styles to the container width:
+<p class="font-mono small">
+<span class="rounded-md px-2 py-1 border sm:bg-purple-200 sm:dark:bg-purple-800">sm:</span>
+<span class="rounded-md px-2 py-1 border md:bg-purple-200 md:dark:bg-purple-800">md:</span>
+<span class="rounded-md px-2 py-1 border lg:bg-purple-200 lg:dark:bg-purple-800">lg:</span>
+</p>
+
+The `dark:` modifier adapts to the current page’s `color-scheme`, to better support dark mode.
+
+Modifiers can be stacked; for instance, the `md:` pill above adopts a different shade of purple in light and dark modes, using the following classes:
+
+```html run=false
+<span class="md:bg-purple-200 md:dark:bg-purple-800">…</span>
+```
+
+While Tailwind offers a lot of features, those that you don’t actually use are not added to the bundled stylesheet, keeping its size as small as possible. (The list of classes used is derived by a simple string-based search in your Markdown pages and JavaScript modules.) You can fine-tune the configuration by creating a `tailwind.config.js` [configuration file](https://tailwindcss.com/docs/configuration) in your [source root](./config#root).
+
+For details, see [Tailwind’s official documentation](https://tailwindcss.com/docs/).
+
+```js
+// https://github.com/observablehq/framework/pull/1780 
+document.body.classList.toggle("dark", dark);
+```
