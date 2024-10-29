@@ -507,7 +507,6 @@ export class FileBuildEffects implements BuildEffects {
 
 export interface BuildManifest {
   title?: string;
-  pages: {path: string; title?: string | null; source?: string; params?: Params}[];
-  modules: {path: string; source?: string; params?: Params}[];
-  files: {path: string; source?: string; params?: Params}[];
+  pages: {path: string; title?: string | null; source?: string}[];
+  modules: {path: string; source?: string}[];
 }
