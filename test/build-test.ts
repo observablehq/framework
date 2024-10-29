@@ -126,21 +126,35 @@ describe("build", () => {
         "\n\n" +
         "```js\nconst generated = await FileAttachment('generated.txt').text(); display(generated);\n```" +
         "\n\n" +
-        "```js\nconst thing = await FileAttachment('parameterized-thing.txt').text(); display(thing);\n```"
+        "```js\nconst internal = await FileAttachment('internal.txt').text(); display(internal);\n```" +
+        "\n\n" +
+        "```js\nconst thing = await FileAttachment('parameterized-thing.txt').text(); display(thing);\n```" +
+        "\n\n" +
+        "```js\nimport * from '/module-internal.js';\n```"
     );
     await mkdir(join(inputDir, "cities"));
     await writeFile(join(inputDir, "cities", "index.md"), "# Cities");
     await writeFile(join(inputDir, "cities", "portland.md"), "# Portland");
+    // exported files
     await writeFile(join(inputDir, "weather.txt"), "sunny");
     await writeFile(join(inputDir, "generated.txt.ts"), "process.stdout.write('hello');");
-    await writeFile(join(inputDir, "weather.txt"), "sunny");
     await writeFile(join(inputDir, "parameterized-[page].txt.ts"), "process.stdout.write('hello');");
-    await writeFile(join(inputDir, "module-[page].js"), "console.log(observable.params.page);");
+    // /module-exported.js, /module-internal.js
+    await writeFile(join(inputDir, "module-[type].js"), "console.log(observable.params.type);");
+    // not exported
+    await writeFile(join(inputDir, "internal.txt.ts"), "process.stdout.write('hello');");
 
     const outputDir = await mkdtemp(tmpPrefix + "output-");
     const cacheDir = await mkdtemp(tmpPrefix + "output-");
 
-    const config = normalizeConfig({root: inputDir, output: outputDir, dynamicPaths: ["/module-thing.js"]}, inputDir);
+    const config = normalizeConfig(
+      {
+        root: inputDir,
+        output: outputDir,
+        dynamicPaths: ["/module-exported.js", "/weather.txt", "/generated.txt", "/parameterized-thing.txt"]
+      },
+      inputDir
+    );
     const effects = new LoggingBuildEffects(outputDir, cacheDir);
     await build({config}, effects);
     effects.buildManifest!.pages.sort((a, b) => ascending(a.path, b.path));
@@ -156,7 +170,7 @@ describe("build", () => {
         {path: "/generated.txt", source: "/generated.txt.ts"},
         {path: "/parameterized-thing.txt", source: "/parameterized-[page].txt.ts", params: {page: "thing"}}
       ],
-      modules: [{path: "/module-thing.js", source: "/module-[page].js", params: {page: "thing"}}]
+      modules: [{path: "/module-exported.js", source: "/module-[type].js", params: {type: "exported"}}]
     });
 
     await Promise.all([inputDir, cacheDir, outputDir].map((dir) => rm(dir, {recursive: true}))).catch(() => {});

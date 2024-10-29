@@ -108,15 +108,16 @@ export async function build(
         effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
         outputs.set(path, {type: "module", resolvers});
         ++assetCount;
+        addToManifest("modules", path, module);
         continue;
       }
     }
     const file = loaders.find(path);
     if (file) {
-      addToManifest("files", path, file);
       effects.output.write(`${faint("copy")} ${join(root, path)} ${faint("→")} `);
       const sourcePath = join(root, await file.load({useStale: true}, effects));
       await effects.copyFile(sourcePath, path);
+      addToManifest("files", path, file);
       ++assetCount;
       continue;
     }
@@ -214,12 +215,12 @@ export async function build(
     const path = join("/", file);
     const loader = loaders.find(path);
     if (!loader) throw enoent(path);
-    addToManifest("files", path, loader);
     const sourcePath = join(root, await loader.load({useStale: true}, effects));
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const alias = applyHash(join("/_file", file), hash);
     aliases.set(loaders.resolveFilePath(file), alias);
+    // addToManifest("files", alias, loader);
     await effects.writeFile(alias, contents);
   }
 
@@ -278,7 +279,6 @@ export async function build(
     if (!module) throw new Error(`import not found: ${path}`);
     const sourcePath = join(root, module.path);
     const importPath = join("_import", module.path);
-    addToManifest("modules", path, module);
     effects.output.write(`${faint("copy")} ${sourcePath} ${faint("→")} `);
     const resolveImport = loaders.getModuleResolver(path);
     const input = await readJavaScript(sourcePath);
@@ -310,6 +310,7 @@ export async function build(
     const alias = await resolveLocalImport(path);
     aliases.set(loaders.resolveImportPath(path), alias);
     await effects.writeFile(alias, contents);
+    // addToManifest("modules", alias, module);
   }
 
   // Wrap the resolvers to apply content-hashed file names.
