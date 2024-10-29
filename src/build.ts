@@ -16,7 +16,6 @@ import type {Resolvers} from "./resolvers.js";
 import {getModuleResolvers, getResolvers} from "./resolvers.js";
 import {resolveStylesheetPath} from "./resolvers.js";
 import {bundleStyles, rollupClient} from "./rollup.js";
-import type {Params} from "./route.js";
 import {searchIndex} from "./search.js";
 import {Telemetry} from "./telemetry.js";
 import {tree} from "./tree.js";
@@ -77,7 +76,14 @@ export async function build(
   const pagePaths = new Set<string>();
 
   const {title} = config;
-  const buildManifest: BuildManifest = {...(title && {title}), pages: [], modules: [], files: []};
+  const buildManifest: BuildManifest = {
+    ...(title && {title}),
+    pages: [],
+    modules: [],
+    files: [],
+    _file: [],
+    _import: []
+  };
   const addToManifest = (type: string, file: string, {title, path}: {title?: string | null; path?: string}) => {
     const source = path == null || path === file.slice(1) ? null : join("/", path);
     buildManifest[type].push({
@@ -215,7 +221,7 @@ export async function build(
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const alias = applyHash(join("/_file", file), hash);
     aliases.set(loaders.resolveFilePath(file), alias);
-    // addToManifest("files", alias, loader);
+    addToManifest("_file", alias, loader);
     await effects.writeFile(alias, contents);
   }
 
@@ -305,7 +311,7 @@ export async function build(
     const alias = await resolveLocalImport(path);
     aliases.set(loaders.resolveImportPath(path), alias);
     await effects.writeFile(alias, contents);
-    // addToManifest("modules", alias, module);
+    addToManifest("_import", alias, module);
   }
 
   // Wrap the resolvers to apply content-hashed file names.
@@ -509,4 +515,7 @@ export interface BuildManifest {
   title?: string;
   pages: {path: string; title?: string | null; source?: string}[];
   modules: {path: string; source?: string}[];
+  files: {path: string; source?: string}[];
+  _file: {path: string; source?: string}[];
+  _import: {path: string; source?: string}[];
 }
