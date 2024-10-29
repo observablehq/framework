@@ -126,11 +126,6 @@ export class ObservableApiClient {
     return await this._fetch<GetProjectResponse>(url, {method: "GET"});
   }
 
-  async getProjectEnvironment({id}: {id: string}): Promise<GetProjectEnvironmentResponse> {
-    const url = new URL(`/cli/project/${id}/environment`, this._apiOrigin);
-    return await this._fetch<GetProjectEnvironmentResponse>(url, {method: "GET"});
-  }
-
   async getGitHubRepository(repoName): Promise<GetGitHubRepositoryResponse | null> {
     const [owner, repo] = repoName.split("/");
     const url = new URL(`/cli/github/repository?owner=${owner}&repo=${repo}`, this._apiOrigin);
@@ -141,9 +136,9 @@ export class ObservableApiClient {
     }
   }
 
-  async postProjectEnvironment(id, body): Promise<GetProjectEnvironmentResponse> {
+  async postProjectEnvironment(id, body): Promise<PostProjectEnvironmentResponse> {
     const url = new URL(`/cli/project/${id}/environment`, this._apiOrigin);
-    return await this._fetch<GetProjectEnvironmentResponse>(url, {
+    return await this._fetch<PostProjectEnvironmentResponse>(url, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify(body)
@@ -295,11 +290,19 @@ export interface GetProjectResponse {
   owner: {id: string; login: string};
   creator: {id: string; login: string};
   latestCreatedDeployId: string | null;
+  automatic_builds_enabled: boolean | null;
+  build_environment_id: string | null;
+  source: null | {
+    provider: string;
+    provider_id: string;
+    url: string;
+    branch: string | null;
+  };
   // Available fields that we don't use
   // servingRoot: string | null;
 }
 
-export interface GetProjectEnvironmentResponse {
+export interface PostProjectEnvironmentResponse {
   automatic_builds_enabled: boolean | null;
   build_environment_id: string | null;
   source: null | {

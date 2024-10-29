@@ -193,7 +193,6 @@ const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; wor
   workspaceLogin: "mock-user-ws",
   continuousDeployment: false
 };
-const DEFAULT_ENVIRONMENT = {automatic_builds_enabled: null, build_environment_id: null, source: null};
 
 describe("deploy", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
@@ -205,7 +204,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -296,7 +294,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject({...DEPLOY_CONFIG, title: oldTitle})
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -351,7 +348,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(deployConfig)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .handlePostDeploy({projectId: deployConfig.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -575,7 +571,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject({...DEPLOY_CONFIG})
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId, status: 500})
       .start();
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
@@ -600,7 +595,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .handlePostDeployManifest({deployId, files: [{deployId, path: "index.html", action: "upload"}]})
       .handlePostDeployFile({deployId, status: 500})
@@ -625,7 +619,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId, status: 500})
@@ -734,7 +727,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({
@@ -769,7 +761,6 @@ describe("deploy", () => {
       getCurrentObservableApi()
         .handleGetCurrentUser()
         .handleGetProject({...DEPLOY_CONFIG, projectId: newProjectId})
-        .handleGetProjectEnvironment({projectId: newProjectId, environment: DEFAULT_ENVIRONMENT})
         .handlePostDeploy({projectId: newProjectId, deployId})
         .expectStandardFiles({deployId})
         .handlePostDeployUploaded({deployId})
@@ -788,7 +779,6 @@ describe("deploy", () => {
       getCurrentObservableApi()
         .handleGetCurrentUser()
         .handleGetProject({...DEPLOY_CONFIG, projectId: newProjectId})
-        .handleGetProjectEnvironment({projectId: newProjectId, environment: DEFAULT_ENVIRONMENT})
         .start();
       const effects = new MockDeployEffects({deployConfig: oldDeployConfig, isTty: true});
       effects.clack.inputs.push(false); // State doesn't match do you want to continue deploying?
@@ -811,7 +801,6 @@ describe("deploy", () => {
           ...DEPLOY_CONFIG,
           projectId: newProjectId
         })
-        .handleGetProjectEnvironment({projectId: newProjectId, environment: DEFAULT_ENVIRONMENT})
         .start();
       const effects = new MockDeployEffects({deployConfig: oldDeployConfig, isTty: false, debug: true});
       try {
@@ -833,7 +822,6 @@ describe("deploy", () => {
           ...DEPLOY_CONFIG,
           projectId: newProjectId
         })
-        .handleGetProjectEnvironment({projectId: newProjectId, environment: DEFAULT_ENVIRONMENT})
         .start();
       const effects = new MockDeployEffects({deployConfig, isTty: true});
       effects.clack.inputs.push(false);
@@ -854,7 +842,6 @@ describe("deploy", () => {
       .handlePostAuthRequestPoll("accepted")
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -876,7 +863,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -904,7 +890,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
@@ -923,7 +908,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
@@ -945,7 +929,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
@@ -967,7 +950,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
@@ -994,7 +976,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
@@ -1026,7 +1007,6 @@ describe("deploy", () => {
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
-      .handleGetProjectEnvironment({projectId: DEPLOY_CONFIG.projectId, environment: DEFAULT_ENVIRONMENT})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectFileUpload({deployId, path: "index.html", action: "upload"})
       .expectFileUpload({deployId, path: "_observablehq/client.00000001.js", action: "skip"})

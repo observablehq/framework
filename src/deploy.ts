@@ -23,7 +23,6 @@ import type {
   DeployManifestFile,
   GetCurrentUserResponse,
   GetDeployResponse,
-  GetProjectEnvironmentResponse,
   GetProjectResponse,
   WorkspaceResponse
 } from "./observableApiClient.js";
@@ -94,7 +93,6 @@ type DeployTargetInfo =
       create: false;
       workspace: {id: string; login: string};
       project: GetProjectResponse;
-      environment: GetProjectEnvironmentResponse;
     };
 
 /** Deploy a project to Observable */
@@ -241,7 +239,7 @@ class Deployer {
       throw new Error("Incorrect deployTarget state");
     }
     if (!this.effects.isTty) return false;
-    if (deployTarget.environment.build_environment_id && deployTarget.environment.source) {
+    if (deployTarget.project.build_environment_id && deployTarget.project.source) {
       // can do cloud build
       return true;
     } else {
@@ -259,7 +257,7 @@ class Deployer {
           const branch = (
             await promisify(exec)("git rev-parse --abbrev-ref HEAD", {cwd: this.deployOptions.config.root})
           ).stdout;
-          let authedRepo = (await this.apiClient.getGitHubRepository(repoName));
+          let authedRepo = await this.apiClient.getGitHubRepository(repoName);
           if (!authedRepo) {
             // repo not auth’ed; link to auth page and poll for auth
             // TODO: link to internal page that bookends the flow and handles the no-oauth-token case more gracefully
@@ -277,7 +275,7 @@ class Deployer {
                 spinner.stop("Waiting for repository to be authorized timed out.");
                 throw new CliError("Repository authorization failed");
               }
-              authedRepo = (await this.apiClient.getGitHubRepository(repoName));
+              authedRepo = await this.apiClient.getGitHubRepository(repoName);
               if (authedRepo) spinner.stop("Repository authorized.");
             }
           }
@@ -397,8 +395,7 @@ class Deployer {
           workspaceLogin: deployConfig.workspaceLogin,
           projectSlug: deployConfig.projectSlug
         });
-        const environment = await this.apiClient.getProjectEnvironment({id: project.id});
-        deployTarget = {create: false, workspace: project.owner, project, environment};
+        deployTarget = {create: false, workspace: project.owner, project};
       } catch (error) {
         if (!isHttpError(error) || error.statusCode !== 404) {
           throw error;
@@ -479,13 +476,7 @@ class Deployer {
         deployTarget = {
           create: false,
           workspace: deployTarget.workspace,
-          project,
-          // TODO: In the future we may have a default environment
-          environment: {
-            automatic_builds_enabled: null,
-            build_environment_id: null,
-            source: null
-          }
+          project
         };
       } catch (error) {
         if (isApiError(error) && error.details.errors.some((e) => e.code === "TOO_MANY_PROJECTS")) {
@@ -908,12 +899,7 @@ export async function promptDeployTarget(
       return {
         create: false,
         workspace,
-        project: existingProjects.find((p) => p.slug === chosenProject)!,
-        environment: {
-          automatic_builds_enabled: null,
-          build_environment_id: null,
-          source: null
-        }
+        project: existingProjects.find((p) => p.slug === chosenProject)!
       };
     }
   } else {

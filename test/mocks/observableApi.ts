@@ -4,7 +4,6 @@ import PendingInterceptorsFormatter from "undici/lib/mock/pending-interceptors-f
 import type {BuildManifest} from "../../src/build.js";
 import type {
   GetCurrentUserResponse,
-  GetProjectEnvironmentResponse,
   GetProjectResponse,
   PaginatedList,
   PostAuthRequestPollResponse,
@@ -168,7 +167,10 @@ class ObservableApiMock {
             title,
             creator: {id: "user-id", login: "user-login"},
             owner: {id: "workspace-id", login: "workspace-login"},
-            latestCreatedDeployId: null
+            latestCreatedDeployId: null,
+            automatic_builds_enabled: null,
+            build_environment_id: null,
+            source: null
           } satisfies GetProjectResponse)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 401 && status !== 403);
@@ -206,7 +208,10 @@ class ObservableApiMock {
             title: "Mock Project",
             owner,
             creator,
-            latestCreatedDeployId: null
+            latestCreatedDeployId: null,
+            automatic_builds_enabled: null,
+            build_environment_id: null,
+            source: null
           } satisfies GetProjectResponse)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
@@ -239,7 +244,10 @@ class ObservableApiMock {
               owner,
               title: p.title ?? "Mock Title",
               accessLevel: p.accessLevel ?? "private",
-              latestCreatedDeployId: null
+              latestCreatedDeployId: null,
+              automatic_builds_enabled: null,
+              build_environment_id: null,
+              source: null
             }))
           } satisfies PaginatedList<GetProjectResponse>)
         : emptyErrorBody;
@@ -262,25 +270,6 @@ class ObservableApiMock {
     this.addHandler((pool) =>
       pool
         .intercept({path: `/cli/project/${projectId}/deploy`, method: "POST", headers: headersMatcher(headers)})
-        .reply(status, response, {headers: {"content-type": "application/json"}})
-    );
-    return this;
-  }
-
-  handleGetProjectEnvironment({
-    projectId,
-    environment,
-    status = 200
-  }: {
-    projectId: string;
-    environment?: GetProjectEnvironmentResponse;
-    status?: number;
-  }): ObservableApiMock {
-    const response = status == 200 ? JSON.stringify(environment) : emptyErrorBody;
-    const headers = authorizationHeader(status !== 403);
-    this.addHandler((pool) =>
-      pool
-        .intercept({path: `/cli/project/${projectId}/environment`, method: "GET", headers: headersMatcher(headers)})
         .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
