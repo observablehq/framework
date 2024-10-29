@@ -53,7 +53,7 @@ export async function build(
   {config}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
-  const {root, loaders} = config;
+  const {root, loaders, title} = config;
   Telemetry.record({event: "build", step: "start"});
 
   // Prepare for build (such as by emptying the existing output root).
@@ -75,9 +75,9 @@ export async function build(
   let pageCount = 0;
   const pagePaths = new Set<string>();
 
-  const {title} = config;
   const buildManifest: BuildManifest = {
     ...(title && {title}),
+    root,
     pages: [],
     modules: [],
     files: [],
@@ -513,6 +513,7 @@ export class FileBuildEffects implements BuildEffects {
 
 export interface BuildManifest {
   title?: string;
+  root: string;
   pages: {path: string; title?: string | null; source?: string}[];
   modules: {path: string; source?: string}[];
   files: {path: string; source?: string}[];

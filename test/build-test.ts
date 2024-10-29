@@ -158,7 +158,9 @@ describe("build", () => {
     const effects = new LoggingBuildEffects(outputDir, cacheDir);
     await build({config}, effects);
     effects.buildManifest!.pages.sort((a, b) => ascending(a.path, b.path));
-    assert.deepEqual(effects.buildManifest, {
+    const {root, ...manifest} = effects.buildManifest!;
+    assert.equal(typeof root, "string");
+    assert.deepEqual(manifest, {
       pages: [
         {path: "/", title: "Hello, world!", source: "/index.md"},
         {path: "/cities/", title: "Cities", source: "/cities/index.md"},

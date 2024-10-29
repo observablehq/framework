@@ -744,7 +744,14 @@ describe("deploy", () => {
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),
       fixedOutputStatTime: new Date("2024-03-10"),
-      buildManifest: {pages: [{path: "/", title: "Build test case"}], modules: [], files: [], _file: [], _import: []}
+      buildManifest: {
+        root: "src/",
+        pages: [{path: "/", title: "Build test case"}],
+        modules: [],
+        files: [],
+        _file: [],
+        _import: []
+      }
     });
     effects.clack.inputs = ["fix some bugs"]; // "what changed?"
     await deploy(TEST_OPTIONS, effects);
