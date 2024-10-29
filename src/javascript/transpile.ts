@@ -7,6 +7,7 @@ import {isPathImport, relativePath, resolvePath, resolveRelativePath} from "../p
 import {getModuleResolver} from "../resolvers.js";
 import type {Params} from "../route.js";
 import {Sourcemap} from "../sourcemap.js";
+import annotate from "./annotate.js";
 import type {FileExpression} from "./files.js";
 import {findFiles} from "./files.js";
 import type {ExportNode, ImportNode} from "./imports.js";
@@ -101,7 +102,7 @@ export async function transpileModule(
 
   async function rewriteImportSource(source: StringLiteral) {
     const specifier = getStringLiteralValue(source);
-    output.replaceLeft(source.start, source.end, JSON.stringify(await resolveImport(specifier)));
+    output.replaceLeft(source.start, source.end, annotate(await resolveImport(specifier)));
   }
 
   for (const {name, node} of findFiles(body, path, input)) {
@@ -111,17 +112,15 @@ export async function transpileModule(
     output.replaceLeft(
       source.start,
       source.end,
-      `${JSON.stringify(
+      `${
         info
-          ? {
-              name: p,
-              mimeType: mime.getType(name) ?? undefined,
-              path: relativePath(servePath, resolveFile(name)),
-              lastModified: info.mtimeMs,
-              size: info.size
-            }
-          : p
-      )}, import.meta.url`
+          ? `{"name":${JSON.stringify(p)},"mimeType":${JSON.stringify(
+              mime.getType(name) ?? undefined
+            )},"path":${annotate(relativePath(servePath, resolveFile(name)))},"lastModified":${JSON.stringify(
+              info.mtimeMs
+            )},"size":${JSON.stringify(info.size)}}`
+          : JSON.stringify(p)
+      }, import.meta.url`
     );
   }
 
@@ -137,7 +136,7 @@ export async function transpileModule(
     if (isImportMetaResolve(node) && isStringLiteral(source)) {
       const value = getStringLiteralValue(source);
       const resolution = isPathImport(value) && !isJavaScript(value) ? resolveFile(value) : await resolveImport(value);
-      output.replaceLeft(source.start, source.end, JSON.stringify(resolution));
+      output.replaceLeft(source.start, source.end, annotate(resolution));
     }
   }
 
@@ -205,7 +204,7 @@ function rewriteImportDeclarations(
   for (const node of declarations) {
     output.delete(node.start, node.end + +(output.input[node.end] === "\n"));
     specifiers.push(rewriteImportSpecifiers(node));
-    imports.push(`import(${JSON.stringify(resolve(getStringLiteralValue(node.source as StringLiteral)))})`);
+    imports.push(`import(${annotate(resolve(getStringLiteralValue(node.source as StringLiteral)))})`);
   }
   if (declarations.length > 1) {
     output.insertLeft(0, `const [${specifiers.join(", ")}] = await Promise.all([${imports.join(", ")}]);\n`);
