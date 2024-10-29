@@ -158,7 +158,10 @@ describe("build", () => {
     const effects = new LoggingBuildEffects(outputDir, cacheDir);
     await build({config}, effects);
     effects.buildManifest!.pages.sort((a, b) => ascending(a.path, b.path));
-    const {root, ...manifest} = effects.buildManifest!;
+    const {
+      config: {root},
+      ...manifest
+    } = effects.buildManifest!;
     assert.equal(typeof root, "string");
     assert.deepEqual(manifest, {
       pages: [

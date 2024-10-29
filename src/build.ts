@@ -77,7 +77,7 @@ export async function build(
 
   const buildManifest: BuildManifest = {
     ...(title && {title}),
-    root,
+    config: {root},
     pages: [],
     modules: [],
     files: [],
@@ -513,7 +513,7 @@ export class FileBuildEffects implements BuildEffects {
 
 export interface BuildManifest {
   title?: string;
-  root: string;
+  config: {root: string};
   pages: {path: string; title?: string | null; source?: string}[];
   modules: {path: string; source?: string}[];
   files: {path: string; source?: string}[];

@@ -745,7 +745,7 @@ describe("deploy", () => {
       fixedInputStatTime: new Date("2024-03-09"),
       fixedOutputStatTime: new Date("2024-03-10"),
       buildManifest: {
-        root: "src/",
+        config: {root: "src"},
         pages: [{path: "/", title: "Build test case"}],
         modules: [],
         files: [],
