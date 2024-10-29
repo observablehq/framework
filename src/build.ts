@@ -78,17 +78,12 @@ export async function build(
 
   const {title} = config;
   const buildManifest: BuildManifest = {...(title && {title}), pages: [], modules: [], files: []};
-  const addToManifest = (
-    type: string,
-    file: string,
-    {title, path, params}: {title?: string | null; path?: string; params?: Params}
-  ) => {
+  const addToManifest = (type: string, file: string, {title, path}: {title?: string | null; path?: string}) => {
     const source = path == null || path === file.slice(1) ? null : join("/", path);
     buildManifest[type].push({
       path: config.normalizePath(file),
       ...(title != null && {title}),
-      ...(source && {source}),
-      ...(params && {params})
+      ...(source && {source})
     });
   };
 

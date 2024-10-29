@@ -168,9 +168,9 @@ describe("build", () => {
       files: [
         {path: "/weather.txt"},
         {path: "/generated.txt", source: "/generated.txt.ts"},
-        {path: "/parameterized-thing.txt", source: "/parameterized-[page].txt.ts", params: {page: "thing"}}
+        {path: "/parameterized-thing.txt", source: "/parameterized-[page].txt.ts"}
       ],
-      modules: [{path: "/module-exported.js", source: "/module-[type].js", params: {type: "exported"}}]
+      modules: [{path: "/module-exported.js", source: "/module-[type].js"}]
     });
 
     await Promise.all([inputDir, cacheDir, outputDir].map((dir) => rm(dir, {recursive: true}))).catch(() => {});
