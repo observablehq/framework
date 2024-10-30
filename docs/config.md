@@ -309,7 +309,7 @@ By default "json" and "parquet" are installed, but not loaded (since they are au
 
 As a shorthand, you can specify `name: true` to install and load the named extension from the "core" repository. (And `name: false` is shorthand for `{install: false, load: false}`.)
 
-For example, a typical configuration for a geospatial data app might install and load "spatial" from "core" and "h3" from "community":
+For example, a typical configuration for a geospatial data app might install and load “spatial” from `core` and “h3” from `community`:
 
 ```js run=false
 duckdb: {
