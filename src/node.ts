@@ -13,6 +13,7 @@ import type {AstNode, OutputChunk, Plugin, ResolveIdResult} from "rollup";
 import {rollup} from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import {prepareOutput, toOsPath} from "./files.js";
+import annotate from "./javascript/annotate.js";
 import type {ImportReference} from "./javascript/imports.js";
 import {isJavaScript, parseImports} from "./javascript/imports.js";
 import {parseNpmSpecifier, rewriteNpmImports} from "./npm.js";
@@ -86,7 +87,7 @@ function isBadCommonJs(specifier: string): boolean {
 }
 
 function shimCommonJs(specifier: string, require: NodeRequire): string {
-  return `export {${Object.keys(require(specifier))}} from ${JSON.stringify(specifier)};\n`;
+  return `export {${Object.keys(require(specifier))}} from ${annotate(specifier)};\n`;
 }
 
 async function bundle(

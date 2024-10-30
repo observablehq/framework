@@ -1,5 +1,4 @@
 import {getObservableUiOrigin} from "./observableApiClient.js";
-import type {TtyColor} from "./tty.js";
 import {bold, magenta} from "./tty.js";
 
 export function commandInstruction(
@@ -7,9 +6,12 @@ export function commandInstruction(
   {
     color = (s) => magenta(bold(s)),
     env = process.env
-  }: {color?: TtyColor | null; env?: Record<string, string | undefined>} = {}
+  }: {
+    color?: ((s: string) => string) | null;
+    env?: Record<string, string | undefined>;
+  } = {}
 ): string {
-  if (!color) color = (s) => s;
+  color ??= (s) => s;
 
   const prefix = env["npm_config_user_agent"]?.includes("yarn/")
     ? "yarn observable"
