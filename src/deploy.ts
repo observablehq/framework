@@ -18,7 +18,7 @@ import {visitFiles} from "./files.js";
 import type {Logger} from "./logger.js";
 import type {AuthEffects} from "./observableApiAuth.js";
 import {defaultEffects as defaultAuthEffects, formatUser, loginInner, validWorkspaces} from "./observableApiAuth.js";
-import {ObservableApiClient} from "./observableApiClient.js";
+import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
 import type {
   DeployManifestFile,
   GetCurrentUserResponse,
@@ -35,6 +35,8 @@ import {bold, defaultEffects as defaultTtyEffects, faint, inverse, link, underli
 const DEPLOY_POLL_MAX_MS = 1000 * 60 * 5;
 const DEPLOY_POLL_INTERVAL_MS = 1000 * 5;
 const BUILD_AGE_WARNING_MS = 1000 * 60 * 5;
+
+const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
 export function formatGitUrl(url: string) {
   return new URL(url).pathname.slice(1).replace(/\.git$/, "");
@@ -252,18 +254,20 @@ class Deployer {
           .map((d) => d.split(/\s/g));
         const gitHub = remotes.find(([, url]) => url.startsWith("https://github.com/"));
         if (gitHub) {
-          const repoName = formatGitUrl(gitHub[1]);
+          const [ownerName, repoName] = formatGitUrl(gitHub[1]).split("/");
           // Get current branch
           const branch = (
             await promisify(exec)("git rev-parse --abbrev-ref HEAD", {cwd: this.deployOptions.config.root})
           ).stdout;
-          let authedRepo = await this.apiClient.getGitHubRepository(repoName);
+          let authedRepo = await this.apiClient.getGitHubRepository(ownerName, repoName);
           if (!authedRepo) {
-            // repo not auth’ed; link to auth page and poll for auth
-            // TODO: link to internal page that bookends the flow and handles the no-oauth-token case more gracefully
+            // Repo is not authorized; link to auth page and poll for auth
+            const authUrl = new URL("/auth-github", OBSERVABLE_UI_ORIGIN);
+            authUrl.searchParams.set("owner", ownerName);
+            authUrl.searchParams.set("repo", repoName);
             this.effects.clack.log.info(
               `Authorize Observable to access the ${bold(repoName)} repository: ${link(
-                "https://github.com/apps/observable-data-apps-dev/installations/select_target"
+                authUrl
               )}`
             );
             const spinner = this.effects.clack.spinner();
@@ -275,7 +279,7 @@ class Deployer {
                 spinner.stop("Waiting for repository to be authorized timed out.");
                 throw new CliError("Repository authorization failed");
               }
-              authedRepo = await this.apiClient.getGitHubRepository(repoName);
+              authedRepo = await this.apiClient.getGitHubRepository(ownerName, repoName);
               if (authedRepo) spinner.stop("Repository authorized.");
             }
           }

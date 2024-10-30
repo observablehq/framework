@@ -126,9 +126,8 @@ export class ObservableApiClient {
     return await this._fetch<GetProjectResponse>(url, {method: "GET"});
   }
 
-  async getGitHubRepository(repoName): Promise<GetGitHubRepositoryResponse | null> {
-    const [owner, repo] = repoName.split("/");
-    const url = new URL(`/cli/github/repository?owner=${owner}&repo=${repo}`, this._apiOrigin);
+  async getGitHubRepository(ownerName, repoName): Promise<GetGitHubRepositoryResponse | null> {
+    const url = new URL(`/cli/github/repository?owner=${ownerName}&repo=${repoName}`, this._apiOrigin);
     try {
       return await this._fetch<GetGitHubRepositoryResponse>(url, {method: "GET"});
     } catch (err) {
