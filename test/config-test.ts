@@ -4,6 +4,22 @@ import MarkdownIt from "markdown-it";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
 import {LoaderResolver} from "../src/loader.js";
 
+const DUCKDB_DEFAULTS = {
+  bundles: ["eh", "mvp"],
+  extensions: {
+    json: {
+      install: true,
+      load: false,
+      source: "https://extensions.duckdb.org"
+    },
+    parquet: {
+      install: true,
+      load: false,
+      source: "https://extensions.duckdb.org"
+    }
+  }
+};
+
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   it("imports the config file at the specified root", async () => {
@@ -44,19 +60,7 @@ describe("readConfig(undefined, root)", () => {
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: null,
       watchPath: resolve("test/input/build/config/observablehq.config.js"),
-      duckdb: {
-        bundles: ["eh", "mvp"],
-        extensions: {
-          json: {
-            load: false,
-            source: "https://extensions.duckdb.org"
-          },
-          parquet: {
-            load: false,
-            source: "https://extensions.duckdb.org"
-          }
-        }
-      }
+      duckdb: DUCKDB_DEFAULTS
     });
   });
   it("returns the default config if no config file is found", async () => {
@@ -85,19 +89,7 @@ describe("readConfig(undefined, root)", () => {
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: null,
       watchPath: undefined,
-      duckdb: {
-        bundles: ["eh", "mvp"],
-        extensions: {
-          json: {
-            load: false,
-            source: "https://extensions.duckdb.org"
-          },
-          parquet: {
-            load: false,
-            source: "https://extensions.duckdb.org"
-          }
-        }
-      }
+      duckdb: DUCKDB_DEFAULTS
     });
   });
 });
@@ -319,5 +311,68 @@ describe("mergeToc(spec, toc)", () => {
     assert.deepStrictEqual(mergeToc({show: true}, toc), {label: "Contents", show: true});
     assert.deepStrictEqual(mergeToc({show: undefined}, toc), {label: "Contents", show: true});
     assert.deepStrictEqual(mergeToc({}, toc), {label: "Contents", show: true});
+  });
+});
+
+describe("normalizeConfig(duckdb)", () => {
+  const root = "";
+  it("uses the defaults", () => {
+    const {duckdb} = config({}, root);
+    assert.deepEqual(duckdb, DUCKDB_DEFAULTS);
+  });
+  it("supports install:false and load:false", () => {
+    const {duckdb} = config({duckdb: {extensions: {json: {install: false, load: false}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      json: {
+        install: false,
+        load: false,
+        source: "https://extensions.duckdb.org"
+      }
+    });
+  });
+  it("supports core, community and https:// sources", () => {
+    const {duckdb} = config(
+      {
+        duckdb: {
+          extensions: {foo: {source: "core"}, bar: {source: "community"}, baz: {source: "https://custom-domain"}}
+        }
+      },
+      root
+    );
+    assert.deepEqual(duckdb.extensions, {
+      foo: {
+        install: true,
+        load: true,
+        source: "https://extensions.duckdb.org"
+      },
+      bar: {
+        install: true,
+        load: true,
+        source: "https://community-extensions.duckdb.org"
+      },
+      baz: {
+        install: true,
+        load: true,
+        source: "https://custom-domain"
+      }
+    });
+  });
+  it("supports shorthand", () => {
+    const {duckdb} = config({duckdb: {extensions: {foo: true, bar: false}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      foo: {
+        install: true,
+        load: true,
+        source: "https://extensions.duckdb.org"
+      },
+      bar: {
+        install: false,
+        load: false,
+        source: "https://extensions.duckdb.org"
+      }
+    });
+  });
+  it("rejects illegal names", () => {
+    assert.throws(() => config({duckdb: {extensions: {"*^/": true}}}, root));
   });
 });
