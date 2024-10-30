@@ -205,7 +205,7 @@ class Deployer {
 
   private async cloudBuild(deployTarget: DeployTargetInfo) {
     if (deployTarget.create) {
-      throw new Error("Incorrect deployTarget state");
+      throw new Error("Incorrect deploy target state");
     }
     const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
     await this.apiClient.postProjectBuild(deployTarget.project.id);
@@ -238,7 +238,7 @@ class Deployer {
 
   private async maybeLinkGitHub(deployTarget: DeployTargetInfo): Promise<boolean> {
     if (deployTarget.create) {
-      throw new Error("Incorrect deployTarget state");
+      throw new Error("Incorrect deploy target state");
     }
     if (!this.effects.isTty) return false;
     if (deployTarget.project.build_environment_id && deployTarget.project.source) {
