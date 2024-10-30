@@ -197,8 +197,8 @@ async function registerExtensions(db, {load}) {
     await Promise.all(
       manifest.extensions.map(([name, {[activePlatform]: ref, load: l}]) =>
         connection
-          .query(`INSTALL ${name} FROM '${import.meta.resolve(`../..${ref}`)}'`)
-          .then(() => (load ? load.includes(name) : l) && connection.query(`LOAD ${name}`))
+          .query(`INSTALL "${name}" FROM '${ref.startsWith("https://") ? ref : import.meta.resolve(`../..${ref}`)}'`)
+          .then(() => (load ? load.includes(name) : l) && connection.query(`LOAD "${name}"`))
       )
     );
   } finally {

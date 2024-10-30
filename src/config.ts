@@ -515,15 +515,16 @@ function normalizeDuckDB(spec: unknown): DuckDBConfig {
   const extensions: {[name: string]: any} = {};
   for (const [name, config] of Object.entries(spec?.["extensions"] ?? {json: {load: false}, parquet: {load: false}})) {
     if (!/^\w+$/.test(name)) throw new Error(`illegal extension name ${name}`);
-    if (config) {
+    if (config != null) {
       extensions[name] =
         config === true
-          ? {load: true, source: duckDBExtensionSource()}
+          ? {load: true, install: true, source: duckDBExtensionSource()}
           : config === false
-          ? {install: false}
+          ? {load: false, install: false, source: duckDBExtensionSource()}
           : {
               source: duckDBExtensionSource(config["source"]),
-              load: config["load"] === undefined ? true : Boolean(config["load"])
+              install: Boolean(config["install"] ?? true),
+              load: Boolean(config["load"] ?? true)
             };
     }
   }

@@ -10,7 +10,13 @@ export const DUCKDBWASMVERSION = "1.29.0";
 export const DUCKDBVERSION = "1.1.1";
 export const DUCKDBBUNDLES = ["eh", "mvp"];
 
-async function getDuckDBExtension(root, platform, source, name, aliases) {
+async function getDuckDBExtension(
+  root: string,
+  platform: string,
+  source: string,
+  name: string,
+  aliases?: Map<string, string>
+) {
   let ext = await resolveDuckDBExtension(root, platform, source, name);
   if (aliases?.has(ext)) ext = aliases.get(ext)!;
   return dirname(dirname(dirname(ext)));
@@ -34,7 +40,7 @@ export async function getDuckDBManifest(
                 await Promise.all(
                   duckdb.bundles.map(async (platform) => [
                     platform,
-                    await getDuckDBExtension(root, platform, source, name, aliases)
+                    install ? await getDuckDBExtension(root, platform, source, name, aliases) : source
                   ])
                 )
               )
