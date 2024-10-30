@@ -299,17 +299,23 @@ export default {
 
 ## duckdb <a href="https://github.com/observablehq/framework/pull/1734" class="observablehq-version-badge" data-version="prerelease" title="Added in #1734"></a>
 
-The **duckdb** option specifies the list of DuckDB [extensions](./sql#extensions) that you want to self-host and make available in the `sql` and `DuckDBClient` instances.
+The **duckdb** option allows you to specify the DuckDB [extensions](./sql#extensions) that you want to self-host and make available in the `sql` and `DuckDBClient` instances.
 
-Its **install** key is an array of the names of extensions to self-host; it defaults to `["json", "parquet"]`. The optional **load** key is an array of names of extensions to load immediately. It defaults to the empty array (since "json" and "parquet" are autoloaded, there is no reason to load them before we actually need them). Lastly, the **source** key is an object of key:value pairs representing the repo used to download each extension. The source repo for any name defaults to `core`, which points to `https://extensions.duckdb.org/`. You can use `core`, `community` (which points to `https://community-extensions.duckdb.org/`), or a custom URL:
+Its **extensions** property is an object where keys are extension names, and values describe the **source** for the extension, and whether to **install** (self-host) it, and **load** it immediately.
+
+The **source** property is the reference of the repo from which to download the extension. It defaults to `core`, which points to `https://extensions.duckdb.org/`. You can use `core`, `community` (which points to `https://community-extensions.duckdb.org/`), or a custom URL, for example if you develop your own extensions.
+
+By default "json" and "parquet" are installed, but not loaded (since they are autoloaded, there is no reason to load them before we actually need them). If you don’t want to self-host an extension, set its **install** property to false. You will still be able to load it from its source by calling `INSTALL` and `LOAD`.
+
+As a shorthand, you can specify `name: true` to install and load the named extension from the "core" repository. (And `name: false` is shorthand for `{install: false, load: false}`.)
+
+For example, a typical configuration for a geospatial data app might install and load "spatial" from "core" and "h3" from "community":
 
 ```js run=false
 duckdb: {
-  install: ["json", "spatial", "h3", "custom"],
-  load: ["spatial"],
-  source: {
-    h3: "community",
-    custom: "https://my-custom-repo.tld"
+  extensions: {
+    spatial: true,
+    h3: {source: "community"}
   }
 }
 ```
