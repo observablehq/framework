@@ -253,6 +253,7 @@ class Deployer {
           .filter((d) => d)
           .map((d) => d.split(/\s/g));
         const gitHub = remotes.find(([, url]) => url.startsWith("https://github.com/"));
+        // TODO: validate "Your branch is up to date" & "nothing to commit, working tree clean"
         if (gitHub) {
           const [ownerName, repoName] = formatGitUrl(gitHub[1]).split("/");
           // Get current branch
@@ -522,7 +523,7 @@ class Deployer {
     }
 
     // Disables continuous deployment if there’s no env/source & we can’t link GitHub
-    if (continuousDeployment) continuousDeployment = await this.maybeLinkGitHub(deployTarget);
+    if (continuousDeployment) await this.maybeLinkGitHub(deployTarget);
 
     const newDeployConfig = {
       projectId: deployTarget.project.id,
