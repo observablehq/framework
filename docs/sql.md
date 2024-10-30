@@ -219,29 +219,29 @@ The self-hosted extensions are immediately available in all the `sql` code block
 SELECT bbox FROM read_json('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
 ```
 
-Likewise, with the "spatial" extension configured, you could directly run:
+Likewise, with the “spatial” extension configured, you could directly run:
 
 ```sql echo run=false
 SELECT ST_Area('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'::GEOMETRY) as area;
 ```
 
-If you use an extension that is not self-hosted, DuckDB falls back to loading it directly from DuckDB’s servers. For example, this documentation does not have the "inet" extension configured for self-hosting.
+If you use an extension that is not self-hosted, DuckDB falls back to loading it directly from DuckDB’s servers. For example, this documentation does not have the “inet” extension configured for self-hosting.
 
 ```sql echo
 SELECT '127.0.0.1'::INET AS ipv4, '2001:db8:3c4d::/48'::INET AS ipv6;
 ```
 
-During development, you can experiment freely with extensions that are not self-hosted. For example to try out the "h3" `community` extension:
+During development, you can experiment freely with extensions that are not self-hosted. For example to try out the “h3” `community` extension:
 
 ```sql echo run=false
-INSTALL "h3" FROM community;
-LOAD "h3";
+INSTALL h3 FROM community;
+LOAD h3;
 SELECT format('{:x}', h3_latlng_to_cell(37.77, -122.43, 9)) AS cell_id;
 ```
 
 <small>(this returns the H3 cell [`892830828a3ffff`](https://h3geo.org/#hex=892830828a3ffff))</small>
 
-However, for performance and ergonomy, we strongly recommend adding all the extensions you actually use to your site’s configuration.
+For performance and ergonomy, we strongly recommend adding all the extensions you actually use to the [configuration](./config#duckdb).
 
 <div class="tip">
 
