@@ -1,5 +1,3 @@
-# Python Pageloader Templates
+# Pizza Paradise
 
-This is the home page of your new Observable Framework app.
-
-For more, see <https://observablehq.com/framework/getting-started>.
+This is an example of using the Pizza Paradise data set in Python. See the pages in the sidebar for each day.
