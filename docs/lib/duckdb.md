@@ -110,8 +110,16 @@ SELECT * FROM quakes ORDER BY updated DESC;
 
 DuckDB’s [extensions](../sql#extensions)<a href="https://github.com/observablehq/framework/pull/1734" class="observablehq-version-badge" data-version="prerelease" title="Added in #1734"></a> are supported.
 
-By default, `DuckDBClient.of` and `DuckDBClient.sql` load the (self-hosted) extensions referenced in the [configuration](../config#duckdb). You can pass an options object with a **load** key set to a different list if you want a different environment:
+By default, `DuckDBClient.of` and `DuckDBClient.sql` load the extensions referenced in the [configuration](../config#duckdb). If you want a different environment, you can pass options listing the extensions you want to load.
+
+For example, pass an empty array to instantiate a DuckDBClient with no loaded extensions (even if your configuration lists several extensions):
 
 ```js echo run=false
-const geodb = await DuckDBClient.of({}, {load: ["spatial", "h3"]});
+const simpledb = DuckDBClient.of({}, {load: []});
+```
+
+Or, create a geospatial tagged template literal:
+
+```js echo run=false
+const geosql = DuckDBClient.sql({}, {load: ["spatial", "h3"]});
 ```
