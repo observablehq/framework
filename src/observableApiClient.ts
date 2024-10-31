@@ -126,11 +126,20 @@ export class ObservableApiClient {
     return await this._fetch<GetProjectResponse>(url, {method: "GET"});
   }
 
-  async getGitHubRepository(ownerName, repoName): Promise<GetGitHubRepositoryResponse | null> {
-    const url = new URL(`/cli/github/repository?owner=${ownerName}&repo=${repoName}`, this._apiOrigin);
+  async getGitHubRepository(
+    props: {ownerName: string; repoName: string} | {providerId: string}
+  ): Promise<GetGitHubRepositoryResponse | null> {
+    let url: URL;
+    if ("providerId" in props) {
+      url = new URL(`/cli/github/repository?provider_id=${props.providerId}`, this._apiOrigin);
+    } else {
+      url = new URL(`/cli/github/repository?owner=${props.ownerName}&repo=${props.repoName}`, this._apiOrigin);
+    }
     try {
       return await this._fetch<GetGitHubRepositoryResponse>(url, {method: "GET"});
     } catch (err) {
+      // TODO: err.details.errors may be [{code: "NO_GITHUB_TOKEN"}] or [{code: "NO_REPO_ACCESS"}],
+      // which could be handled separately
       return null;
     }
   }
