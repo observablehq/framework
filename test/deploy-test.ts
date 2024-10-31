@@ -748,9 +748,7 @@ describe("deploy", () => {
         config: {root: "src"},
         pages: [{path: "/", title: "Build test case"}],
         modules: [],
-        files: [],
-        _file: [],
-        _import: []
+        files: []
       }
     });
     effects.clack.inputs = ["fix some bugs"]; // "what changed?"

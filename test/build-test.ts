@@ -175,14 +175,7 @@ describe("build", () => {
         {path: "/generated.txt", source: "/generated.txt.ts"},
         {path: "/parameterized-thing.txt", source: "/parameterized-[page].txt.ts"}
       ],
-      modules: [{path: "/module-exported.js", source: "/module-[type].js"}],
-      _file: [
-        {path: "/_file/weather.c2333a7e.txt", source: "/weather.txt"},
-        {path: "/_file/generated.2cf24dba.txt", source: "/generated.txt.ts"},
-        {path: "/_file/internal.2cf24dba.txt", source: "/internal.txt.ts"},
-        {path: "/_file/parameterized-thing.2cf24dba.txt", source: "/parameterized-[page].txt.ts"}
-      ],
-      _import: [{path: "/_import/module-exported.281d2524.js", source: "/module-[type].js"}]
+      modules: [{path: "/module-exported.js", source: "/module-[type].js"}]
     });
 
     await Promise.all([inputDir, cacheDir, outputDir].map((dir) => rm(dir, {recursive: true}))).catch(() => {});
