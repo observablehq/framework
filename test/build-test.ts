@@ -151,7 +151,13 @@ describe("build", () => {
       {
         root: inputDir,
         output: outputDir,
-        dynamicPaths: ["/module-exported.js", "/weather.txt", "/generated.txt", "/parameterized-thing.txt", "/parameterized-[page].txt"]
+        dynamicPaths: [
+          "/module-exported.js",
+          "/weather.txt",
+          "/generated.txt",
+          "/parameterized-thing.txt",
+          "/parameterized-[page].txt"
+        ]
       },
       inputDir
     );
