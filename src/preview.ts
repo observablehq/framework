@@ -181,8 +181,8 @@ export class PreviewServer {
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
 
-        // Normalize the pathname (e.g., adding ".html" if cleanUrls is false,
-        // dropping ".html" if cleanUrls is true) and redirect if necessary.
+        // Normalize the pathname (e.g., adding ".html" or removing ".html"
+        // based on preserveExtension) and redirect if necessary.
         const normalizedPathname = encodeURI(config.normalizePath(pathname));
         if (url.pathname !== normalizedPathname) {
           res.writeHead(302, {Location: normalizedPathname + url.search});

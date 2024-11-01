@@ -205,7 +205,7 @@ describe("normalizeConfig(spec, root)", () => {
   });
 });
 
-describe("normalizePath(path) with {cleanUrls: false}", () => {
+describe("normalizePath(path) with {cleanUrls: false} (deprecated)", () => {
   const root = "test/input";
   const normalize = config({cleanUrls: false}, root).normalizePath;
   it("appends .html to extension-less links", () => {
@@ -252,7 +252,7 @@ describe("normalizePath(path) with {cleanUrls: false}", () => {
   });
 });
 
-describe("normalizePath(path) with {cleanUrls: true}", () => {
+describe("normalizePath(path) with {cleanUrls: true} (deprecated)", () => {
   const root = "test/input";
   const normalize = config({cleanUrls: true}, root).normalizePath;
   it("does not append .html to extension-less links", () => {
@@ -298,6 +298,156 @@ describe("normalizePath(path) with {cleanUrls: true}", () => {
     assert.strictEqual(normalize("../foo"), "../foo");
     assert.strictEqual(normalize("./foo.png"), "./foo.png");
     assert.strictEqual(normalize("../foo.png"), "../foo.png");
+  });
+});
+
+describe("normalizePath(path) with {preserveExtension: true}", () => {
+  const root = "test/input";
+  const normalize = config({preserveExtension: true}, root).normalizePath;
+  it("appends .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo.html");
+  });
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.html"), "foo.html");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
+  });
+  it("preserves absolute paths", () => {
+    assert.strictEqual(normalize("/foo"), "/foo.html");
+    assert.strictEqual(normalize("/foo.html"), "/foo.html");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "../sub/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("foo"), "foo.html");
+    assert.strictEqual(normalize("./foo"), "./foo.html");
+    assert.strictEqual(normalize("../foo"), "../foo.html");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
+  });
+});
+
+describe("normalizePath(path) with {preserveExtension: false}", () => {
+  const root = "test/input";
+  const normalize = config({preserveExtension: false}, root).normalizePath;
+  it("does not append .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo");
+  });
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
+  });
+  it("removes .html from extensioned links", () => {
+    assert.strictEqual(normalize("foo.html"), "foo");
+  });
+  it("preserves absolute paths", () => {
+    assert.strictEqual(normalize("/foo"), "/foo");
+    assert.strictEqual(normalize("/foo.html"), "/foo");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "../sub/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("foo"), "foo");
+    assert.strictEqual(normalize("./foo"), "./foo");
+    assert.strictEqual(normalize("../foo"), "../foo");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
+  });
+});
+
+describe("normalizePath(path) with {preserveIndex: true}", () => {
+  const root = "test/input";
+  const normalize = config({preserveIndex: true}, root).normalizePath;
+  it("preserves index links", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/index");
+    assert.strictEqual(normalize("foo/index.html"), "foo/index");
+    assert.strictEqual(normalize("../index"), "../index");
+    assert.strictEqual(normalize("../index.html"), "../index");
+    assert.strictEqual(normalize("./index"), "./index");
+    assert.strictEqual(normalize("./index.html"), "./index");
+    assert.strictEqual(normalize("/index"), "/index");
+    assert.strictEqual(normalize("/index.html"), "/index");
+    assert.strictEqual(normalize("index"), "index");
+    assert.strictEqual(normalize("index.html"), "index");
+  });
+  it("converts links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/index");
+    assert.strictEqual(normalize("./"), "./index");
+    assert.strictEqual(normalize("../"), "../index");
+    assert.strictEqual(normalize("foo/"), "foo/index");
+    assert.strictEqual(normalize("./foo/"), "./foo/index");
+    assert.strictEqual(normalize("../foo/"), "../foo/index");
+    assert.strictEqual(normalize("../sub/"), "../sub/index");
+  });
+});
+
+describe("normalizePath(path) with {preserveIndex: true, preserveExtension: true}", () => {
+  const root = "test/input";
+  const normalize = config({preserveIndex: true, preserveExtension: true}, root).normalizePath;
+  it("preserves index links", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/index.html");
+    assert.strictEqual(normalize("foo/index.html"), "foo/index.html");
+    assert.strictEqual(normalize("../index"), "../index.html");
+    assert.strictEqual(normalize("../index.html"), "../index.html");
+    assert.strictEqual(normalize("./index"), "./index.html");
+    assert.strictEqual(normalize("./index.html"), "./index.html");
+    assert.strictEqual(normalize("/index"), "/index.html");
+    assert.strictEqual(normalize("/index.html"), "/index.html");
+    assert.strictEqual(normalize("index"), "index.html");
+    assert.strictEqual(normalize("index.html"), "index.html");
+  });
+  it("converts links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/index.html");
+    assert.strictEqual(normalize("./"), "./index.html");
+    assert.strictEqual(normalize("../"), "../index.html");
+    assert.strictEqual(normalize("foo/"), "foo/index.html");
+    assert.strictEqual(normalize("./foo/"), "./foo/index.html");
+    assert.strictEqual(normalize("../foo/"), "../foo/index.html");
+    assert.strictEqual(normalize("../sub/"), "../sub/index.html");
   });
 });
 
