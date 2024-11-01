@@ -522,7 +522,6 @@ export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
 }
 
-// TODO convert array of names
 // TODO configure bundles?
 function normalizeDuckDB(spec: unknown): DuckDBConfig {
   const extensions: {[name: string]: DuckDBExtensionConfig} = {};
