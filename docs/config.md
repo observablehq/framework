@@ -303,26 +303,42 @@ export default {
 
 ## duckdb <a href="https://github.com/observablehq/framework/pull/1734" class="observablehq-version-badge" data-version="prerelease" title="Added in #1734"></a>
 
-The **duckdb** option allows you to specify the DuckDB [extensions](./sql#extensions) that you want to self-host and make available in the `sql` and `DuckDBClient` instances.
-
-Its **extensions** property is an object where keys are extension names, and values describe the **source** for the extension, and whether to **install** (self-host) it, and **load** it immediately.
-
-The **source** property is the reference of the repo from which to download the extension. It defaults to `core`, which points to `https://extensions.duckdb.org/`. You can use `core`, `community` (which points to `https://community-extensions.duckdb.org/`), or a custom URL, for example if you develop your own extensions.
-
-By default "json" and "parquet" are installed, but not loaded (since they are autoloaded, there is no reason to load them before we actually need them). If you don’t want to self-host an extension, set its **install** property to false. You will still be able to load it from its source by calling `INSTALL` and `LOAD`.
-
-As a shorthand, you can specify `name: true` to install and load the named extension from the "core" repository. (And `name: false` is shorthand for `{install: false, load: false}`.)
-
-For example, a typical configuration for a geospatial data app might install and load “spatial” from `core` and “h3” from `community`:
+The **duckdb** option configures [self-hosting](./lib/duckdb#self-hosting-of-extensions) and loading of [DuckDB extensions](./lib/duckdb#extensions) for use in [SQL code blocks](./sql) and the `sql` and `DuckDBClient` built-ins. For example, a geospatial data app might enable the [`spatial`](https://duckdb.org/docs/extensions/spatial/overview.html) and [`h3`](https://duckdb.org/community_extensions/extensions/h3.html) extensions like so:
 
 ```js run=false
-duckdb: {
-  extensions: {
-    spatial: true,
-    h3: {source: "community"}
+export default {
+  duckdb: {
+    extensions: ["spatial", "h3"]
   }
-}
+};
 ```
+
+The **extensions** option can either be an array of extension names, or an object whose keys are extension names and whose values are configuration options for the given extension, including its **source** repository (defaulting to the keyword _core_ for core extensions, and otherwise _community_; can also be a custom repository URL), whether to **load** it immediately (defaulting to true, except for known extensions that support autoloading), and whether to **install** it (_i.e._ to self-host, defaulting to true). As additional shorthand, you can specify `[name]: true` to install and load the named extension from the default (_core_ or _community_) source repository, or `[name]: string` to install and load the named extension from the given source repository.
+
+The configuration above is equivalent to:
+
+```js run=false
+export default {
+  duckdb: {
+    extensions: {
+      spatial: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      h3: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      }
+    }
+  }
+};
+```
+
+The `json` and `parquet` are configured (and therefore self-hosted) by default. To expressly disable self-hosting of extension, you can set its **install** property to false, or equivalently pass null as the extension configuration object.
+
+For more, see [DuckDB extensions](./lib/duckdb#extensions).
 
 ## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
 

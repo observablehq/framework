@@ -6,9 +6,63 @@ import {faint} from "./tty.js";
 
 const downloadRequests = new Map<string, Promise<string>>();
 
-export const DUCKDBWASMVERSION = "1.29.0";
-export const DUCKDBVERSION = "1.1.1";
-export const DUCKDBBUNDLES = ["eh", "mvp"];
+export const DUCKDB_WASM_VERSION = "1.29.0";
+export const DUCKDB_VERSION = "1.1.1";
+export const DUCKDB_BUNDLES = ["eh", "mvp"];
+
+// https://duckdb.org/docs/extensions/core_extensions.html
+export const DUCKDB_CORE_EXTENSIONS: [name: string, autoload: boolean][] = [
+  ["arrow", false],
+  ["autocomplete", true],
+  ["aws", true],
+  ["azure", true],
+  ["delta", true],
+  ["excel", true],
+  ["fts", true],
+  ["httpfs", true],
+  ["iceberg", false],
+  ["icu", true],
+  ["inet", true],
+  ["jemalloc", false],
+  ["json", true],
+  ["mysql", false],
+  ["parquet", true],
+  ["postgres", true],
+  ["spatial", false],
+  ["sqlite", true],
+  ["substrait", false],
+  ["tpcds", true],
+  ["tpch", true],
+  ["vss", false]
+];
+
+export async function getDuckDBManifest(
+  duckdb: DuckDBConfig,
+  {root, aliases}: {root: string; aliases?: Map<string, string>}
+) {
+  return {
+    bundles: duckdb.bundles,
+    extensions: await Promise.all(
+      Array.from(Object.entries(duckdb.extensions), ([name, {install, load, source}]) =>
+        (async () => [
+          name,
+          {
+            install,
+            load,
+            ...Object.fromEntries(
+              await Promise.all(
+                duckdb.bundles.map(async (platform) => [
+                  platform,
+                  install ? await getDuckDBExtension(root, platform, source, name, aliases) : source
+                ])
+              )
+            )
+          }
+        ])()
+      )
+    )
+  };
+}
 
 async function getDuckDBExtension(
   root: string,
@@ -20,36 +74,6 @@ async function getDuckDBExtension(
   let ext = await resolveDuckDBExtension(root, platform, source, name);
   if (aliases?.has(ext)) ext = aliases.get(ext)!;
   return dirname(dirname(dirname(ext)));
-}
-
-export async function getDuckDBManifest(
-  duckdb: DuckDBConfig,
-  {root, aliases}: {root: string; aliases?: Map<string, string>}
-) {
-  return {
-    bundles: duckdb.bundles,
-    extensions: await Promise.all(
-      Array.from(Object.entries(duckdb.extensions), ([name, {install, load, source}]) =>
-        (async () => {
-          return [
-            name,
-            {
-              install,
-              load,
-              ...Object.fromEntries(
-                await Promise.all(
-                  duckdb.bundles.map(async (platform) => [
-                    platform,
-                    install ? await getDuckDBExtension(root, platform, source, name, aliases) : source
-                  ])
-                )
-              )
-            }
-          ];
-        })()
-      )
-    )
-  };
 }
 
 /**
@@ -66,20 +90,19 @@ export async function resolveDuckDBExtension(
   repo: string,
   name: string
 ): Promise<string> {
-  if (!repo.startsWith("https://")) throw new Error(`invalid repo: ${repo}`);
   const cache = join(root, ".observablehq", "cache");
   const file = `${name}.duckdb_extension.wasm`;
-  const ref = `${repo}/v${DUCKDBVERSION}/wasm_${platform}/${file}`.slice("https://".length);
-  const path = join("_duckdb", ref);
+  const url = new URL(`v${DUCKDB_VERSION}/wasm_${platform}/${file}`, repo);
+  if (url.protocol !== "https:") throw new Error(`invalid repo: ${repo}`);
+  const path = join("_duckdb", String(url).slice("https://".length));
   const cachePath = join(cache, path);
   if (existsSync(cachePath)) return `/${path}`;
   let promise = downloadRequests.get(cachePath);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async () => {
-    const href = `https://${ref}`;
-    console.log(`duckdb:${href} ${faint("→")} ${cachePath}`);
-    const response = await fetch(href);
-    if (!response.ok) throw new Error(`unable to fetch: ${href}`);
+    console.log(`duckdb:${url} ${faint("→")} ${cachePath}`);
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`unable to fetch: ${url}`);
     await mkdir(dirname(cachePath), {recursive: true});
     await writeFile(cachePath, Buffer.from(await response.arrayBuffer()));
     return `/${path}`;

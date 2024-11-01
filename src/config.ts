@@ -8,7 +8,7 @@ import {pathToFileURL} from "node:url";
 import he from "he";
 import type MarkdownIt from "markdown-it";
 import wrapAnsi from "wrap-ansi";
-import {DUCKDBBUNDLES} from "./duckdb.js";
+import {DUCKDB_BUNDLES, DUCKDB_CORE_EXTENSIONS} from "./duckdb.js";
 import {visitFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
@@ -79,7 +79,19 @@ export interface SearchConfigSpec {
 
 export interface DuckDBConfig {
   bundles: string[];
-  extensions: {[name: string]: {install?: false; load: boolean; source: string}};
+  extensions: {[name: string]: DuckDBExtensionConfig};
+}
+
+export interface DuckDBExtensionConfig {
+  source: string;
+  install: boolean;
+  load: boolean;
+}
+
+interface DuckDBExtensionConfigSpec {
+  source: unknown;
+  install: unknown;
+  load: unknown;
 }
 
 export interface Config {
@@ -510,34 +522,40 @@ export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
 }
 
-function duckDBExtensionSource(source?: string): string {
-  return source === undefined || source === "core"
-    ? "https://extensions.duckdb.org"
-    : source === "community"
-    ? "https://community-extensions.duckdb.org"
-    : (source = String(source)).startsWith("https://")
-    ? source
-    : (() => {
-        throw new Error(`unsupported DuckDB extension source ${source}`);
-      })();
+// TODO convert array of names
+// TODO configure bundles?
+function normalizeDuckDB(spec: unknown): DuckDBConfig {
+  const extensions: {[name: string]: DuckDBExtensionConfig} = {};
+  let extspec: Record<string, unknown> = spec?.["extensions"] ?? {};
+  if (Array.isArray(extspec)) extspec = Object.fromEntries(extspec.map((name) => [name, {}]));
+  if (extspec.json === undefined) extspec = {...extspec, json: false};
+  if (extspec.parquet === undefined) extspec = {...extspec, parquet: false};
+  for (const name in extspec) {
+    if (!/^\w+$/.test(name)) throw new Error(`invalid extension: ${name}`);
+    const vspec = extspec[name];
+    if (vspec == null) continue;
+    const {
+      source = DUCKDB_CORE_EXTENSIONS.some(([n]) => n === name) ? "core" : "community",
+      install = true,
+      load = !DUCKDB_CORE_EXTENSIONS.find(([n]) => n === name)?.[1]
+    } = typeof vspec === "boolean"
+      ? {load: vspec}
+      : typeof vspec === "string"
+      ? {source: vspec}
+      : (vspec as DuckDBExtensionConfigSpec);
+    extensions[name] = {
+      source: normalizeDuckDBSource(String(source)),
+      install: Boolean(install),
+      load: Boolean(load)
+    };
+  }
+  return {bundles: DUCKDB_BUNDLES, extensions};
 }
 
-function normalizeDuckDB(spec: unknown): DuckDBConfig {
-  const extensions: {[name: string]: any} = {};
-  for (const [name, config] of Object.entries(spec?.["extensions"] ?? {json: {load: false}, parquet: {load: false}})) {
-    if (!/^\w+$/.test(name)) throw new Error(`illegal extension name ${name}`);
-    if (config != null) {
-      extensions[name] =
-        config === true
-          ? {load: true, install: true, source: duckDBExtensionSource()}
-          : config === false
-          ? {load: false, install: false, source: duckDBExtensionSource()}
-          : {
-              source: duckDBExtensionSource(config["source"]),
-              install: Boolean(config["install"] ?? true),
-              load: Boolean(config["load"] ?? true)
-            };
-    }
-  }
-  return {bundles: DUCKDBBUNDLES, extensions};
+function normalizeDuckDBSource(source: string): string {
+  if (source === "core") return "https://extensions.duckdb.org/";
+  if (source === "community") return "https://community-extensions.duckdb.org/";
+  const url = new URL(source);
+  if (url.protocol !== "https:") throw new Error(`invalid source: ${source}`);
+  return String(url);
 }

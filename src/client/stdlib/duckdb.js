@@ -32,7 +32,6 @@ import * as duckdb from "npm:@duckdb/duckdb-wasm";
 // Baked-in manifest.
 // eslint-disable-next-line no-undef
 const manifest = DUCKDB_MANIFEST;
-
 const candidates = {
   ...(manifest.bundles.includes("mvp") && {
     mvp: {
@@ -49,7 +48,6 @@ const candidates = {
 };
 const bundle = await duckdb.selectBundle(candidates);
 const activePlatform = manifest.bundles.find((key) => bundle.mainModule === candidates[key].mainModule);
-
 const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
 
 let db;
@@ -179,7 +177,7 @@ export class DuckDBClient {
       config = {...config, query: {...config.query, castBigIntToDouble: true}};
     }
     await db.open(config);
-    await registerExtensions(db, config);
+    await registerExtensions(db, config.extensions);
     await Promise.all(Object.entries(sources).map(([name, source]) => insertSource(db, name, source)));
     return new DuckDBClient(db);
   }
@@ -191,14 +189,14 @@ export class DuckDBClient {
 
 Object.defineProperty(DuckDBClient.prototype, "dialect", {value: "duckdb"});
 
-async function registerExtensions(db, {load}) {
+async function registerExtensions(db, extensions = []) {
   const connection = await db.connect();
   try {
     await Promise.all(
-      manifest.extensions.map(([name, {[activePlatform]: ref, load: l}]) =>
+      manifest.extensions.map(([name, {[activePlatform]: ref, load}]) =>
         connection
           .query(`INSTALL "${name}" FROM '${ref.startsWith("https://") ? ref : import.meta.resolve(`../..${ref}`)}'`)
-          .then(() => (load ? load.includes(name) : l) && connection.query(`LOAD "${name}"`))
+          .then(() => load && extensions.includes(name) && connection.query(`LOAD "${name}"`))
       )
     );
   } finally {

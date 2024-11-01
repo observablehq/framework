@@ -8,14 +8,14 @@ const DUCKDB_DEFAULTS = {
   bundles: ["eh", "mvp"],
   extensions: {
     json: {
+      source: "https://extensions.duckdb.org/",
       install: true,
-      load: false,
-      source: "https://extensions.duckdb.org"
+      load: false
     },
     parquet: {
+      source: "https://extensions.duckdb.org/",
       install: true,
-      load: false,
-      source: "https://extensions.duckdb.org"
+      load: false
     }
   }
 };
@@ -470,13 +470,54 @@ describe("normalizeConfig(duckdb)", () => {
     const {duckdb} = config({}, root);
     assert.deepEqual(duckdb, DUCKDB_DEFAULTS);
   });
-  it("supports install:false and load:false", () => {
+  it("supports install: false and load: false", () => {
     const {duckdb} = config({duckdb: {extensions: {json: {install: false, load: false}}}}, root);
     assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
       json: {
+        source: "https://extensions.duckdb.org/",
         install: false,
-        load: false,
-        source: "https://extensions.duckdb.org"
+        load: false
+      }
+    });
+  });
+  it("supports null", () => {
+    const {duckdb} = config({duckdb: {extensions: {json: null}}}, root);
+    assert.deepEqual(
+      duckdb.extensions,
+      Object.fromEntries(Object.entries(DUCKDB_DEFAULTS.extensions).filter(([name]) => name !== "json"))
+    );
+  });
+  it("defaults load: false for known auto-loading extensions", () => {
+    const {duckdb} = config({duckdb: {extensions: {aws: {}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      aws: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: false
+      }
+    });
+  });
+  it("defaults source: core for known core extensions", () => {
+    const {duckdb} = config({duckdb: {extensions: {mysql: {}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      mysql: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("defaults source: community for unknown extensions", () => {
+    const {duckdb} = config({duckdb: {extensions: {h3: {}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      h3: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
       }
     });
   });
@@ -484,45 +525,108 @@ describe("normalizeConfig(duckdb)", () => {
     const {duckdb} = config(
       {
         duckdb: {
-          extensions: {foo: {source: "core"}, bar: {source: "community"}, baz: {source: "https://custom-domain"}}
+          extensions: {
+            foo: {source: "core"},
+            bar: {source: "community"},
+            baz: {source: "https://custom-domain"}
+          }
         }
       },
       root
     );
     assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
       foo: {
+        source: "https://extensions.duckdb.org/",
         install: true,
-        load: true,
-        source: "https://extensions.duckdb.org"
+        load: true
       },
       bar: {
+        source: "https://community-extensions.duckdb.org/",
         install: true,
-        load: true,
-        source: "https://community-extensions.duckdb.org"
+        load: true
       },
       baz: {
+        source: "https://custom-domain/", // URL normalization
         install: true,
-        load: true,
-        source: "https://custom-domain"
+        load: true
       }
     });
   });
-  it("supports shorthand", () => {
-    const {duckdb} = config({duckdb: {extensions: {foo: true, bar: false}}}, root);
+  it("supports source: string shorthand", () => {
+    const {duckdb} = config(
+      {
+        duckdb: {
+          extensions: {
+            foo: "core",
+            bar: "community",
+            baz: "https://custom-domain"
+          }
+        }
+      },
+      root
+    );
     assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
       foo: {
+        source: "https://extensions.duckdb.org/",
         install: true,
-        load: true,
-        source: "https://extensions.duckdb.org"
+        load: true
       },
       bar: {
-        install: false,
-        load: false,
-        source: "https://extensions.duckdb.org"
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      baz: {
+        source: "https://custom-domain/", // URL normalization
+        install: true,
+        load: true
       }
     });
   });
-  it("rejects illegal names", () => {
-    assert.throws(() => config({duckdb: {extensions: {"*^/": true}}}, root));
+  it("supports load: boolean shorthand", () => {
+    const {duckdb} = config({duckdb: {extensions: {json: true, foo: true, bar: false}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      json: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      foo: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      bar: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: false
+      }
+    });
+  });
+  it("supports sources shorthand", () => {
+    const {duckdb} = config({duckdb: {extensions: ["spatial", "h3"]}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      spatial: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      h3: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("rejects invalid names", () => {
+    assert.throws(() => config({duckdb: {extensions: {"*^/": true}}}, root), /invalid extension/i);
+  });
+  it("rejects invalid sources", () => {
+    assert.throws(() => config({duckdb: {extensions: {foo: "file:///path/to/extension"}}}, root), /invalid source/i);
+    assert.throws(() => config({duckdb: {extensions: {foo: "notasource"}}}, root), /invalid url/i);
   });
 });

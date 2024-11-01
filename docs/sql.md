@@ -29,7 +29,7 @@ sql:
 
 <div class="tip">For performance and reliability, we recommend using local files rather than loading data from external servers at runtime. You can use a <a href="./data-loaders">data loader</a> to take a snapshot of a remote data during build if needed.</div>
 
-You can also register tables via code (say to have sources that are defined dynamically via user input) by defining the `sql` symbol with [DuckDBClient.sql](./lib/duckdb).
+You can also register tables via code (say to have sources that are defined dynamically via user input) by defining the `sql` symbol with [DuckDBClient.sql](./lib/duckdb). To register [DuckDB extensions](./lib/duckdb#extensions), use the [**duckdb** config option](./config#duckdb).
 
 ## SQL code blocks
 
@@ -206,47 +206,3 @@ Inputs.table(await sql([`SELECT * FROM gaia WHERE source_id IN (${[source_ids]})
 When interpolating values into SQL queries, be careful to avoid [SQL injection](https://en.wikipedia.org/wiki/SQL_injection) by properly escaping or sanitizing user input. The example above is safe only because `source_ids` are known to be numeric.
 
 </div>
-
-## Extensions <a href="https://github.com/observablehq/framework/pull/1734" class="observablehq-version-badge" data-version="prerelease" title="Added in #1734"></a>
-
-DuckDB has a flexible extension mechanism that allows for dynamically loading extensions. These may extend DuckDB's functionality by providing support for additional file formats, introducing new types, and domain-specific functionality.
-
-Framework can download and host the extensions of your choice. By default, only "json" and "parquet" are self-hosted, but you can add more by specifying them in the [configuration](./config). The self-hosted extensions are served from the `/_duckdb/` directory with a content-hashed URL, ensuring optimal performance and allowing you to work offline and from a server you control.
-
-The self-hosted extensions are immediately available in all the `sql` code blocks and [DuckDBClient](./lib/duckdb) instances. For example, the query below works instantly since the "json" extension is configured:
-
-```sql echo
-SELECT bbox FROM read_json('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
-```
-
-Likewise, with the “spatial” extension configured, you could directly run:
-
-```sql echo run=false
-SELECT ST_Area('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'::GEOMETRY) as area;
-```
-
-If you use an extension that is not self-hosted, DuckDB falls back to loading it directly from DuckDB’s servers. For example, this documentation does not have the “inet” extension configured for self-hosting.
-
-```sql echo
-SELECT '127.0.0.1'::INET AS ipv4, '2001:db8:3c4d::/48'::INET AS ipv6;
-```
-
-During development, you can experiment freely with extensions that are not self-hosted. For example to try out the “h3” `community` extension:
-
-```sql echo run=false
-INSTALL h3 FROM community;
-LOAD h3;
-SELECT format('{:x}', h3_latlng_to_cell(37.77, -122.43, 9)) AS cell_id;
-```
-
-<small>(this returns the H3 cell [`892830828a3ffff`](https://h3geo.org/#hex=892830828a3ffff))</small>
-
-For performance and ergonomy, we strongly recommend adding all the extensions you actually use to the [configuration](./config#duckdb).
-
-<div class="tip">
-
-To tell which extensions are effectively in use on a page, inspect the network tab in your browser, or run the following query: `FROM duckdb_extensions() WHERE loaded;`.
-
-</div>
-
-These features are tied to DuckDB wasm’s 1.29 version, and strongly dependent on its development cycle.
