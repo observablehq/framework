@@ -542,11 +542,7 @@ class Deployer {
           workspaceId: deployTarget.workspace.id,
           accessLevel: deployTarget.accessLevel
         });
-        deployTarget = {
-          create: false,
-          workspace: deployTarget.workspace,
-          project
-        };
+        deployTarget = {create: false, workspace: deployTarget.workspace, project};
       } catch (error) {
         if (isApiError(error) && error.details.errors.some((e) => e.code === "TOO_MANY_PROJECTS")) {
           this.effects.clack.log.error(
@@ -961,12 +957,7 @@ export async function promptDeployTarget(
     if (effects.clack.isCancel(chosenProject)) {
       throw new CliError("User canceled deploy.", {print: false, exitCode: 0});
     } else if (chosenProject !== null) {
-      // TODO(toph): initial env config
-      return {
-        create: false,
-        workspace,
-        project: existingProjects.find((p) => p.slug === chosenProject)!
-      };
+      return {create: false, workspace, project: existingProjects.find((p) => p.slug === chosenProject)!};
     }
   } else {
     const confirmChoice = await effects.clack.confirm({
