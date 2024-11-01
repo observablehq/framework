@@ -370,6 +370,7 @@ class Deployer {
     const {deployConfig, deployTarget} = await this.getDeployTarget(await this.getUpdatedDeployConfig());
     let deployId: string | null;
     if (deployConfig.continuousDeployment) {
+      await this.validateGitHubLink(deployTarget);
       deployId = await this.cloudBuild(deployTarget);
     } else {
       const buildFilePaths = await this.getBuildFilePaths();
@@ -584,8 +585,6 @@ class Deployer {
       if (this.effects.clack.isCancel(enable)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
       continuousDeployment = enable;
     }
-
-    if (continuousDeployment) await this.validateGitHubLink(deployTarget);
 
     const newDeployConfig = {
       projectId: deployTarget.project.id,
