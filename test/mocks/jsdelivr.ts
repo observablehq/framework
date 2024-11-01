@@ -1,7 +1,8 @@
 import {getCurrentAgent, mockAgent} from "./undici.js";
 
-const packages: [name: string, {version: string; dependencies?: Record<string, string>}][] = [
+const packages: [name: string, {version: string; contents?: string; dependencies?: Record<string, string>}][] = [
   ["@duckdb/duckdb-wasm", {version: "1.28.0"}],
+  ["@example/url-import", {version: "1.0.0", contents: "import('https://example.com');"}],
   ["@observablehq/inputs", {version: "0.10.6"}],
   ["@observablehq/plot", {version: "0.6.11"}],
   ["@observablehq/sample-datasets", {version: "1.0.1"}],
@@ -50,7 +51,7 @@ export function mockJsDelivr() {
         .persist(); // prettier-ignore
       cdnClient
         .intercept({path: new RegExp(`^/npm/${name}@${pkg.version}/`), method: "GET"})
-        .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}})
+        .reply(200, pkg.contents ?? "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}})
         .persist(); // prettier-ignore
     }
   });

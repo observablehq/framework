@@ -5,6 +5,7 @@ import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {maxSatisfying, rsort, satisfies, validRange} from "semver";
 import {isEnoent} from "./error.js";
+import annotate from "./javascript/annotate.js";
 import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
 import {isImportMetaResolve, parseImports} from "./javascript/imports.js";
 import {parseProgram} from "./javascript/parse.js";
@@ -64,7 +65,7 @@ export function rewriteNpmImports(input: string, resolve: (s: string) => string 
     const value = getStringLiteralValue(source);
     const resolved = resolve(value);
     if (resolved === undefined || value === resolved) return;
-    output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
+    output.replaceLeft(source.start, source.end, annotate(resolved));
   }
 
   // TODO Preserve the source map, but download it too.
