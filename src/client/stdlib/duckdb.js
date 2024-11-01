@@ -282,7 +282,7 @@ async function insertFile(database, name, file, options) {
           });
         }
         if (/\.parquet$/i.test(file.name)) {
-          const table = file.size < 10e6 ? "TABLE" : "VIEW"; // for small files, materialize the table
+          const table = file.size < 50e6 ? "TABLE" : "VIEW"; // for small files, materialize the table
           return await connection.query(`CREATE ${table} '${name}' AS SELECT * FROM parquet_scan('${file.name}')`);
         }
         if (/\.(db|ddb|duckdb)$/i.test(file.name)) {
