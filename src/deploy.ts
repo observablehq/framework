@@ -49,6 +49,37 @@ function settingsUrl(deployTarget: DeployTargetInfo) {
   return `${OBSERVABLE_UI_ORIGIN}projects/@${deployTarget.workspace.login}/${deployTarget.project.slug}`;
 }
 
+/**
+ * Returns the ownerName and repoName of the first GitHub remote (HTTPS or SSH)
+ * on the current repository, or null.
+ */
+async function getGitHubRemote() {
+  const remotes = (await promisify(exec)("git remote -v")).stdout
+    .split("\n")
+    .filter((d) => d)
+    .map((d) => {
+      const [, url] = d.split(/\s/g);
+      if (url.startsWith("https://github.com/")) {
+        // HTTPS: https://github.com/observablehq/framework.git
+        const [ownerName, repoName] = new URL(url).pathname
+          .slice(1)
+          .replace(/\.git$/, "")
+          .split("/");
+        return {ownerName, repoName};
+      } else if (url.startsWith("git@github.com:")) {
+        // SSH: git@github.com:observablehq/framework.git
+        const [ownerName, repoName] = url
+          .replace(/^git@github.com:/, "")
+          .replace(/\.git$/, "")
+          .split("/");
+        return {ownerName, repoName};
+      }
+    });
+  const remote = remotes.find((d) => d && d.ownerName && d.repoName);
+  if (!remote) throw new CliError("No GitHub remote found.");
+  return remote ?? null;
+}
+
 export interface DeployOptions {
   config: Config;
   deployConfigPath: string | undefined;
@@ -246,28 +277,23 @@ class Deployer {
     if (deployTarget.create) {
       throw new Error("Incorrect deploy target state");
     }
-    // We only support cloud builds from the root directory so this ignores this.deployOptions.config.root
+    if (!deployTarget.project.build_environment_id) {
+      // TODO: allow setting build environment from CLI
+      throw new CliError("No build environment configured.");
+    }
+    // We only support cloud builds from the root directory so this ignores
+    // this.deployOptions.config.root
     const isGit = existsSync(".git");
     if (!isGit) throw new CliError("Not at root of a git repository.");
-    const remotes = (await promisify(exec)("git remote -v", {cwd: this.deployOptions.config.root})).stdout
-      .split("\n")
-      .filter((d) => d)
-      .map((d) => d.split(/\s/g));
-    const gitHub = remotes.find(([, url]) => url.startsWith("https://github.com/"));
-    if (!gitHub) throw new CliError("No GitHub remote found.");
-    // TODO: validate "Your branch is up to date" & "nothing to commit, working tree clean"
 
-    if (!deployTarget.project.build_environment_id) throw new CliError("No build environment configured.");
-    // TODO: allow setting build environment from CLI
-
-    const [ownerName, repoName] = formatGitUrl(gitHub[1]).split("/");
-    const branch = (await promisify(exec)("git rev-parse --abbrev-ref HEAD", {cwd: this.deployOptions.config.root}))
-      .stdout;
-
+    const {ownerName, repoName} = await getGitHubRemote();
+    const branch = (await promisify(exec)("git rev-parse --abbrev-ref HEAD")).stdout;
     let localRepo = await this.apiClient.getGitHubRepository({ownerName, repoName});
 
     // If a source repository has already been configured, check that it’s
-    // accessible and matches the local repository and branch
+    // accessible and matches the local repository and branch.
+    // TODO: validate local/remote refs match, "Your branch is up to date",
+    // and "nothing to commit, working tree clean".
     if (deployTarget.project.source) {
       if (localRepo && deployTarget.project.source.provider_id !== localRepo.provider_id) {
         throw new CliError(
@@ -283,7 +309,6 @@ class Deployer {
           )}`
         );
       }
-      // TODO: validate local/remote refs match
       const remoteAuthedRepo = await this.apiClient.getGitHubRepository({
         providerId: deployTarget.project.source.provider_id
       });
@@ -295,7 +320,7 @@ class Deployer {
           )}`
         );
       }
-      
+
       // Configured repo is OK; proceed
       return;
     }
