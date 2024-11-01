@@ -129,11 +129,7 @@ const defaultEffects: DeployEffects = {
 
 type DeployTargetInfo =
   | {create: true; workspace: {id: string; login: string}; projectSlug: string; title: string; accessLevel: string}
-  | {
-      create: false;
-      workspace: {id: string; login: string};
-      project: GetProjectResponse;
-    };
+  | {create: false; workspace: {id: string; login: string}; project: GetProjectResponse};
 
 /** Deploy a project to Observable */
 export async function deploy(deployOptions: DeployOptions, effects = defaultEffects): Promise<void> {
