@@ -64,6 +64,14 @@ export async function getDuckDBManifest(
   };
 }
 
+/**
+ * Returns the extension “custom repository” location as needed for DuckDB’s
+ * INSTALL command. This is the relative path to which DuckDB will implicitly add
+ * v{version}/wasm_{platform}/{name}.duckdb_extension.wasm, assuming that the
+ * manifest is baked into /_observablehq/stdlib/duckdb.js.
+ *
+ * https://duckdb.org/docs/extensions/working_with_extensions#creating-a-custom-repository
+ */
 async function getDuckDBExtension(
   root: string,
   platform: string,
@@ -73,16 +81,16 @@ async function getDuckDBExtension(
 ) {
   let ext = await resolveDuckDBExtension(root, platform, source, name);
   if (aliases?.has(ext)) ext = aliases.get(ext)!;
-  return dirname(dirname(dirname(ext)));
+  return join("..", "..", dirname(dirname(dirname(ext))));
 }
 
 /**
- * Given a duckdb configuration and an extension name such as "parquet", saves
- * the binary to _duckdb/{hash}/v1.1.1/wasm_{p}/parquet.duckdb_extension.wasm
- * for every supported platform p ("eh" and "mvp"), and returns a content-hashed
- * reference (_duckdb/{hash}) to use in the corresponding DuckDB INSTALL
- * statement. The repo is structured as required by DuckDB with:
- * ${repo}/v{duckdbversion}/wasm_{platform}/${name}.duckdb_extension.wasm
+ * Saves the given DuckDB extension to the .observablehq/cache/_duckdb cache,
+ * as {repo}/v{version}/wasm_{platform}/{name}.duckdb_extension.wasm,
+ * returning the serving path to the saved file in the cache (starting with
+ * /_duckdb).
+ *
+ * https://duckdb.org/docs/extensions/overview#installation-location
  */
 export async function resolveDuckDBExtension(
   root: string,

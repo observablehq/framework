@@ -189,18 +189,18 @@ export class DuckDBClient {
 
 Object.defineProperty(DuckDBClient.prototype, "dialect", {value: "duckdb"});
 
-async function registerExtensions(db, extensions = []) {
-  const connection = await db.connect();
+async function registerExtensions(db, extensions) {
+  const con = await db.connect();
   try {
     await Promise.all(
       manifest.extensions.map(([name, {[activePlatform]: ref, load}]) =>
-        connection
-          .query(`INSTALL "${name}" FROM '${ref.startsWith("https://") ? ref : import.meta.resolve(`../..${ref}`)}'`)
-          .then(() => load && extensions.includes(name) && connection.query(`LOAD "${name}"`))
+        con
+          .query(`INSTALL "${name}" FROM '${import.meta.resolve(ref)}'`)
+          .then(() => (extensions === undefined ? load : extensions.includes(name)) && con.query(`LOAD "${name}"`))
       )
     );
   } finally {
-    await connection.close();
+    await con.close();
   }
 }
 
