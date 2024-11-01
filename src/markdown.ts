@@ -49,6 +49,7 @@ interface ParseContext {
   currentLine: number;
   path: string;
   params?: Params;
+  defaultBlockAttributes?: ParseOptions["defaultBlockAttributes"];
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
@@ -114,6 +115,8 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
     const {path, params} = context;
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
+    inheritAttributes(attributes, context.defaultBlockAttributes?.[tag]);
+    inheritAttributes(attributes, context.defaultBlockAttributes?.["*"]);
     token.info = tag;
     let html = "";
     let source: string | undefined;
@@ -139,6 +142,16 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
     }
     return html;
   };
+}
+
+function inheritAttributes(attributes: Record<string, string>, defaults?: Record<string, string>): void {
+  if (defaults) {
+    for (const key in defaults) {
+      if (!(key in attributes)) {
+        attributes[key] = defaults[key];
+      }
+    }
+  }
 }
 
 const CODE_DOLLAR = 36;
@@ -217,6 +230,7 @@ export interface ParseOptions {
   header?: Config["header"];
   footer?: Config["footer"];
   params?: Params;
+  defaultBlockAttributes?: Record<string, Record<string, string>>;
 }
 
 export function createMarkdownIt({
@@ -242,10 +256,10 @@ export function createMarkdownIt({
 }
 
 export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
-  const {md, path, params} = options;
+  const {md, path, params, defaultBlockAttributes} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params};
+  const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params, defaultBlockAttributes};
   const tokens = md.parse(content, context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   const title = data.title !== undefined ? data.title : findTitle(tokens);

@@ -275,6 +275,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   }
 
   const config: Config = {
+    defaultBlockAttributes: spec.defaultBlockAttributes, // TODO
     root,
     output,
     base,
