@@ -575,7 +575,7 @@ class Deployer {
       const enable = await this.effects.clack.confirm({
         message: wrapAnsi(
           `Do you want to enable continuous deployment? ${faint(
-            "This builds in the cloud and redeploys whenever you push to this repository."
+            "Given a GitHub repository, this builds in the cloud and redeploys whenever you push to the current branch."
           )}`,
           this.effects.outputColumns
         ),
