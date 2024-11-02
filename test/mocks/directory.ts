@@ -24,6 +24,6 @@ export function mockIsolatedDirectory({git}: {git: boolean}) {
 
   afterEach(async () => {
     process.chdir(cwd);
-    await rm(dir, {recursive: true});
+    await rm(dir, {recursive: true, force: true});
   });
 }
