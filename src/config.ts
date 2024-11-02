@@ -8,6 +8,7 @@ import {pathToFileURL} from "node:url";
 import he from "he";
 import type MarkdownIt from "markdown-it";
 import wrapAnsi from "wrap-ansi";
+import {DUCKDB_BUNDLES, DUCKDB_CORE_EXTENSIONS} from "./duckdb.js";
 import {visitFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
@@ -76,6 +77,23 @@ export interface SearchConfigSpec {
   index?: unknown;
 }
 
+export interface DuckDBConfig {
+  bundles: string[];
+  extensions: {[name: string]: DuckDBExtensionConfig};
+}
+
+export interface DuckDBExtensionConfig {
+  source: string;
+  install: boolean;
+  load: boolean;
+}
+
+interface DuckDBExtensionConfigSpec {
+  source: unknown;
+  install: unknown;
+  load: unknown;
+}
+
 export interface Config {
   root: string; // defaults to src
   output: string; // defaults to dist
@@ -98,6 +116,7 @@ export interface Config {
   normalizePath: (path: string) => string;
   loaders: LoaderResolver;
   watchPath?: string;
+  duckdb: DuckDBConfig;
 }
 
 export interface ConfigSpec {
@@ -127,6 +146,7 @@ export interface ConfigSpec {
   preserveIndex?: unknown;
   preserveExtension?: unknown;
   markdownIt?: unknown;
+  duckdb?: unknown;
 }
 
 interface ScriptSpec {
@@ -262,6 +282,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const normalizePath = getPathNormalizer(spec);
+  const duckdb = normalizeDuckDB(spec.duckdb);
 
   // If this path ends with a slash, then add an implicit /index to the
   // end of the path. Otherwise, remove the .html extension (we use clean
@@ -312,7 +333,8 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     md,
     normalizePath,
     loaders: new LoaderResolver({root, interpreters}),
-    watchPath
+    watchPath,
+    duckdb
   };
   if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
@@ -498,4 +520,41 @@ export function mergeStyle(
 
 export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
+}
+
+// TODO configure bundles?
+function normalizeDuckDB(spec: unknown): DuckDBConfig {
+  const extensions: {[name: string]: DuckDBExtensionConfig} = {};
+  let extspec: Record<string, unknown> = spec?.["extensions"] ?? {};
+  if (Array.isArray(extspec)) extspec = Object.fromEntries(extspec.map((name) => [name, {}]));
+  if (extspec.json === undefined) extspec = {...extspec, json: false};
+  if (extspec.parquet === undefined) extspec = {...extspec, parquet: false};
+  for (const name in extspec) {
+    if (!/^\w+$/.test(name)) throw new Error(`invalid extension: ${name}`);
+    const vspec = extspec[name];
+    if (vspec == null) continue;
+    const {
+      source = DUCKDB_CORE_EXTENSIONS.some(([n]) => n === name) ? "core" : "community",
+      install = true,
+      load = !DUCKDB_CORE_EXTENSIONS.find(([n]) => n === name)?.[1]
+    } = typeof vspec === "boolean"
+      ? {load: vspec}
+      : typeof vspec === "string"
+      ? {source: vspec}
+      : (vspec as DuckDBExtensionConfigSpec);
+    extensions[name] = {
+      source: normalizeDuckDBSource(String(source)),
+      install: Boolean(install),
+      load: Boolean(load)
+    };
+  }
+  return {bundles: DUCKDB_BUNDLES, extensions};
+}
+
+function normalizeDuckDBSource(source: string): string {
+  if (source === "core") return "https://extensions.duckdb.org/";
+  if (source === "community") return "https://community-extensions.duckdb.org/";
+  const url = new URL(source);
+  if (url.protocol !== "https:") throw new Error(`invalid source: ${source}`);
+  return String(url);
 }

@@ -29,17 +29,25 @@ import * as duckdb from "npm:@duckdb/duckdb-wasm";
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-const bundle = await duckdb.selectBundle({
-  mvp: {
-    mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm"),
-    mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js")
-  },
-  eh: {
-    mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm"),
-    mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js")
-  }
-});
-
+// Baked-in manifest.
+// eslint-disable-next-line no-undef
+const manifest = DUCKDB_MANIFEST;
+const candidates = {
+  ...(manifest.bundles.includes("mvp") && {
+    mvp: {
+      mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm"),
+      mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js")
+    }
+  }),
+  ...(manifest.bundles.includes("eh") && {
+    eh: {
+      mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm"),
+      mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js")
+    }
+  })
+};
+const bundle = await duckdb.selectBundle(candidates);
+const activePlatform = manifest.bundles.find((key) => bundle.mainModule === candidates[key].mainModule);
 const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
 
 let db;
@@ -169,6 +177,7 @@ export class DuckDBClient {
       config = {...config, query: {...config.query, castBigIntToDouble: true}};
     }
     await db.open(config);
+    await registerExtensions(db, config.extensions);
     await Promise.all(Object.entries(sources).map(([name, source]) => insertSource(db, name, source)));
     return new DuckDBClient(db);
   }
@@ -178,9 +187,22 @@ export class DuckDBClient {
   }
 }
 
-Object.defineProperty(DuckDBClient.prototype, "dialect", {
-  value: "duckdb"
-});
+Object.defineProperty(DuckDBClient.prototype, "dialect", {value: "duckdb"});
+
+async function registerExtensions(db, extensions) {
+  const con = await db.connect();
+  try {
+    await Promise.all(
+      manifest.extensions.map(([name, {[activePlatform]: ref, load}]) =>
+        con
+          .query(`INSTALL "${name}" FROM '${import.meta.resolve(ref)}'`)
+          .then(() => (extensions === undefined ? load : extensions.includes(name)) && con.query(`LOAD "${name}"`))
+      )
+    );
+  } finally {
+    await con.close();
+  }
+}
 
 async function insertSource(database, name, source) {
   source = await source;
@@ -258,7 +280,7 @@ async function insertFile(database, name, file, options) {
           });
         }
         if (/\.parquet$/i.test(file.name)) {
-          const table = file.size < 10e6 ? "TABLE" : "VIEW"; // for small files, materialize the table
+          const table = file.size < 50e6 ? "TABLE" : "VIEW"; // for small files, materialize the table
           return await connection.query(`CREATE ${table} '${name}' AS SELECT * FROM parquet_scan('${file.name}')`);
         }
         if (/\.(db|ddb|duckdb)$/i.test(file.name)) {

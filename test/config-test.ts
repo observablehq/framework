@@ -4,6 +4,22 @@ import MarkdownIt from "markdown-it";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
 import {LoaderResolver} from "../src/loader.js";
 
+const DUCKDB_DEFAULTS = {
+  bundles: ["eh", "mvp"],
+  extensions: {
+    json: {
+      source: "https://extensions.duckdb.org/",
+      install: true,
+      load: false
+    },
+    parquet: {
+      source: "https://extensions.duckdb.org/",
+      install: true,
+      load: false
+    }
+  }
+};
+
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   it("imports the config file at the specified root", async () => {
@@ -43,7 +59,8 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: null,
-      watchPath: resolve("test/input/build/config/observablehq.config.js")
+      watchPath: resolve("test/input/build/config/observablehq.config.js"),
+      duckdb: DUCKDB_DEFAULTS
     });
   });
   it("returns the default config if no config file is found", async () => {
@@ -71,7 +88,8 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: null,
-      watchPath: undefined
+      watchPath: undefined,
+      duckdb: DUCKDB_DEFAULTS
     });
   });
 });
@@ -443,5 +461,172 @@ describe("mergeToc(spec, toc)", () => {
     assert.deepStrictEqual(mergeToc({show: true}, toc), {label: "Contents", show: true});
     assert.deepStrictEqual(mergeToc({show: undefined}, toc), {label: "Contents", show: true});
     assert.deepStrictEqual(mergeToc({}, toc), {label: "Contents", show: true});
+  });
+});
+
+describe("normalizeConfig(duckdb)", () => {
+  const root = "";
+  it("uses the defaults", () => {
+    const {duckdb} = config({}, root);
+    assert.deepEqual(duckdb, DUCKDB_DEFAULTS);
+  });
+  it("supports install: false and load: false", () => {
+    const {duckdb} = config({duckdb: {extensions: {json: {install: false, load: false}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      json: {
+        source: "https://extensions.duckdb.org/",
+        install: false,
+        load: false
+      }
+    });
+  });
+  it("supports null", () => {
+    const {duckdb} = config({duckdb: {extensions: {json: null}}}, root);
+    assert.deepEqual(
+      duckdb.extensions,
+      Object.fromEntries(Object.entries(DUCKDB_DEFAULTS.extensions).filter(([name]) => name !== "json"))
+    );
+  });
+  it("defaults load: false for known auto-loading extensions", () => {
+    const {duckdb} = config({duckdb: {extensions: {aws: {}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      aws: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: false
+      }
+    });
+  });
+  it("defaults source: core for known core extensions", () => {
+    const {duckdb} = config({duckdb: {extensions: {mysql: {}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      mysql: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("defaults source: community for unknown extensions", () => {
+    const {duckdb} = config({duckdb: {extensions: {h3: {}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      h3: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("supports core, community and https:// sources", () => {
+    const {duckdb} = config(
+      {
+        duckdb: {
+          extensions: {
+            foo: {source: "core"},
+            bar: {source: "community"},
+            baz: {source: "https://custom-domain"}
+          }
+        }
+      },
+      root
+    );
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      foo: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      bar: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      baz: {
+        source: "https://custom-domain/", // URL normalization
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("supports source: string shorthand", () => {
+    const {duckdb} = config(
+      {
+        duckdb: {
+          extensions: {
+            foo: "core",
+            bar: "community",
+            baz: "https://custom-domain"
+          }
+        }
+      },
+      root
+    );
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      foo: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      bar: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      baz: {
+        source: "https://custom-domain/", // URL normalization
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("supports load: boolean shorthand", () => {
+    const {duckdb} = config({duckdb: {extensions: {json: true, foo: true, bar: false}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      json: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      foo: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      bar: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: false
+      }
+    });
+  });
+  it("supports sources shorthand", () => {
+    const {duckdb} = config({duckdb: {extensions: ["spatial", "h3"]}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      spatial: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      h3: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("rejects invalid names", () => {
+    assert.throws(() => config({duckdb: {extensions: {"*^/": true}}}, root), /invalid extension/i);
+  });
+  it("rejects invalid sources", () => {
+    assert.throws(() => config({duckdb: {extensions: {foo: "file:///path/to/extension"}}}, root), /invalid source/i);
+    assert.throws(() => config({duckdb: {extensions: {foo: "notasource"}}}, root), /invalid url/i);
   });
 });

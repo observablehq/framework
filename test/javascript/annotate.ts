@@ -1,7 +1,5 @@
-/**
- * This file is not suffixed with '-test'; it expects to run with an extra
- * OBSERVABLE_ANNOTATE_FILES=true environment variable.
- */
+// This file is not suffixed with '-test'; it expects to run with an extra
+// OBSERVABLE_ANNOTATE_FILES=true environment variable.
 import assert from "node:assert";
 import type {TranspileModuleOptions} from "../../src/javascript/transpile.js";
 import {transpileModule} from "../../src/javascript/transpile.js";
