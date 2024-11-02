@@ -535,7 +535,7 @@ The <code>build</code> command generates the `dist` directory; you can then copy
 
 <pre data-copy>npx http-server dist</pre>
 
-<div class="tip">By default, Framework generates “clean” URLs by dropping the `.html` extension from page links. Not all webhosts support this; some need the <a href="./config#clean-urls"><b>cleanUrls</b> config option</a> set to false.</div>
+<div class="tip">By default, Framework generates “clean” URLs by dropping the `.html` extension from page links. Not all webhosts support this; some need the <a href="./config#preserve-extension"><b>preserveExtension</b> config option</a> set to true.</div>
 
 <div class="tip">When deploying to GitHub Pages without using GitHub’s related actions (<a href="https://github.com/actions/configure-pages">configure-pages</a>,
 <a href="https://github.com/actions/deploy-pages">deploy-pages</a>, and
