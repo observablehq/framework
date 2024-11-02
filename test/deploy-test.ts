@@ -260,7 +260,7 @@ describe("deploy", () => {
       const {stdout, stderr} = await promisify(exec)(
         "touch readme.md; git add .; git commit -m 'initial'; git remote add origin git@github.com:observablehq/test.git"
       );
-      console.log({stdout, stderr});
+      console.log("starts cloud build test", {stdout, stderr});
 
       await deploy(TEST_OPTIONS, effects);
 
