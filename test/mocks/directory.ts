@@ -14,7 +14,7 @@ export function mockIsolatedDirectory({git}: {git: boolean}) {
     if (git) {
       console.log("logging stdout, stderr");
       const a = await promisify(exec)(
-        "git config --global user.email \"you@example.com\"; git config --global user.name \"Your Name\"; git config --global init.defaultBranch main"
+        'git config --global user.email "observable@example.com" && git config --global user.name "Observable User" && git config --global init.defaultBranch main'
       );
       console.log(a.stdout, a.stderr);
       const b = await promisify(exec)("git init");
