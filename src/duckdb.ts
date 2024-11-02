@@ -8,7 +8,7 @@ const downloadRequests = new Map<string, Promise<string>>();
 
 export const DUCKDB_WASM_VERSION = "1.29.0";
 export const DUCKDB_VERSION = "1.1.1";
-export const DUCKDB_BUNDLES = ["eh", "mvp"];
+export const DUCKDB_PLATFORMS: DuckDBConfig["platforms"] = {eh: true, mvp: true};
 
 // https://duckdb.org/docs/extensions/core_extensions.html
 export const DUCKDB_CORE_EXTENSIONS: [name: string, autoload: boolean][] = [
@@ -37,30 +37,32 @@ export const DUCKDB_CORE_EXTENSIONS: [name: string, autoload: boolean][] = [
 ];
 
 export async function getDuckDBManifest(
-  duckdb: DuckDBConfig,
+  {platforms, extensions}: DuckDBConfig,
   {root, aliases}: {root: string; aliases?: Map<string, string>}
 ) {
   return {
-    bundles: duckdb.bundles,
-    extensions: await Promise.all(
-      Array.from(Object.entries(duckdb.extensions), ([name, {install, load, source}]) =>
-        (async () => [
-          name,
-          {
-            install,
-            load,
-            ...Object.fromEntries(
-              await Promise.all(
-                duckdb.bundles.map(async (platform) => [
-                  platform,
-                  install
-                    ? await getDuckDBExtension(root, resolveDuckDBExtension(source, platform, name), aliases)
-                    : source
-                ])
+    platforms,
+    extensions: Object.fromEntries(
+      await Promise.all(
+        Object.entries(extensions).map(([name, {install, load, source}]) =>
+          (async () => [
+            name,
+            {
+              install,
+              load,
+              ...Object.fromEntries(
+                await Promise.all(
+                  Object.keys(platforms).map(async (platform) => [
+                    platform,
+                    install
+                      ? await getDuckDBExtension(root, resolveDuckDBExtension(source, platform, name), aliases)
+                      : source
+                  ])
+                )
               )
-            )
-          }
-        ])()
+            }
+          ])()
+        )
       )
     )
   };

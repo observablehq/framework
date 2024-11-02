@@ -1,3 +1,4 @@
+/* global DUCKDB_MANIFEST */
 import * as duckdb from "npm:@duckdb/duckdb-wasm";
 
 // Adapted from https://observablehq.com/@cmudig/duckdb-client
@@ -29,25 +30,21 @@ import * as duckdb from "npm:@duckdb/duckdb-wasm";
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-// Baked-in manifest.
-// eslint-disable-next-line no-undef
-const manifest = DUCKDB_MANIFEST;
-const candidates = {
-  ...(manifest.bundles.includes("mvp") && {
-    mvp: {
-      mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm"),
-      mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js")
-    }
-  }),
-  ...(manifest.bundles.includes("eh") && {
-    eh: {
-      mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm"),
-      mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js")
-    }
-  })
+const bundles = {
+  mvp: DUCKDB_MANIFEST.platforms.mvp
+    ? {
+        mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm"),
+        mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js")
+      }
+    : undefined,
+  eh: DUCKDB_MANIFEST.platforms.eh
+    ? {
+        mainModule: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm"),
+        mainWorker: import.meta.resolve("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js")
+      }
+    : undefined
 };
-const bundle = await duckdb.selectBundle(candidates);
-const activePlatform = manifest.bundles.find((key) => bundle.mainModule === candidates[key].mainModule);
+const bundle = duckdb.selectBundle(bundles);
 const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
 
 let db;
@@ -190,10 +187,12 @@ export class DuckDBClient {
 Object.defineProperty(DuckDBClient.prototype, "dialect", {value: "duckdb"});
 
 async function registerExtensions(db, extensions) {
+  const {mainModule} = await bundle;
+  const platform = Object.keys(bundles).find((platform) => mainModule === bundles[platform].mainModule);
   const con = await db.connect();
   try {
     await Promise.all(
-      manifest.extensions.map(([name, {[activePlatform]: ref, load}]) =>
+      Object.entries(DUCKDB_MANIFEST.extensions).map(([name, {load, [platform]: ref}]) =>
         con
           .query(`INSTALL "${name}" FROM '${import.meta.resolve(ref)}'`)
           .then(() => (extensions === undefined ? load : extensions.includes(name)) && con.query(`LOAD "${name}"`))
@@ -328,9 +327,10 @@ async function insertArray(database, name, array, options) {
 }
 
 async function createDuckDB() {
-  const worker = await duckdb.createWorker(bundle.mainWorker);
+  const {mainWorker, mainModule} = await bundle;
+  const worker = await duckdb.createWorker(mainWorker);
   const db = new duckdb.AsyncDuckDB(logger, worker);
-  await db.instantiate(bundle.mainModule);
+  await db.instantiate(mainModule);
   return db;
 }
 

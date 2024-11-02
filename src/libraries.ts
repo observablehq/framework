@@ -85,7 +85,7 @@ export function getImplicitDownloads(imports: Iterable<string>, duckdb?: DuckDBC
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
     if (!duckdb) throw new Error("Implementation error: missing duckdb configuration");
     for (const [name, {source}] of Object.entries(duckdb.extensions)) {
-      for (const platform of duckdb.bundles) {
+      for (const platform in duckdb.platforms) {
         implicits.add(`duckdb:${resolveDuckDBExtension(source, platform, name)}`);
       }
     }

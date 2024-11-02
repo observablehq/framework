@@ -8,7 +8,7 @@ import {pathToFileURL} from "node:url";
 import he from "he";
 import type MarkdownIt from "markdown-it";
 import wrapAnsi from "wrap-ansi";
-import {DUCKDB_BUNDLES, DUCKDB_CORE_EXTENSIONS} from "./duckdb.js";
+import {DUCKDB_CORE_EXTENSIONS, DUCKDB_PLATFORMS} from "./duckdb.js";
 import {visitFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
@@ -78,7 +78,7 @@ export interface SearchConfigSpec {
 }
 
 export interface DuckDBConfig {
-  bundles: string[];
+  platforms: Record<string, true>;
   extensions: {[name: string]: DuckDBExtensionConfig};
 }
 
@@ -522,7 +522,7 @@ export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
 }
 
-// TODO configure bundles?
+// TODO configure platforms?
 function normalizeDuckDB(spec: unknown): DuckDBConfig {
   const extensions: {[name: string]: DuckDBExtensionConfig} = {};
   let extspec: Record<string, unknown> = spec?.["extensions"] ?? {};
@@ -548,7 +548,7 @@ function normalizeDuckDB(spec: unknown): DuckDBConfig {
       load: Boolean(load)
     };
   }
-  return {bundles: DUCKDB_BUNDLES, extensions};
+  return {platforms: DUCKDB_PLATFORMS, extensions};
 }
 
 function normalizeDuckDBSource(source: string): string {
