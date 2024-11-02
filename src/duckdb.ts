@@ -8,40 +8,50 @@ const downloadRequests = new Map<string, Promise<string>>();
 
 export const DUCKDB_WASM_VERSION = "1.29.0";
 export const DUCKDB_VERSION = "1.1.1";
-export const DUCKDB_PLATFORMS: DuckDBConfig["platforms"] = {eh: true, mvp: true};
 
 // https://duckdb.org/docs/extensions/core_extensions.html
-export const DUCKDB_CORE_EXTENSIONS: [name: string, autoload: boolean][] = [
-  ["arrow", false],
-  ["autocomplete", true],
-  ["aws", true],
-  ["azure", true],
-  ["delta", true],
-  ["excel", true],
-  ["fts", true],
-  ["httpfs", true],
-  ["iceberg", false],
-  ["icu", true],
-  ["inet", true],
-  ["jemalloc", false],
-  ["json", true],
-  ["mysql", false],
-  ["parquet", true],
-  ["postgres", true],
-  ["spatial", false],
-  ["sqlite", true],
-  ["substrait", false],
-  ["tpcds", true],
-  ["tpch", true],
-  ["vss", false]
-];
+export const DUCKDB_CORE_ALIASES: Record<string, keyof typeof DUCKDB_CORE_EXTENSIONS> = {
+  sqlite: "sqlite_scanner",
+  sqlite3: "sqlite_scanner",
+  postgres_scanner: "postgres",
+  http: "httpfs",
+  https: "httpfs",
+  s3: "httpfs"
+} as const;
+
+// https://duckdb.org/docs/extensions/core_extensions.html
+// https://duckdb.org/docs/api/wasm/extensions.html#list-of-officially-available-extensions
+export const DUCKDB_CORE_EXTENSIONS = {
+  arrow: false,
+  autocomplete: true,
+  aws: true,
+  azure: true,
+  delta: true,
+  excel: true,
+  fts: true,
+  httpfs: true,
+  iceberg: false,
+  icu: true,
+  inet: true,
+  jemalloc: false,
+  json: true,
+  mysql: false,
+  parquet: true,
+  postgres: true,
+  spatial: false,
+  sqlite_scanner: true,
+  substrait: false,
+  tpcds: true,
+  tpch: true,
+  vss: false
+} as const;
 
 export async function getDuckDBManifest(
   {platforms, extensions}: DuckDBConfig,
   {root, aliases}: {root: string; aliases?: Map<string, string>}
 ) {
   return {
-    platforms,
+    platforms: {mvp: "mvp" in platforms, eh: "eh" in platforms},
     extensions: Object.fromEntries(
       await Promise.all(
         Object.entries(extensions).map(([name, {install, load, source}]) =>

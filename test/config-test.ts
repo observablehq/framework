@@ -1,11 +1,15 @@
 import assert from "node:assert";
 import {resolve} from "node:path";
 import MarkdownIt from "markdown-it";
+import type {DuckDBConfig} from "../src/config.js";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
 import {LoaderResolver} from "../src/loader.js";
 
-const DUCKDB_DEFAULTS = {
-  bundles: ["eh", "mvp"],
+const DUCKDB_DEFAULTS: DuckDBConfig = {
+  platforms: {
+    eh: true,
+    mvp: true
+  },
   extensions: {
     json: {
       source: "https://extensions.duckdb.org/",
