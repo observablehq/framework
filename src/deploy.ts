@@ -290,15 +290,19 @@ class Deployer {
     // accessible and matches the local repository and branch.
     // TODO: validate local/remote refs match, "Your branch is up to date",
     // and "nothing to commit, working tree clean".
-    if (deployTarget.project.source) {
-      if (localRepo && deployTarget.project.source.provider_id !== localRepo.provider_id) {
+    const {source} = deployTarget.project;
+    if (source) {
+      if (localRepo && source.provider_id !== localRepo.provider_id) {
         throw new CliError(
           `Configured repository does not match local repository; check build settings on ${link(
             `${settingsUrl(deployTarget)}/settings`
           )}`
         );
       }
-      if (localRepo && deployTarget.project.source.branch !== branch) {
+      if (localRepo && source.branch && source.branch !== branch) {
+        // TODO: If source.branch is empty, it'll use the default repository
+        // branch (usually main or master), which we don't know from our current
+        // getGitHubRepository response, and thus can't check here.
         throw new CliError(
           `Configured branch does not match local branch; check build settings on ${link(
             `${settingsUrl(deployTarget)}/settings`
@@ -306,10 +310,9 @@ class Deployer {
         );
       }
       const remoteAuthedRepo = await this.apiClient.getGitHubRepository({
-        providerId: deployTarget.project.source.provider_id
+        providerId: source.provider_id
       });
       if (!remoteAuthedRepo) {
-        console.log(deployTarget.project.source.provider_id, remoteAuthedRepo);
         throw new CliError(
           `Cannot access configured repository; check build settings on ${link(
             `${settingsUrl(deployTarget)}/settings`

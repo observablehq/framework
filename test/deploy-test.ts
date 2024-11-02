@@ -1,7 +1,11 @@
 import assert, {fail} from "node:assert";
+import {exec} from "node:child_process";
 import type {Stats} from "node:fs";
-import {stat} from "node:fs/promises";
+import {mkdtemp, rm, stat} from "node:fs/promises";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
 import {Readable, Writable} from "node:stream";
+import {promisify} from "node:util";
 import type {BuildManifest} from "../src/build.js";
 import {normalizeConfig, setCurrentDate} from "../src/config.js";
 import type {DeployEffects, DeployOptions} from "../src/deploy.js";
@@ -115,7 +119,9 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   async getDeployConfig(sourceRoot: string, deployConfigPath?: string): Promise<DeployConfig> {
     const key = this.getDeployConfigKey(sourceRoot, deployConfigPath);
     return (
-      this.deployConfigs[key] ?? this.defaultDeployConfig ?? {projectId: null, projectSlug: null, workspaceLogin: null}
+      this.deployConfigs[key] ??
+      this.defaultDeployConfig ??
+      ({projectId: null, projectSlug: null, workspaceLogin: null, continuousDeployment: null} satisfies DeployConfig)
     );
   }
 
@@ -194,10 +200,88 @@ const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; wor
   continuousDeployment: false
 };
 
+function mockIsolatedDirectory({git}: {git: boolean}) {
+  let dir: string;
+  let cwd: string;
+  beforeEach(async () => {
+    cwd = process.cwd();
+    dir = await mkdtemp(join(tmpdir(), "framework-test-"));
+    process.chdir(dir);
+    if (git) (await promisify(exec)("git init")).stdout;
+  });
+
+  afterEach(async () => {
+    process.chdir(cwd);
+    await rm(dir, {recursive: true});
+  });
+}
+
 describe("deploy", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   mockObservableApi();
   mockJsDelivr();
+
+  describe("in isolated directory with git repo", () => {
+    mockIsolatedDirectory({git: true});
+
+    it("fails continuous deployment if repo has no GitHub remote", async () => {
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetWorkspaceProjects({
+          workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
+          projects: []
+        })
+        .handlePostProject({projectId: DEPLOY_CONFIG.projectId})
+        .start();
+      const effects = new MockDeployEffects();
+      effects.clack.inputs.push(
+        true, // No apps found. Do you want to create a new app?
+        "cloud-deployed-app", // What slug do you want to use?
+        "public", // Who is allowed to access your app?
+        true // Do you want to enable continuous deployment?
+      );
+
+      try {
+        await deploy(TEST_OPTIONS, effects);
+        assert.fail("expected error");
+      } catch (error) {
+        CliError.assert(error, {message: "No GitHub remote found."});
+      }
+
+      effects.close();
+    });
+  });
+
+  describe("in isolated directory without git repo", () => {
+    mockIsolatedDirectory({git: false});
+
+    it("fails continuous deployment if not in a git repo", async () => {
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetWorkspaceProjects({
+          workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
+          projects: []
+        })
+        .handlePostProject({projectId: DEPLOY_CONFIG.projectId})
+        .start();
+      const effects = new MockDeployEffects();
+      effects.clack.inputs.push(
+        true, // No apps found. Do you want to create a new app?
+        "cloud-deployed-app", // What slug do you want to use?
+        "public", // Who is allowed to access your app?
+        true // Do you want to enable continuous deployment?
+      );
+
+      try {
+        await deploy(TEST_OPTIONS, effects);
+        assert.fail("expected error");
+      } catch (error) {
+        CliError.assert(error, {message: "Not at root of a git repository."});
+      }
+
+      effects.close();
+    });
+  });
 
   it("makes expected API calls for an existing project", async () => {
     const deployId = "deploy456";
@@ -334,6 +418,7 @@ describe("deploy", () => {
     effects.clack.inputs.push(
       DEPLOY_CONFIG.projectSlug, // which project do you want to use?
       true, // Do you want to continue? (and overwrite the project)
+      false, // Do you want to enable continuous deployment?
       "change project title" // "what changed?"
     );
     await deploy(TEST_OPTIONS, effects);
@@ -887,10 +972,7 @@ describe("deploy", () => {
       force: null,
       config: {...TEST_OPTIONS.config, output: "test/output/does-not-exist"}
     } satisfies DeployOptions;
-    getCurrentObservableApi()
-      .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
-      .start();
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),
@@ -905,10 +987,7 @@ describe("deploy", () => {
       ...TEST_OPTIONS,
       force: null
     } satisfies DeployOptions;
-    getCurrentObservableApi()
-      .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
-      .start();
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),
@@ -926,10 +1005,7 @@ describe("deploy", () => {
       ...TEST_OPTIONS,
       force: null
     } satisfies DeployOptions;
-    getCurrentObservableApi()
-      .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
-      .start();
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-11"),
@@ -947,10 +1023,7 @@ describe("deploy", () => {
       ...TEST_OPTIONS,
       force: "build"
     } satisfies DeployOptions;
-    getCurrentObservableApi()
-      .handleGetCurrentUser()
-      .handleGetProject(DEPLOY_CONFIG)
-      .start();
+    getCurrentObservableApi().handleGetCurrentUser().handleGetProject(DEPLOY_CONFIG).start();
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
       fixedInputStatTime: new Date("2024-03-09"),

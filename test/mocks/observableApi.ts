@@ -169,7 +169,7 @@ class ObservableApiMock {
             owner: {id: "workspace-id", login: "workspace-login"},
             latestCreatedDeployId: null,
             automatic_builds_enabled: null,
-            build_environment_id: null,
+            build_environment_id: "abc123",
             source: null
           } satisfies GetProjectResponse)
         : emptyErrorBody;
@@ -209,8 +209,8 @@ class ObservableApiMock {
             owner,
             creator,
             latestCreatedDeployId: null,
-            automatic_builds_enabled: null,
-            build_environment_id: null,
+            automatic_builds_enabled: true,
+            build_environment_id: "abc123",
             source: null
           } satisfies GetProjectResponse)
         : emptyErrorBody;
