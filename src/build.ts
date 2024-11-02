@@ -3,6 +3,7 @@ import {existsSync} from "node:fs";
 import {copyFile, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
+import {getDuckDBManifest} from "./duckdb.js";
 import {CliError} from "./error.js";
 import {getClientPath, prepareOutput} from "./files.js";
 import {findModule, getModuleHash, readJavaScript} from "./javascript/module.js";
@@ -53,7 +54,7 @@ export async function build(
   {config}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
-  const {root, loaders} = config;
+  const {root, loaders, duckdb} = config;
   Telemetry.record({event: "build", step: "start"});
 
   // Prepare for build (such as by emptying the existing output root).
@@ -140,6 +141,21 @@ export async function build(
     effects.logger.log(cachePath);
   }
 
+  // Copy over the DuckDB extensions, initializing aliases that are needed to
+  // construct the DuckDB manifest.
+  for (const path of globalImports) {
+    if (path.startsWith("/_duckdb/")) {
+      const sourcePath = join(cacheRoot, path);
+      effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
+      const contents = await readFile(sourcePath);
+      const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+      const [, , , version, bundle, name] = path.split("/");
+      const alias = join("/_duckdb/", `${basename(name, ".duckdb_extension.wasm")}-${hash}`, version, bundle, name);
+      aliases.set(path, alias);
+      await effects.writeFile(alias, contents);
+    }
+  }
+
   // Generate the client bundles. These are initially generated into the cache
   // because we need to rewrite any npm and node imports to be hashed; this is
   // handled generally for all global imports below.
@@ -149,6 +165,7 @@ export async function build(
       effects.output.write(`${faint("bundle")} ${path} ${faint("→")} `);
       const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
       const define: {[key: string]: string} = {};
+      if (path === "/_observablehq/stdlib/duckdb.js") define["DUCKDB_MANIFEST"] = JSON.stringify(await getDuckDBManifest(duckdb, {root, aliases})); // prettier-ignore
       const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
       await prepareOutput(cachePath);
       await writeFile(cachePath, contents);
@@ -202,9 +219,10 @@ export async function build(
 
   // Copy over global assets (e.g., minisearch.json, DuckDB’s WebAssembly).
   // Anything in _observablehq also needs a content hash, but anything in _npm
-  // or _node does not (because they are already necessarily immutable).
+  // or _node does not (because they are already necessarily immutable). We’re
+  // skipping DuckDB’s extensions because they were previously copied above.
   for (const path of globalImports) {
-    if (path.endsWith(".js")) continue;
+    if (path.endsWith(".js") || path.startsWith("/_duckdb/")) continue;
     const sourcePath = join(cacheRoot, path);
     effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
     if (path.startsWith("/_observablehq/")) {

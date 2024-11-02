@@ -29,7 +29,7 @@ sql:
 
 <div class="tip">For performance and reliability, we recommend using local files rather than loading data from external servers at runtime. You can use a <a href="./data-loaders">data loader</a> to take a snapshot of a remote data during build if needed.</div>
 
-You can also register tables via code (say to have sources that are defined dynamically via user input) by defining the `sql` symbol with [DuckDBClient.sql](./lib/duckdb).
+You can also register tables via code (say to have sources that are defined dynamically via user input) by defining the `sql` symbol with [DuckDBClient.sql](./lib/duckdb). To register [DuckDB extensions](./lib/duckdb#extensions), use the [**duckdb** config option](./config#duckdb).
 
 ## SQL code blocks
 

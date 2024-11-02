@@ -1,14 +1,9 @@
 import {isPathImport} from "../path.js";
 
-/**
- * Annotate a path to a local import or file so it can be reworked server-side.
- */
-
 const annotate = process.env["OBSERVABLE_ANNOTATE_FILES"];
-if (typeof annotate === "string" && annotate !== "true")
-  throw new Error(`unsupported OBSERVABLE_ANNOTATE_FILES value: ${annotate}`);
-export default annotate
-  ? function (uri: string): string {
-      return `${JSON.stringify(uri)}${isPathImport(uri) ? "/* observablehq-file */" : ""}`;
-    }
+if (annotate && annotate !== "true") throw new Error(`unsupported OBSERVABLE_ANNOTATE_FILES: ${annotate}`);
+
+/** Annotate a path to a local import or file so it can be reworked server-side. */
+export const annotatePath = annotate
+  ? (uri: string) => `${JSON.stringify(uri)}${isPathImport(uri) ? "/* observablehq-file */" : ""}`
   : JSON.stringify;
