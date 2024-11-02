@@ -437,13 +437,19 @@ class ObservableApiMock {
     return this;
   }
 
-  handleGetRepository({status = 200, useProviderId = false}: {status?: number; useProviderId?: boolean} = {}) {
+  handleGetRepository({
+    status = 200,
+    ownerName = "observablehq",
+    repoName = "test",
+    provider_id = "123:456",
+    useProviderId = false
+  }: {status?: number; ownerName?: string; repoName?: string; provider_id?: string; useProviderId?: boolean} = {}) {
     const response =
       status === 200
         ? JSON.stringify({
             provider: "github",
-            provider_id: "123:456",
-            url: "https://github.com/observablehq/test.git",
+            provider_id,
+            url: `https://github.com/${ownerName}/${repoName}.git`,
             default_branch: "main",
             name: "test",
             linked_projects: []
@@ -455,7 +461,7 @@ class ObservableApiMock {
       this._handlers.push((pool) =>
         pool
           .intercept({
-            path: `/cli/github/repository?provider_id=${encodeURIComponent("123:456")}`,
+            path: `/cli/github/repository?provider_id=${encodeURIComponent(provider_id)}`,
             headers: headersMatcher(headers)
           })
           .reply(status, response, {headers: {"content-type": "application/json"}})
@@ -464,7 +470,10 @@ class ObservableApiMock {
       // version that accepts owner & repo
       this._handlers.push((pool) =>
         pool
-          .intercept({path: "/cli/github/repository?owner=observablehq&repo=test", headers: headersMatcher(headers)})
+          .intercept({
+            path: `/cli/github/repository?owner=${ownerName}&repo=${repoName}`,
+            headers: headersMatcher(headers)
+          })
           .reply(status, response, {headers: {"content-type": "application/json"}})
       );
     }

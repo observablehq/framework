@@ -14,7 +14,7 @@ import type {ObservableApiClientOptions, PostDeployUploadedRequest} from "../src
 import type {GetCurrentUserResponse} from "../src/observableApiClient.js";
 import {ObservableApiClient} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
-import {stripColor} from "../src/tty.js";
+import {link, stripColor} from "../src/tty.js";
 import {MockAuthEffects} from "./mocks/authEffects.js";
 import {TestClackEffects} from "./mocks/clack.js";
 import {MockConfigEffects} from "./mocks/configEffects.js";
@@ -207,7 +207,7 @@ describe("deploy", () => {
   describe("in isolated directory with git repo", () => {
     mockIsolatedDirectory({git: true});
 
-    it("fails continuous deployment if repo has no GitHub remote", async () => {
+    it("fails cloud build if repo has no GitHub remote", async () => {
       getCurrentObservableApi()
         .handleGetCurrentUser()
         .handleGetWorkspaceProjects({
@@ -234,7 +234,39 @@ describe("deploy", () => {
       effects.close();
     });
 
-    it("starts cloud build when continuous deployment is enabled and repo is valid", async () => {
+    it("fails cloud build if repo doesn’t match", async () => {
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetProject({
+          ...DEPLOY_CONFIG,
+          source: {
+            provider: "github",
+            provider_id: "123:456",
+            url: "https://github.com/observablehq/test.git",
+            branch: "main"
+          },
+          latestCreatedDeployId: null
+        })
+        .handleGetRepository({ownerName: "observablehq", repoName: "wrongrepo", provider_id: "000:001"})
+        .start();
+      const effects = new MockDeployEffects({deployConfig: {...DEPLOY_CONFIG, continuousDeployment: true}});
+
+      await (await open("readme.md", "a")).close();
+      await promisify(exec)(
+        "git add . && git commit -m 'initial' && git remote add origin git@github.com:observablehq/wrongrepo.git"
+      );
+
+      try {
+        await deploy(TEST_OPTIONS, effects);
+        assert.fail("expected error");
+      } catch (error) {
+        CliError.assert(error, {message: `Configured repository does not match local repository; check build settings on ${link(`https://observablehq.com/projects/@${DEPLOY_CONFIG.workspaceLogin}/${DEPLOY_CONFIG.projectSlug}/settings`)}`});
+      }
+
+      effects.close();
+    });
+
+    it("starts cloud build when continuous deployment is enabled for new project and repo is valid", async () => {
       const deployId = "deploy123";
       getCurrentObservableApi()
         .handleGetCurrentUser()
@@ -282,6 +314,7 @@ describe("deploy", () => {
           },
           latestCreatedDeployId: null
         })
+        .handleGetRepository({useProviderId: false})
         .handleGetRepository({useProviderId: true})
         .handlePostProjectBuild()
         .handleGetProject({
@@ -297,9 +330,6 @@ describe("deploy", () => {
         .handleGetDeploy({deployId, deployStatus: "uploaded"})
         .start();
       const effects = new MockDeployEffects({deployConfig: {...DEPLOY_CONFIG, continuousDeployment: true}});
-      effects.clack.inputs.push(
-        "bi" // Which app do you want to use?
-      );
 
       await (await open("readme.md", "a")).close();
       await promisify(exec)(
@@ -315,7 +345,7 @@ describe("deploy", () => {
   describe("in isolated directory without git repo", () => {
     mockIsolatedDirectory({git: false});
 
-    it("fails continuous deployment if not in a git repo", async () => {
+    it("fails cloud build if not in a git repo", async () => {
       getCurrentObservableApi()
         .handleGetCurrentUser()
         .handleGetWorkspaceProjects({
