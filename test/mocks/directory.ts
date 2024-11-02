@@ -11,7 +11,10 @@ export function mockIsolatedDirectory({ git }: { git: boolean; }) {
     cwd = process.cwd();
     dir = await mkdtemp(join(tmpdir(), "framework-test-"));
     process.chdir(dir);
-    if (git) (await promisify(exec)("git init")).stdout;
+    if (git) {
+      const {stdout, stderr} = (await promisify(exec)("git init"));
+      console.log({stdout, stderr});
+    };
   });
 
   afterEach(async () => {
