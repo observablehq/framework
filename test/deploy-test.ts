@@ -231,12 +231,12 @@ describe("deploy", () => {
           workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
           projects: []
         })
-        .handlePostProject({projectId: DEPLOY_CONFIG.projectId})
+        .handlePostProject({projectId: DEPLOY_CONFIG.projectId, slug: DEPLOY_CONFIG.projectSlug})
         .start();
       const effects = new MockDeployEffects();
       effects.clack.inputs.push(
         true, // No apps found. Do you want to create a new app?
-        "cloud-deployed-app", // What slug do you want to use?
+        DEPLOY_CONFIG.projectSlug, // What slug do you want to use?
         "public", // Who is allowed to access your app?
         true // Do you want to enable continuous deployment?
       );
@@ -250,6 +250,39 @@ describe("deploy", () => {
 
       effects.close();
     });
+
+    it("starts cloud build when continuous deployment is enabled and repo is valid", async () => {
+      const deployId = "deploy123";
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetWorkspaceProjects({
+          workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
+          projects: []
+        })
+        .handlePostProject({projectId: DEPLOY_CONFIG.projectId, slug: DEPLOY_CONFIG.projectSlug})
+        .handleGetRepository()
+        .handlePostProjectEnvironment()
+        .handlePostProjectBuild()
+        .handleGetProject({...DEPLOY_CONFIG, latestCreatedDeployId: deployId})
+        .handleGetDeploy({deployId, deployStatus: "uploaded"})
+        .start();
+      const effects = new MockDeployEffects();
+      effects.clack.inputs.push(
+        true, // No apps found. Do you want to create a new app?
+        DEPLOY_CONFIG.projectSlug, // What slug do you want to use?
+        "public", // Who is allowed to access your app?
+        true // Do you want to enable continuous deployment?
+      );
+
+      await promisify(exec)(
+        "touch readme.md; git add .; git commit -m 'initial'; git remote add origin git@github.com:observablehq/test.git"
+      );
+
+      await deploy(TEST_OPTIONS, effects);
+
+      effects.close();
+    });
+
   });
 
   describe("in isolated directory without git repo", () => {
@@ -267,7 +300,7 @@ describe("deploy", () => {
       const effects = new MockDeployEffects();
       effects.clack.inputs.push(
         true, // No apps found. Do you want to create a new app?
-        "cloud-deployed-app", // What slug do you want to use?
+        DEPLOY_CONFIG.projectSlug, // What slug do you want to use?
         "public", // Who is allowed to access your app?
         true // Do you want to enable continuous deployment?
       );

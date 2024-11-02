@@ -38,10 +38,6 @@ const BUILD_AGE_WARNING_MS = 1000 * 60 * 5;
 
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
-export function formatGitUrl(url: string) {
-  return new URL(url).pathname.slice(1).replace(/\.git$/, "");
-}
-
 function settingsUrl(deployTarget: DeployTargetInfo) {
   if (deployTarget.create) {
     throw new Error("Incorrect deploy target state");

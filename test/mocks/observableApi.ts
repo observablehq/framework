@@ -149,6 +149,7 @@ class ObservableApiMock {
     projectId = "project123",
     title = "Build test case",
     accessLevel = "private",
+    latestCreatedDeployId = null,
     status = 200
   }: {
     workspaceLogin: string;
@@ -157,6 +158,7 @@ class ObservableApiMock {
     title?: string;
     accessLevel?: string;
     status?: number;
+    latestCreatedDeployId?: null | string;
   }): ObservableApiMock {
     const response =
       status === 200
@@ -167,8 +169,8 @@ class ObservableApiMock {
             title,
             creator: {id: "user-id", login: "user-login"},
             owner: {id: "workspace-id", login: "workspace-login"},
-            latestCreatedDeployId: null,
-            automatic_builds_enabled: null,
+            latestCreatedDeployId,
+            automatic_builds_enabled: true,
             build_environment_id: "abc123",
             source: null
           } satisfies GetProjectResponse)
@@ -429,6 +431,66 @@ class ObservableApiMock {
           method: "POST"
         })
         .reply(200, JSON.stringify(response), {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handleGetRepository({status = 200}: {status?: number} = {}) {
+    const response =
+      status === 200
+        ? JSON.stringify({
+            provider: "github",
+            provider_id: "123:456",
+            url: "https://github.com/observablehq/test.git",
+            default_branch: "main",
+            name: "test",
+            linked_projects: []
+          })
+        : emptyErrorBody;
+    const headers = authorizationHeader(status !== 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: "/cli/github/repository?owner=observablehq&repo=test", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handlePostProjectEnvironment({status = 200}: {status?: number} = {}) {
+    const response =
+      status === 200
+        ? JSON.stringify({
+            automatic_builds_enabled: true,
+            build_environment_id: "abc123",
+            source: {
+              provider: "github",
+              provider_id: "123:456",
+              url: "https://github.com/observablehq/test.git",
+              branch: "main"
+            }
+          })
+        : emptyErrorBody;
+    const headers = authorizationHeader(status !== 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: "/cli/project/project123/environment", method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handlePostProjectBuild({status = 200}: {status?: number} = {}) {
+    const response =
+      status === 200
+        ? JSON.stringify({
+            id: "abc123"
+          })
+        : emptyErrorBody;
+    const headers = authorizationHeader(status !== 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: "/cli/project/project123/build", method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
   }
