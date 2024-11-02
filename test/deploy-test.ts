@@ -1,7 +1,7 @@
 import assert, {fail} from "node:assert";
 import {exec} from "node:child_process";
 import type {Stats} from "node:fs";
-import {stat} from "node:fs/promises";
+import {open, stat} from "node:fs/promises";
 import {Readable, Writable} from "node:stream";
 import {promisify} from "node:util";
 import type {BuildManifest} from "../src/build.js";
@@ -257,8 +257,11 @@ describe("deploy", () => {
         true // Do you want to enable continuous deployment?
       );
 
+      await (
+        await open("readme.md", "a")
+      ).close;
       const {stdout, stderr} = await promisify(exec)(
-        "touch readme.md && git add . && git commit -m 'initial' && git remote add origin git@github.com:observablehq/test.git"
+        "git add . && git commit -m 'initial' && git remote add origin git@github.com:observablehq/test.git"
       );
       console.log("starts cloud build test", {stdout, stderr});
 

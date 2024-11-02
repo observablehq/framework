@@ -279,7 +279,7 @@ class Deployer {
     if (!isGit) throw new CliError("Not at root of a git repository.");
 
     const {ownerName, repoName} = await getGitHubRemote();
-    const a = (await promisify(exec)("git rev-parse --abbrev-ref HEAD"));
+    const a = await promisify(exec)("git rev-parse --abbrev-ref HEAD");
     console.log("validateGitHubLink", {stdout: a.stdout, stderr: a.stderr});
     const branch = a.stdout.trim();
     let localRepo = await this.apiClient.getGitHubRepository({ownerName, repoName});
