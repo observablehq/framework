@@ -257,9 +257,10 @@ describe("deploy", () => {
         true // Do you want to enable continuous deployment?
       );
 
-      await promisify(exec)(
+      const {stdout, stderr} = await promisify(exec)(
         "touch readme.md; git add .; git commit -m 'initial'; git remote add origin git@github.com:observablehq/test.git"
       );
+      console.log({stdout, stderr});
 
       await deploy(TEST_OPTIONS, effects);
 
