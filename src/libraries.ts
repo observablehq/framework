@@ -1,3 +1,6 @@
+import type {DuckDBConfig} from "./config.js";
+import {resolveDuckDBExtension} from "./duckdb.js";
+
 export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
   const set = setof(methods);
   const implicits = new Set<string>();
@@ -72,7 +75,7 @@ export function getImplicitStylesheets(imports: Iterable<string>): Set<string> {
  * library used by FileAttachment) we manually enumerate the needed additional
  * downloads here. TODO Support versioned imports, too, such as "npm:leaflet@1".
  */
-export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
+export function getImplicitDownloads(imports: Iterable<string>, duckdb?: DuckDBConfig): Set<string> {
   const set = setof(imports);
   const implicits = new Set<string>();
   if (set.has("npm:@observablehq/duckdb")) {
@@ -80,6 +83,12 @@ export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js");
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
+    if (!duckdb) throw new Error("Implementation error: missing duckdb configuration");
+    for (const [name, {source}] of Object.entries(duckdb.extensions)) {
+      for (const platform in duckdb.platforms) {
+        implicits.add(`duckdb:${resolveDuckDBExtension(source, platform, name)}`);
+      }
+    }
   }
   if (set.has("npm:@observablehq/sqlite")) {
     implicits.add("npm:sql.js/dist/sql-wasm.js");

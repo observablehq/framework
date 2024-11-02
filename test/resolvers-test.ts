@@ -88,8 +88,8 @@ describe("getResolvers(page, {root, path})", () => {
   });
 });
 
-describe("resolveLink(href) with {cleanUrls: false}", () => {
-  const options = getOptions({root: "test/input", path: "sub/index.html", cleanUrls: false});
+describe("resolveLink(href) with {preserveExtension: true}", () => {
+  const options = getOptions({root: "test/input", path: "sub/index.html", preserveExtension: true});
   const page = parseMarkdown("", options);
   async function getResolveLink() {
     const resolvers = await getResolvers(page, options);
@@ -163,8 +163,8 @@ describe("resolveLink(href) with {cleanUrls: false}", () => {
   });
 });
 
-describe("resolveLink(href) with {cleanUrls: true}", () => {
-  const options = getOptions({root: "test/input", path: "sub/index.html", cleanUrls: true});
+describe("resolveLink(href) with {preserveExtension: false}", () => {
+  const options = getOptions({root: "test/input", path: "sub/index.html", preserveExtension: false});
   const page = parseMarkdown("", options);
   async function getResolveLink() {
     const resolvers = await getResolvers(page, options);
