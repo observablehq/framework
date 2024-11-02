@@ -8,7 +8,7 @@ import {pathToFileURL} from "node:url";
 import he from "he";
 import type MarkdownIt from "markdown-it";
 import wrapAnsi from "wrap-ansi";
-import {DUCKDB_CORE_EXTENSIONS, DUCKDB_PLATFORMS} from "./duckdb.js";
+import {DUCKDB_CORE_ALIASES, DUCKDB_CORE_EXTENSIONS} from "./duckdb.js";
 import {visitFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
@@ -78,7 +78,7 @@ export interface SearchConfigSpec {
 }
 
 export interface DuckDBConfig {
-  platforms: Record<string, true>;
+  platforms: {[name: string]: true};
   extensions: {[name: string]: DuckDBExtensionConfig};
 }
 
@@ -522,21 +522,22 @@ export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
 }
 
-// TODO configure platforms?
 function normalizeDuckDB(spec: unknown): DuckDBConfig {
+  const {mvp = true, eh = true} = spec?.["platforms"] ?? {};
   const extensions: {[name: string]: DuckDBExtensionConfig} = {};
   let extspec: Record<string, unknown> = spec?.["extensions"] ?? {};
   if (Array.isArray(extspec)) extspec = Object.fromEntries(extspec.map((name) => [name, {}]));
   if (extspec.json === undefined) extspec = {...extspec, json: false};
   if (extspec.parquet === undefined) extspec = {...extspec, parquet: false};
-  for (const name in extspec) {
+  for (let name in extspec) {
     if (!/^\w+$/.test(name)) throw new Error(`invalid extension: ${name}`);
     const vspec = extspec[name];
     if (vspec == null) continue;
+    name = DUCKDB_CORE_ALIASES[name] ?? name;
     const {
-      source = DUCKDB_CORE_EXTENSIONS.some(([n]) => n === name) ? "core" : "community",
+      source = name in DUCKDB_CORE_EXTENSIONS ? "core" : "community",
       install = true,
-      load = !DUCKDB_CORE_EXTENSIONS.find(([n]) => n === name)?.[1]
+      load = !DUCKDB_CORE_EXTENSIONS[name]
     } = typeof vspec === "boolean"
       ? {load: vspec}
       : typeof vspec === "string"
@@ -548,7 +549,15 @@ function normalizeDuckDB(spec: unknown): DuckDBConfig {
       load: Boolean(load)
     };
   }
-  return {platforms: DUCKDB_PLATFORMS, extensions};
+  return {
+    platforms: Object.fromEntries(
+      [
+        ["mvp", mvp],
+        ["eh", eh]
+      ].filter(([, enabled]) => enabled)
+    ),
+    extensions
+  };
 }
 
 function normalizeDuckDBSource(source: string): string {
