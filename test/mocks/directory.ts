@@ -13,7 +13,7 @@ export function mockIsolatedDirectory({git}: {git: boolean}) {
     process.chdir(dir);
     if (git) {
       await promisify(exec)(
-        'git config --global user.email "observable@example.com" && git config --global user.name "Observable User" && git config --global init.defaultBranch main && git init'
+        'git config user.email "observable@example.com" && git config user.name "Observable User" && git config init.defaultBranch main && git init'
       );
     }
   });
