@@ -1,9 +1,7 @@
 import assert, {fail} from "node:assert";
 import {exec} from "node:child_process";
 import type {Stats} from "node:fs";
-import {mkdtemp, rm, stat} from "node:fs/promises";
-import {tmpdir} from "node:os";
-import {join} from "node:path";
+import {stat} from "node:fs/promises";
 import {Readable, Writable} from "node:stream";
 import {promisify} from "node:util";
 import type {BuildManifest} from "../src/build.js";
@@ -20,6 +18,7 @@ import {stripColor} from "../src/tty.js";
 import {MockAuthEffects} from "./mocks/authEffects.js";
 import {TestClackEffects} from "./mocks/clack.js";
 import {MockConfigEffects} from "./mocks/configEffects.js";
+import {mockIsolatedDirectory} from "./mocks/directory.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 import {MockLogger} from "./mocks/logger.js";
 import {
@@ -199,22 +198,6 @@ const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; wor
   workspaceLogin: "mock-user-ws",
   continuousDeployment: false
 };
-
-function mockIsolatedDirectory({git}: {git: boolean}) {
-  let dir: string;
-  let cwd: string;
-  beforeEach(async () => {
-    cwd = process.cwd();
-    dir = await mkdtemp(join(tmpdir(), "framework-test-"));
-    process.chdir(dir);
-    if (git) (await promisify(exec)("git init")).stdout;
-  });
-
-  afterEach(async () => {
-    process.chdir(cwd);
-    await rm(dir, {recursive: true});
-  });
-}
 
 describe("deploy", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
