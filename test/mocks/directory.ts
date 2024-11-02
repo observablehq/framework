@@ -3,6 +3,7 @@ import {mkdtemp, rm} from "fs/promises";
 import {tmpdir} from "os";
 import {join} from "path/posix";
 import {promisify} from "util";
+import {rimraf} from "rimraf";
 
 export function mockIsolatedDirectory({git}: {git: boolean}) {
   let dir: string;
@@ -24,6 +25,7 @@ export function mockIsolatedDirectory({git}: {git: boolean}) {
 
   afterEach(async () => {
     process.chdir(cwd);
-    await rm(dir, {recursive: true, force: true});
+    await rimraf(dir);
+    // await rm(dir, {recursive: true, force: true});
   });
 }
