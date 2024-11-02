@@ -260,7 +260,11 @@ describe("deploy", () => {
         await deploy(TEST_OPTIONS, effects);
         assert.fail("expected error");
       } catch (error) {
-        CliError.assert(error, {message: `Configured repository does not match local repository; check build settings on ${link(`https://observablehq.com/projects/@${DEPLOY_CONFIG.workspaceLogin}/${DEPLOY_CONFIG.projectSlug}/settings`)}`});
+        CliError.assert(error, {
+          message: `Configured repository does not match local repository; check build settings on ${link(
+            `https://observablehq.com/projects/@${DEPLOY_CONFIG.workspaceLogin}/${DEPLOY_CONFIG.projectSlug}/settings`
+          )}`
+        });
       }
 
       effects.close();
@@ -290,10 +294,9 @@ describe("deploy", () => {
       );
 
       await (await open("readme.md", "a")).close();
-      const {stdout, stderr} = await promisify(exec)(
+      await promisify(exec)(
         "git add . && git commit -m 'initial' && git remote add origin git@github.com:observablehq/test.git"
       );
-      console.log("starts cloud build test", {stdout, stderr});
 
       await deploy(TEST_OPTIONS, effects);
 
@@ -325,10 +328,9 @@ describe("deploy", () => {
       );
 
       await (await open("readme.md", "a")).close();
-      const {stdout, stderr} = await promisify(exec)(
+      await promisify(exec)(
         "git add . && git commit -m 'initial' && git remote add origin git@github.com:observablehq/test.git"
       );
-      console.log("starts cloud build test", {stdout, stderr});
 
       await deploy(TEST_OPTIONS, effects);
 
