@@ -1,4 +1,5 @@
 import type {DuckDBConfig} from "./config.js";
+import {resolveDuckDBExtension} from "./duckdb.js";
 
 export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
   const set = setof(methods);
@@ -85,7 +86,7 @@ export function getImplicitDownloads(imports: Iterable<string>, duckdb?: DuckDBC
     if (!duckdb) throw new Error("Implementation error: missing duckdb configuration");
     for (const [name, {source}] of Object.entries(duckdb.extensions)) {
       for (const platform of duckdb.bundles) {
-        implicits.add(`duckdb:${platform},${name},${source}`);
+        implicits.add(`duckdb:${resolveDuckDBExtension(source, platform, name)}`);
       }
     }
   }

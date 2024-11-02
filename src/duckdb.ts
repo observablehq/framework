@@ -53,7 +53,9 @@ export async function getDuckDBManifest(
               await Promise.all(
                 duckdb.bundles.map(async (platform) => [
                   platform,
-                  install ? await getDuckDBExtension(root, platform, source, name, aliases) : source
+                  install
+                    ? await getDuckDBExtension(root, resolveDuckDBExtension(source, platform, name), aliases)
+                    : source
                 ])
               )
             )
@@ -64,6 +66,10 @@ export async function getDuckDBManifest(
   };
 }
 
+export function resolveDuckDBExtension(repo: string, platform: string, name: string): URL {
+  return new URL(`v${DUCKDB_VERSION}/wasm_${platform}/${name}.duckdb_extension.wasm`, repo);
+}
+
 /**
  * Returns the extension “custom repository” location as needed for DuckDB’s
  * INSTALL command. This is the relative path to which DuckDB will implicitly add
@@ -72,43 +78,31 @@ export async function getDuckDBManifest(
  *
  * https://duckdb.org/docs/extensions/working_with_extensions#creating-a-custom-repository
  */
-async function getDuckDBExtension(
-  root: string,
-  platform: string,
-  source: string,
-  name: string,
-  aliases?: Map<string, string>
-) {
-  let ext = await resolveDuckDBExtension(root, platform, source, name);
+async function getDuckDBExtension(root: string, href: string | URL, aliases?: Map<string, string>) {
+  let ext = await cacheDuckDBExtension(root, href);
   if (aliases?.has(ext)) ext = aliases.get(ext)!;
   return join("..", "..", dirname(dirname(dirname(ext))));
 }
 
 /**
  * Saves the given DuckDB extension to the .observablehq/cache/_duckdb cache,
- * as {repo}/v{version}/wasm_{platform}/{name}.duckdb_extension.wasm,
- * returning the serving path to the saved file in the cache (starting with
- * /_duckdb).
+ * as {origin}/{path}/{name}.duckdb_extension.wasm, returning the serving path
+ * to the saved file in the cache (starting with /_duckdb).
  *
  * https://duckdb.org/docs/extensions/overview#installation-location
  */
-export async function resolveDuckDBExtension(
-  root: string,
-  platform: string,
-  repo: string,
-  name: string
-): Promise<string> {
+export async function cacheDuckDBExtension(root: string, href: string | URL): Promise<string> {
+  const url = new URL(href);
+  if (url.protocol !== "https:") throw new Error(`unsupported protocol: ${url.protocol}`);
+  const key = String(url).slice("https://".length);
+  const path = join("_duckdb", key);
   const cache = join(root, ".observablehq", "cache");
-  const file = `${name}.duckdb_extension.wasm`;
-  const url = new URL(`v${DUCKDB_VERSION}/wasm_${platform}/${file}`, repo);
-  if (url.protocol !== "https:") throw new Error(`invalid repo: ${repo}`);
-  const path = join("_duckdb", String(url).slice("https://".length));
   const cachePath = join(cache, path);
   if (existsSync(cachePath)) return `/${path}`;
   let promise = downloadRequests.get(cachePath);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async () => {
-    console.log(`duckdb:${url} ${faint("→")} ${cachePath}`);
+    console.log(`duckdb:${key} ${faint("→")} ${cachePath}`);
     const response = await fetch(url);
     if (!response.ok) throw new Error(`unable to fetch: ${url}`);
     await mkdir(dirname(cachePath), {recursive: true});

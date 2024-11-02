@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
 import type {DuckDBConfig} from "./config.js";
-import {resolveDuckDBExtension} from "./duckdb.js";
+import {cacheDuckDBExtension} from "./duckdb.js";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
 import {isJavaScript} from "./javascript/imports.js";
@@ -371,8 +371,7 @@ async function resolveResolvers(
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
     } else if (specifier.startsWith("duckdb:")) {
-      const [p, name, repo] = specifier.slice("duckdb:".length).split(",");
-      const path = await resolveDuckDBExtension(root, p, repo, name);
+      const path = await cacheDuckDBExtension(root, specifier.slice("duckdb:".length));
       resolutions.set(specifier, path);
     } else if (!specifier.startsWith("observablehq:")) {
       throw new Error(`unhandled implicit download: ${specifier}`);

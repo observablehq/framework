@@ -152,7 +152,7 @@ If the `duckdb_extensions()` function runs before DuckDB autoloads a core extens
 
 ### Self-hosting of extensions
 
-As with [npm imports](../imports#self-hosting-of-npm-imports), configured DuckDB extensions are self-hosted, improving performance, stability, & security, and allowing you to develop offline. Extensions are downloaded to the DuckDB cache folder, which lives in <code>.observablehq/<wbr>cache/<wbr>_duckdb</code> within the source root (typically `src`). You can clear the cache and restart the preview server to re-fetch the latest versions of any DuckDB extensions. If you use an [autoloading core extension](https://duckdb.org/docs/extensions/core_extensions.html#list-of-core-extensions) that is not configured, DuckDB-Wasm [will load it](https://duckdb.org/docs/api/wasm/extensions.html#fetching-duckdb-wasm-extensions) from the default extension repository, `extensions.duckdb.org`, at runtime.
+As with [npm imports](../imports#self-hosting-of-npm-imports), configured DuckDB extensions are self-hosted, improving performance, stability, & security, and allowing you to develop offline. Extensions are downloaded to the DuckDB cache folder, which lives in <code>.observablehq/<wbr>cache/<wbr>\_duckdb</code> within the source root (typically `src`). You can clear the cache and restart the preview server to re-fetch the latest versions of any DuckDB extensions. If you use an [autoloading core extension](https://duckdb.org/docs/extensions/core_extensions.html#list-of-core-extensions) that is not configured, DuckDB-Wasm [will load it](https://duckdb.org/docs/api/wasm/extensions.html#fetching-duckdb-wasm-extensions) from the default extension repository, `extensions.duckdb.org`, at runtime.
 
 ## Configuring
 
