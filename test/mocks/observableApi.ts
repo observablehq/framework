@@ -150,6 +150,7 @@ class ObservableApiMock {
     title = "Build test case",
     accessLevel = "private",
     latestCreatedDeployId = null,
+    source = null,
     status = 200
   }: {
     workspaceLogin: string;
@@ -158,6 +159,7 @@ class ObservableApiMock {
     title?: string;
     accessLevel?: string;
     status?: number;
+    source?: GetProjectResponse["source"];
     latestCreatedDeployId?: null | string;
   }): ObservableApiMock {
     const response =
@@ -168,11 +170,11 @@ class ObservableApiMock {
             slug: projectSlug,
             title,
             creator: {id: "user-id", login: "user-login"},
-            owner: {id: "workspace-id", login: "workspace-login"},
+            owner: {id: "workspace-id", login: workspaceLogin},
             latestCreatedDeployId,
             automatic_builds_enabled: true,
             build_environment_id: "abc123",
-            source: null
+            source
           } satisfies GetProjectResponse)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 401 && status !== 403);
@@ -435,7 +437,7 @@ class ObservableApiMock {
     return this;
   }
 
-  handleGetRepository({status = 200}: {status?: number} = {}) {
+  handleGetRepository({status = 200, useProviderId = false}: {status?: number; useProviderId?: boolean} = {}) {
     const response =
       status === 200
         ? JSON.stringify({
@@ -448,11 +450,24 @@ class ObservableApiMock {
           })
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 401);
-    this._handlers.push((pool) =>
-      pool
-        .intercept({path: "/cli/github/repository?owner=observablehq&repo=test", headers: headersMatcher(headers)})
-        .reply(status, response, {headers: {"content-type": "application/json"}})
-    );
+    if (useProviderId) {
+      // version that accepts provider_id
+      this._handlers.push((pool) =>
+        pool
+          .intercept({
+            path: `/cli/github/repository?provider_id=${encodeURIComponent("123:456")}`,
+            headers: headersMatcher(headers)
+          })
+          .reply(status, response, {headers: {"content-type": "application/json"}})
+      );
+    } else {
+      // version that accepts owner & repo
+      this._handlers.push((pool) =>
+        pool
+          .intercept({path: "/cli/github/repository?owner=observablehq&repo=test", headers: headersMatcher(headers)})
+          .reply(status, response, {headers: {"content-type": "application/json"}})
+      );
+    }
     return this;
   }
 

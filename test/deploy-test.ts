@@ -283,6 +283,47 @@ describe("deploy", () => {
       effects.close();
     });
 
+    it("starts cloud build when continuous deployment is enabled for existing project with existing source", async () => {
+      const deployId = "deploy123";
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetProject({
+          ...DEPLOY_CONFIG,
+          source: {
+            provider: "github",
+            provider_id: "123:456",
+            url: "https://github.com/observablehq/test.git",
+            branch: "main"
+          },
+          latestCreatedDeployId: null
+        })
+        .handleGetRepository({useProviderId: true})
+        .handlePostProjectBuild()
+        .handleGetProject({
+          ...DEPLOY_CONFIG,
+          source: {
+            provider: "github",
+            provider_id: "123:456",
+            url: "https://github.com/observablehq/test.git",
+            branch: "main"
+          },
+          latestCreatedDeployId: deployId
+        })
+        .handleGetDeploy({deployId, deployStatus: "uploaded"})
+        .start();
+      const effects = new MockDeployEffects({deployConfig: {...DEPLOY_CONFIG, continuousDeployment: true}});
+      effects.clack.inputs.push(
+        "bi" // Which app do you want to use?
+      );
+
+      await promisify(exec)(
+        "touch readme.md; git add .; git commit -m 'initial'; git remote add origin https://github.com/observablehq/test.git"
+      );
+
+      await deploy(TEST_OPTIONS, effects);
+
+      effects.close();
+    });
   });
 
   describe("in isolated directory without git repo", () => {
