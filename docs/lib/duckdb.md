@@ -140,9 +140,8 @@ SELECT ST_Area('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'::GEOMETRY) as area;
 
 To tell which extensions have been loaded, you can run the following query:
 
-```js
-await new Promise((r) => setTimeout(r, 2000));
-display(Inputs.table(await sql`FROM duckdb_extensions() WHERE loaded;`));
+```sql
+FROM duckdb_extensions() WHERE loaded AND JSON '1';
 ```
 
 ```sql run=false
