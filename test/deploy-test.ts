@@ -300,6 +300,41 @@ describe("deploy", () => {
       effects.close();
     });
 
+    it("starts cloud build when continuous deployment is enabled for new project and repo is manually auth’ed while CLI is polling", async () => {
+      const deployId = "deploy123";
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetWorkspaceProjects({
+          workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
+          projects: []
+        })
+        .handlePostProject({projectId: DEPLOY_CONFIG.projectId, slug: DEPLOY_CONFIG.projectSlug})
+        .handleGetRepository({status: 404})
+        .handleGetRepository()
+        .handlePostProjectEnvironment()
+        .handlePostProjectBuild()
+        .handleGetProject({...DEPLOY_CONFIG, latestCreatedDeployId: deployId})
+        .handleGetDeploy({deployId, deployStatus: "uploaded"})
+        .start();
+      const effects = new MockDeployEffects();
+      effects.clack.inputs.push(
+        true, // No apps found. Do you want to create a new app?
+        DEPLOY_CONFIG.projectSlug, // What slug do you want to use?
+        "public", // Who is allowed to access your app?
+        true // Do you want to enable continuous deployment?
+      );
+
+      await (await open("readme.md", "a")).close();
+      const {stdout, stderr} = await promisify(exec)(
+        "git add . && git commit -m 'initial' && git remote add origin git@github.com:observablehq/test.git"
+      );
+      console.log("starts cloud build test", {stdout, stderr});
+
+      await deploy(TEST_OPTIONS, effects);
+
+      effects.close();
+    });
+
     it("starts cloud build when continuous deployment is enabled for existing project with existing source", async () => {
       const deployId = "deploy123";
       getCurrentObservableApi()

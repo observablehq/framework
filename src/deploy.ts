@@ -311,6 +311,8 @@ class Deployer {
         providerId: source.provider_id
       });
       if (!remoteAuthedRepo) {
+        // TODO: This could poll for auth too, but is a distinct case because it
+        // means the repo was linked at one point and then something went wrong
         throw new CliError(
           `Cannot access configured repository; check build settings on ${link(
             `${settingsUrl(deployTarget)}/settings`
@@ -336,9 +338,10 @@ class Deployer {
 
       const spinner = this.effects.clack.spinner();
       spinner.start("Waiting for repository to be authorized");
+      const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
       const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
       while (!localRepo) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, pollInterval));
         if (Date.now() > pollExpiration) {
           spinner.stop("Waiting for repository to be authorized timed out.");
           throw new CliError("Repository authorization failed");
