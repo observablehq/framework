@@ -257,9 +257,7 @@ describe("deploy", () => {
         true // Do you want to enable continuous deployment?
       );
 
-      await (
-        await open("readme.md", "a")
-      ).close;
+      await (await open("readme.md", "a")).close();
       const {stdout, stderr} = await promisify(exec)(
         "git add . && git commit -m 'initial' && git remote add origin git@github.com:observablehq/test.git"
       );
