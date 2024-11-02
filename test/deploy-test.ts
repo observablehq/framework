@@ -301,8 +301,9 @@ describe("deploy", () => {
         "bi" // Which app do you want to use?
       );
 
+      await (await open("readme.md", "a")).close();
       await promisify(exec)(
-        "touch readme.md; git add .; git commit -m 'initial'; git remote add origin https://github.com/observablehq/test.git"
+        "git add . && git commit -m 'initial' && git remote add origin https://github.com/observablehq/test.git"
       );
 
       await deploy(TEST_OPTIONS, effects);
