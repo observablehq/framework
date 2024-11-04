@@ -14,7 +14,7 @@ import type {LoaderResolver} from "./loader.js";
 import type {MarkdownPage} from "./markdown.js";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
-import {isAssetPath, isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
+import {isAssetPath, isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath, resolveRelativePath} from "./path.js";
 
 export interface Resolvers {
   path: string;
@@ -133,7 +133,7 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     for (const value of Object.values(page.data.sql)) {
       const source = String(value);
       if (isAssetPath(source)) {
-        files.add(source);
+        files.add(resolveRelativePath(path, source));
       }
     }
   }
