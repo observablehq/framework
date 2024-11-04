@@ -14,7 +14,15 @@ import type {LoaderResolver} from "./loader.js";
 import type {MarkdownPage} from "./markdown.js";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
-import {isAssetPath, isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath, resolveRelativePath} from "./path.js";
+import {
+  isAssetPath,
+  isPathImport,
+  parseRelativeUrl,
+  relativePath,
+  resolveLocalPath,
+  resolvePath,
+  resolveRelativePath
+} from "./path.js";
 
 export interface Resolvers {
   path: string;
