@@ -95,7 +95,7 @@ ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.foot
 </body>
 <script>{import('${resolveImport(
     "observablehq:stdlib"
-  )}').then(async({Generators:{dark:k}})=>{for await(let d of k()){document.body.classList.toggle("dark",d),document.body.classList.toggle("light",!d)}})}</script>
+  )}').then(async({Generators:{dark:k}})=>{for await(let d of k()){document.body.classList.toggle("dark",d);document.body.classList.toggle("light",!d)}})}</script>
 </html>
 `);
 }
