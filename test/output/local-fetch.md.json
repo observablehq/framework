@@ -69,5 +69,6 @@
       },
       "mode": "block"
     }
-  ]
+  ],
+  "path": "local-fetch.md"
 }
