@@ -4,7 +4,9 @@ import {dirname, extname, join} from "node:path/posix";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
 import {maxSatisfying, rsort, satisfies, validRange} from "semver";
+import {DUCKDB_WASM_VERSION} from "./duckdb.js";
 import {isEnoent} from "./error.js";
+import {annotatePath} from "./javascript/annotate.js";
 import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
 import {isImportMetaResolve, parseImports} from "./javascript/imports.js";
 import {parseProgram} from "./javascript/parse.js";
@@ -64,7 +66,7 @@ export function rewriteNpmImports(input: string, resolve: (s: string) => string 
     const value = getStringLiteralValue(source);
     const resolved = resolve(value);
     if (resolved === undefined || value === resolved) return;
-    output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
+    output.replaceLeft(source.start, source.end, annotatePath(resolved));
   }
 
   // TODO Preserve the source map, but download it too.
@@ -81,14 +83,22 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
   let promise = npmRequests.get(outputPath);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async () => {
-    const specifier = extractNpmSpecifier(path);
+    let specifier = extractNpmSpecifier(path);
+    const s = parseNpmSpecifier(specifier);
+    // https://github.com/sql-js/sql.js/issues/284
+    if (s.name === "sql.js" && s.path === "+esm") {
+      specifier = formatNpmSpecifier({...s, path: "dist/sql-wasm.js"});
+    }
     const href = `https://cdn.jsdelivr.net/npm/${specifier}`;
     console.log(`npm:${specifier} ${faint("→")} ${outputPath}`);
     const response = await fetch(href);
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
     await mkdir(dirname(outputPath), {recursive: true});
     if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
-      const source = await response.text();
+      let source = await response.text();
+      if (s.name === "sql.js" && s.path === "+esm") {
+        source = "var module;\n" + source + "\nexport default initSqlJs;";
+      }
       const resolver = await getDependencyResolver(root, path, source);
       await writeFile(outputPath, rewriteNpmImports(source, resolver), "utf-8");
     } else {
@@ -162,7 +172,7 @@ export async function getDependencyResolver(
         (name === "arquero" || name === "@uwdata/mosaic-core" || name === "@duckdb/duckdb-wasm") && depName === "apache-arrow" // prettier-ignore
           ? "latest" // force Arquero, Mosaic & DuckDB-Wasm to use the (same) latest version of Arrow
           : name === "@uwdata/mosaic-core" && depName === "@duckdb/duckdb-wasm"
-          ? "1.28.0" // force Mosaic to use the latest (stable) version of DuckDB-Wasm
+          ? DUCKDB_WASM_VERSION // force Mosaic to use the latest (stable) version of DuckDB-Wasm
           : pkg.dependencies?.[depName] ??
             pkg.devDependencies?.[depName] ??
             pkg.peerDependencies?.[depName] ??
@@ -248,9 +258,7 @@ async function resolveNpmVersion(root: string, {name, range}: NpmSpecifier): Pro
 export async function resolveNpmImport(root: string, specifier: string): Promise<string> {
   const {
     name,
-    range = name === "@duckdb/duckdb-wasm"
-      ? "1.28.0" // https://github.com/duckdb/duckdb-wasm/issues/1561
-      : undefined,
+    range = name === "@duckdb/duckdb-wasm" ? DUCKDB_WASM_VERSION : undefined,
     path = name === "mermaid"
       ? "dist/mermaid.esm.min.mjs/+esm"
       : name === "echarts"
