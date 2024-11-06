@@ -1,8 +1,28 @@
 import assert from "node:assert";
 import {resolve} from "node:path";
 import MarkdownIt from "markdown-it";
+import type {DuckDBConfig} from "../src/config.js";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
 import {LoaderResolver} from "../src/loader.js";
+
+const DUCKDB_DEFAULTS: DuckDBConfig = {
+  platforms: {
+    eh: true,
+    mvp: true
+  },
+  extensions: {
+    json: {
+      source: "https://extensions.duckdb.org/",
+      install: true,
+      load: false
+    },
+    parquet: {
+      source: "https://extensions.duckdb.org/",
+      install: true,
+      load: false
+    }
+  }
+};
 
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
@@ -43,7 +63,8 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: null,
-      watchPath: resolve("test/input/build/config/observablehq.config.js")
+      watchPath: resolve("test/input/build/config/observablehq.config.js"),
+      duckdb: DUCKDB_DEFAULTS
     });
   });
   it("returns the default config if no config file is found", async () => {
@@ -71,7 +92,8 @@ describe("readConfig(undefined, root)", () => {
       footer:
         'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: null,
-      watchPath: undefined
+      watchPath: undefined,
+      duckdb: DUCKDB_DEFAULTS
     });
   });
 });
@@ -187,7 +209,7 @@ describe("normalizeConfig(spec, root)", () => {
   });
 });
 
-describe("normalizePath(path) with {cleanUrls: false}", () => {
+describe("normalizePath(path) with {cleanUrls: false} (deprecated)", () => {
   const root = "test/input";
   const normalize = config({cleanUrls: false}, root).normalizePath;
   it("appends .html to extension-less links", () => {
@@ -234,7 +256,7 @@ describe("normalizePath(path) with {cleanUrls: false}", () => {
   });
 });
 
-describe("normalizePath(path) with {cleanUrls: true}", () => {
+describe("normalizePath(path) with {cleanUrls: true} (deprecated)", () => {
   const root = "test/input";
   const normalize = config({cleanUrls: true}, root).normalizePath;
   it("does not append .html to extension-less links", () => {
@@ -283,6 +305,156 @@ describe("normalizePath(path) with {cleanUrls: true}", () => {
   });
 });
 
+describe("normalizePath(path) with {preserveExtension: true}", () => {
+  const root = "test/input";
+  const normalize = config({preserveExtension: true}, root).normalizePath;
+  it("appends .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo.html");
+  });
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.html"), "foo.html");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
+  });
+  it("preserves absolute paths", () => {
+    assert.strictEqual(normalize("/foo"), "/foo.html");
+    assert.strictEqual(normalize("/foo.html"), "/foo.html");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "../sub/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("foo"), "foo.html");
+    assert.strictEqual(normalize("./foo"), "./foo.html");
+    assert.strictEqual(normalize("../foo"), "../foo.html");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
+  });
+});
+
+describe("normalizePath(path) with {preserveExtension: false}", () => {
+  const root = "test/input";
+  const normalize = config({preserveExtension: false}, root).normalizePath;
+  it("does not append .html to extension-less links", () => {
+    assert.strictEqual(normalize("foo"), "foo");
+  });
+  it("does not append .html to extensioned links", () => {
+    assert.strictEqual(normalize("foo.png"), "foo.png");
+    assert.strictEqual(normalize("foo.md"), "foo.md");
+  });
+  it("removes .html from extensioned links", () => {
+    assert.strictEqual(normalize("foo.html"), "foo");
+  });
+  it("preserves absolute paths", () => {
+    assert.strictEqual(normalize("/foo"), "/foo");
+    assert.strictEqual(normalize("/foo.html"), "/foo");
+    assert.strictEqual(normalize("/foo.png"), "/foo.png");
+  });
+  it("converts index links to directories", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/");
+    assert.strictEqual(normalize("foo/index.html"), "foo/");
+    assert.strictEqual(normalize("../index"), "../");
+    assert.strictEqual(normalize("../index.html"), "../");
+    assert.strictEqual(normalize("./index"), "./");
+    assert.strictEqual(normalize("./index.html"), "./");
+    assert.strictEqual(normalize("/index"), "/");
+    assert.strictEqual(normalize("/index.html"), "/");
+    assert.strictEqual(normalize("index"), ".");
+    assert.strictEqual(normalize("index.html"), ".");
+  });
+  it("preserves links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/");
+    assert.strictEqual(normalize("./"), "./");
+    assert.strictEqual(normalize("../"), "../");
+    assert.strictEqual(normalize("foo/"), "foo/");
+    assert.strictEqual(normalize("./foo/"), "./foo/");
+    assert.strictEqual(normalize("../foo/"), "../foo/");
+    assert.strictEqual(normalize("../sub/"), "../sub/");
+  });
+  it("preserves a relative path", () => {
+    assert.strictEqual(normalize("foo"), "foo");
+    assert.strictEqual(normalize("./foo"), "./foo");
+    assert.strictEqual(normalize("../foo"), "../foo");
+    assert.strictEqual(normalize("./foo.png"), "./foo.png");
+    assert.strictEqual(normalize("../foo.png"), "../foo.png");
+  });
+});
+
+describe("normalizePath(path) with {preserveIndex: true}", () => {
+  const root = "test/input";
+  const normalize = config({preserveIndex: true}, root).normalizePath;
+  it("preserves index links", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/index");
+    assert.strictEqual(normalize("foo/index.html"), "foo/index");
+    assert.strictEqual(normalize("../index"), "../index");
+    assert.strictEqual(normalize("../index.html"), "../index");
+    assert.strictEqual(normalize("./index"), "./index");
+    assert.strictEqual(normalize("./index.html"), "./index");
+    assert.strictEqual(normalize("/index"), "/index");
+    assert.strictEqual(normalize("/index.html"), "/index");
+    assert.strictEqual(normalize("index"), "index");
+    assert.strictEqual(normalize("index.html"), "index");
+  });
+  it("converts links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/index");
+    assert.strictEqual(normalize("./"), "./index");
+    assert.strictEqual(normalize("../"), "../index");
+    assert.strictEqual(normalize("foo/"), "foo/index");
+    assert.strictEqual(normalize("./foo/"), "./foo/index");
+    assert.strictEqual(normalize("../foo/"), "../foo/index");
+    assert.strictEqual(normalize("../sub/"), "../sub/index");
+  });
+});
+
+describe("normalizePath(path) with {preserveIndex: true, preserveExtension: true}", () => {
+  const root = "test/input";
+  const normalize = config({preserveIndex: true, preserveExtension: true}, root).normalizePath;
+  it("preserves index links", () => {
+    assert.strictEqual(normalize("foo/index"), "foo/index.html");
+    assert.strictEqual(normalize("foo/index.html"), "foo/index.html");
+    assert.strictEqual(normalize("../index"), "../index.html");
+    assert.strictEqual(normalize("../index.html"), "../index.html");
+    assert.strictEqual(normalize("./index"), "./index.html");
+    assert.strictEqual(normalize("./index.html"), "./index.html");
+    assert.strictEqual(normalize("/index"), "/index.html");
+    assert.strictEqual(normalize("/index.html"), "/index.html");
+    assert.strictEqual(normalize("index"), "index.html");
+    assert.strictEqual(normalize("index.html"), "index.html");
+  });
+  it("converts links to directories", () => {
+    assert.strictEqual(normalize(""), "");
+    assert.strictEqual(normalize("/"), "/index.html");
+    assert.strictEqual(normalize("./"), "./index.html");
+    assert.strictEqual(normalize("../"), "../index.html");
+    assert.strictEqual(normalize("foo/"), "foo/index.html");
+    assert.strictEqual(normalize("./foo/"), "./foo/index.html");
+    assert.strictEqual(normalize("../foo/"), "../foo/index.html");
+    assert.strictEqual(normalize("../sub/"), "../sub/index.html");
+  });
+});
+
 describe("mergeToc(spec, toc)", () => {
   const root = "test/input/build/config";
   it("merges page- and project-level toc config", async () => {
@@ -293,5 +465,172 @@ describe("mergeToc(spec, toc)", () => {
     assert.deepStrictEqual(mergeToc({show: true}, toc), {label: "Contents", show: true});
     assert.deepStrictEqual(mergeToc({show: undefined}, toc), {label: "Contents", show: true});
     assert.deepStrictEqual(mergeToc({}, toc), {label: "Contents", show: true});
+  });
+});
+
+describe("normalizeConfig(duckdb)", () => {
+  const root = "";
+  it("uses the defaults", () => {
+    const {duckdb} = config({}, root);
+    assert.deepEqual(duckdb, DUCKDB_DEFAULTS);
+  });
+  it("supports install: false and load: false", () => {
+    const {duckdb} = config({duckdb: {extensions: {json: {install: false, load: false}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      json: {
+        source: "https://extensions.duckdb.org/",
+        install: false,
+        load: false
+      }
+    });
+  });
+  it("supports null", () => {
+    const {duckdb} = config({duckdb: {extensions: {json: null}}}, root);
+    assert.deepEqual(
+      duckdb.extensions,
+      Object.fromEntries(Object.entries(DUCKDB_DEFAULTS.extensions).filter(([name]) => name !== "json"))
+    );
+  });
+  it("defaults load: false for known auto-loading extensions", () => {
+    const {duckdb} = config({duckdb: {extensions: {aws: {}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      aws: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: false
+      }
+    });
+  });
+  it("defaults source: core for known core extensions", () => {
+    const {duckdb} = config({duckdb: {extensions: {mysql: {}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      mysql: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("defaults source: community for unknown extensions", () => {
+    const {duckdb} = config({duckdb: {extensions: {h3: {}}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      h3: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("supports core, community and https:// sources", () => {
+    const {duckdb} = config(
+      {
+        duckdb: {
+          extensions: {
+            foo: {source: "core"},
+            bar: {source: "community"},
+            baz: {source: "https://custom-domain"}
+          }
+        }
+      },
+      root
+    );
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      foo: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      bar: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      baz: {
+        source: "https://custom-domain/", // URL normalization
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("supports source: string shorthand", () => {
+    const {duckdb} = config(
+      {
+        duckdb: {
+          extensions: {
+            foo: "core",
+            bar: "community",
+            baz: "https://custom-domain"
+          }
+        }
+      },
+      root
+    );
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      foo: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      bar: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      baz: {
+        source: "https://custom-domain/", // URL normalization
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("supports load: boolean shorthand", () => {
+    const {duckdb} = config({duckdb: {extensions: {json: true, foo: true, bar: false}}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      json: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      foo: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      bar: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: false
+      }
+    });
+  });
+  it("supports sources shorthand", () => {
+    const {duckdb} = config({duckdb: {extensions: ["spatial", "h3"]}}, root);
+    assert.deepEqual(duckdb.extensions, {
+      ...DUCKDB_DEFAULTS.extensions,
+      spatial: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      h3: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      }
+    });
+  });
+  it("rejects invalid names", () => {
+    assert.throws(() => config({duckdb: {extensions: {"*^/": true}}}, root), /invalid extension/i);
+  });
+  it("rejects invalid sources", () => {
+    assert.throws(() => config({duckdb: {extensions: {foo: "file:///path/to/extension"}}}, root), /invalid source/i);
+    assert.throws(() => config({duckdb: {extensions: {foo: "notasource"}}}, root), /invalid url/i);
   });
 });

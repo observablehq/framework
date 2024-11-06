@@ -16,6 +16,7 @@ import type {WebSocket} from "ws";
 import {WebSocketServer} from "ws";
 import type {Config} from "./config.js";
 import {readConfig} from "./config.js";
+import {getDuckDBManifest} from "./duckdb.js";
 import {enoent, isEnoent, isHttpError, isSystemError} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {FileWatchers} from "./fileWatchers.js";
@@ -118,7 +119,7 @@ export class PreviewServer {
 
   _handleRequest: RequestListener = async (req, res) => {
     const config = await this._readConfig();
-    const {root, loaders} = config;
+    const {root, loaders, duckdb} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
     const url = new URL(req.url!, "http://localhost");
     const {origin} = req.headers;
@@ -135,11 +136,15 @@ export class PreviewServer {
         end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".js")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
-        end(req, res, await rollupClient(path, root, pathname), "text/javascript");
+        const options =
+          pathname === "/_observablehq/stdlib/duckdb.js"
+            ? {define: {DUCKDB_MANIFEST: JSON.stringify(await getDuckDBManifest(duckdb, {root}))}}
+            : {};
+        end(req, res, await rollupClient(path, root, pathname, options), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
         end(req, res, await bundleStyles({path}), "text/css");
-      } else if (pathname.startsWith("/_node/") || pathname.startsWith("/_jsr/")) {
+      } else if (pathname.startsWith("/_node/") || pathname.startsWith("/_jsr/") || pathname.startsWith("/_duckdb/")) {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
         await populateNpmCache(root, pathname);
@@ -179,8 +184,8 @@ export class PreviewServer {
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
 
-        // Normalize the pathname (e.g., adding ".html" if cleanUrls is false,
-        // dropping ".html" if cleanUrls is true) and redirect if necessary.
+        // Normalize the pathname (e.g., adding ".html" or removing ".html"
+        // based on preserveExtension) and redirect if necessary.
         const normalizedPathname = encodeURI(config.normalizePath(pathname));
         if (url.pathname !== normalizedPathname) {
           res.writeHead(302, {Location: normalizedPathname + url.search});
@@ -393,9 +398,9 @@ function handleWatch(socket: WebSocket, req: IncomingMessage, configPromise: Pro
     if (path.endsWith("/")) path += "index";
     path = join(dirname(path), basename(path, ".html"));
     config = await configPromise;
-    const {root, loaders, normalizePath} = config;
+    const {root, loaders, normalizePath, duckdb} = config;
     const page = await loaders.loadPage(path, {path, ...config});
-    const resolvers = await getResolvers(page, {root, path, loaders, normalizePath});
+    const resolvers = await getResolvers(page, {root, path, loaders, normalizePath, duckdb});
     if (resolvers.hash === initialHash) send({type: "welcome"});
     else return void send({type: "reload"});
     hash = resolvers.hash;
