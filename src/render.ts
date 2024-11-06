@@ -93,9 +93,9 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
 ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
 </div>
 </body>
-<script type="module">import{Generators as g}from'${resolveImport(
+<script>{import('${resolveImport(
     "observablehq:stdlib"
-  )}';for await(const d of g.dark()){document.body.classList.toggle("dark",d),document.body.classList.toggle("light",!d)}</script>
+  )}').then(async({Generators:{dark:k}})=>{for await(let d of k()){document.body.classList.toggle("dark",d),document.body.classList.toggle("light",!d)}})}</script>
 </html>
 `);
 }
