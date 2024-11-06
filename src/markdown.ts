@@ -40,7 +40,7 @@ export interface MarkdownPage {
   data: FrontMatter;
   style: string | null;
   code: MarkdownCode[];
-  path?: string;
+  path: string;
   params?: Params;
 }
 
@@ -244,7 +244,7 @@ export function createMarkdownIt({
 }
 
 export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
-  const {md, source, path, params} = options;
+  const {md, path, source = path, params} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params};

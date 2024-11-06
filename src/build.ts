@@ -83,8 +83,8 @@ export async function build(
     modules: [],
     files: []
   };
-  const addToManifest = (type: string, file: string, {title, path}: {title?: string | null; path?: string}) => {
-    const source = path == null || path === file.slice(1) ? null : join("/", path);
+  const addToManifest = (type: string, file: string, {title, path}: {title?: string | null; path: string}) => {
+    const source = file === (path = `/${path}`) ? null : path;
     buildManifest[type].push({
       path: config.normalizePath(file),
       ...(title != null && {title}),
