@@ -1,7 +1,6 @@
 import {observe} from "./observe.js";
 
-// Watches dark mode based on the color-scheme property, that the chosen theme
-// sets.
+// Watches dark mode based on the color-scheme set by the current theme.
 export function dark() {
   return observe((notify: (dark: boolean) => void) => {
     let dark: boolean | undefined;
