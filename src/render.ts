@@ -93,9 +93,9 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
 ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
 </div>
 </body>
-<script>{${html.unsafe(
-    (await rollupClient(getClientPath("dark-init.js"), options.root, path, {resolveImport, minify: true})).trim()
-  )}}</script>
+<script type="module">import{Generators as g}from'${resolveImport(
+    "observablehq:stdlib"
+  )}';for await(const d of g.dark()){document.body.classList.toggle("dark",d),document.body.classList.toggle("light",!d)}</script>
 </html>
 `);
 }
