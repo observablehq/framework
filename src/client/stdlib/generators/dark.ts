@@ -5,10 +5,10 @@ export function dark() {
   return observe((notify: (dark: boolean) => void) => {
     let dark: boolean | undefined;
     const probe = document.createElement("div");
-    probe.style.setProperty("transition-property", "color");
-    probe.style.setProperty("transition-duration", "0.001s");
+    probe.style.transitionProperty = "color";
+    probe.style.transitionDuration = "0.001s";
     const changed = () => {
-      const d = getComputedStyle(probe).getPropertyValue("color-scheme") === "dark";
+      const d = getComputedStyle(probe).getPropertyValue("color-scheme") === "dark"; // TODO "light dark"?
       if (dark === d) return; // only notify if changed
       notify((dark = d));
     };
