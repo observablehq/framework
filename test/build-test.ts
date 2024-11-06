@@ -179,7 +179,7 @@ describe("build", () => {
         {path: "/weather", title: "It's going to be !", source: "/weather.md"}
       ],
       files: [
-        {path: "/weather.txt"},
+        {path: "/weather.txt", source: "/weather.txt"},
         {path: "/generated.txt", source: "/generated.txt.ts"},
         {path: "/parameterized-thing.txt", source: "/parameterized-[page].txt.ts"},
         {path: "/parameterized-[page].txt", source: "/parameterized-[page].txt.ts"}

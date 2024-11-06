@@ -83,12 +83,14 @@ export async function build(
     modules: [],
     files: []
   };
+
+  // file is the serving path relative to the base (e.g., /foo)
+  // path is the source file relative to the source root (e.g., /foo.md)
   const addToManifest = (type: string, file: string, {title, path}: {title?: string | null; path: string}) => {
-    const source = file === (path = `/${path}`) ? null : path;
     buildManifest[type].push({
       path: config.normalizePath(file),
-      ...(title != null && {title}),
-      ...(source && {source})
+      source: join("/", path), // TODO have route return path with leading slash?
+      ...(title != null && {title})
     });
   };
 
