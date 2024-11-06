@@ -5,7 +5,7 @@ export function dark() {
   return observe((notify: (dark: boolean) => void) => {
     let dark: boolean | undefined;
     const probe = document.createElement("div");
-    probe.style.setProperty("transition-property", "background-color");
+    probe.style.setProperty("transition-property", "color");
     probe.style.setProperty("transition-duration", "0.001s");
     const changed = () => {
       const d = getComputedStyle(probe).getPropertyValue("color-scheme") === "dark";

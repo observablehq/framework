@@ -93,9 +93,6 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
 ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
 </div>
 </body>
-<script>{import('${resolveImport(
-    "observablehq:stdlib"
-  )}').then(async({Generators:{dark:k}})=>{for await(let d of k()){document.body.classList.toggle("dark",d);document.body.classList.toggle("light",!d)}})}</script>
 </html>
 `);
 }
