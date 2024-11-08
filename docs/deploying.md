@@ -38,19 +38,19 @@ npm run deploy -- --help
 
 ## Continuous deployment
 
-<!-- TODO: decide whether to primarily use “continuous deployment” or “automatic deploys” -->
+### Cloud builds
 
-You can connect your app to Observable to handle deploys automatically. You can automate deploys both [on commit](https://observablehq.com/documentation/data-apps/github) (whenever you push a new commit to your project’s default branch) and [on schedule](https://observablehq.com/documentation/data-apps/schedules) (such as daily or weekly).
+Connect your app to Observable to handle deploys automatically. You can automate deploys both [on commit](https://observablehq.com/documentation/data-apps/github) (whenever you push a new commit to your project’s default branch) and [on schedule](https://observablehq.com/documentation/data-apps/schedules) (such as daily or weekly).
 
-Automatic deploys — also called _continuous deployment_ or _CD_ — ensure that your data is always up to date, and that any changes you make to your app are immediately reflected in the deployed version.
+Continuous deployment (for short, _CD_) ensures that your data is always up to date, and that any changes you make to your app are immediately reflected in the deployed version.
 
 On your app settings page on Observable, open the **Build settings** tab to set up a link to a GitHub repository hosting your project’s files. Observable will then listen for changes in the repo and deploy the app automatically.
 
-The settings page also allows you to trigger a manual deploy on Observable Cloud, add secrets (for data loaders to use private APIs and passwords), view logs, configure sharing, _etc._ For details, see the [Building & deploying](https://observablehq.com/documentation/data-apps/deploys) documentation.
+The settings page also allows you to trigger a manual deploy, add secrets for data loaders to use private APIs and passwords, view logs, configure sharing, _etc._ For details, see the [Building & deploying](https://observablehq.com/documentation/data-apps/deploys) documentation.
 
-## GitHub Actions
+### GitHub Actions
 
-As an alternative to building on Observable Cloud, you can use [GitHub Actions](https://github.com/features/actions) and have GitHub build a new version of your app and deploy it to Observable. In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
+Alternatively, you can use [GitHub Actions](https://github.com/features/actions) to have GitHub build a new version of your app and deploy it to Observable. In your git repository, create and commit a file at `.github/workflows/deploy.yml`. Here is a starting example:
 
 ```yaml
 name: Deploy
@@ -138,6 +138,8 @@ jobs:
 This uses one cache per calendar day (in the `America/Los_Angeles` time zone). If you deploy multiple times in a day, the results of your data loaders will be reused on the second and subsequent runs. You can customize the `date` and `cache-data` steps to change the cadence of the caching. For example you could use `date +'%Y-%U'` to cache data for a week or `date +'%Y-%m-%dT%H'` to cache it for only an hour.
 
 <div class="note">You’ll need to edit the paths above if you’ve configured a source root other than <code>src</code>.</div>
+
+<div class="tip">Caching is limited for now to manual builds and GitHub Actions. In the future, it will be available as a configuration option for Observable Cloud builds.</div>
 
 ## Deploy configuration
 
