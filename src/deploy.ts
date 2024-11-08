@@ -39,9 +39,7 @@ const BUILD_AGE_WARNING_MS = 1000 * 60 * 5;
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
 function settingsUrl(deployTarget: DeployTargetInfo) {
-  if (deployTarget.create) {
-    throw new Error("Incorrect deploy target state");
-  }
+  if (deployTarget.create) throw new Error("Incorrect deploy target state");
   return `${OBSERVABLE_UI_ORIGIN}projects/@${deployTarget.workspace.login}/${deployTarget.project.slug}`;
 }
 
@@ -223,20 +221,13 @@ class Deployer {
     const {deployId} = this.deployOptions;
     if (!deployId) throw new Error("invalid deploy options");
     await this.checkDeployCreated(deployId);
-
-    const buildFilePaths = await this.getBuildFilePaths();
-
-    await this.uploadFiles(deployId, buildFilePaths);
+    await this.uploadFiles(deployId, await this.getBuildFilePaths());
     await this.markDeployUploaded(deployId);
-    const deployInfo = await this.pollForProcessingCompletion(deployId);
-
-    return deployInfo;
+    return await this.pollForProcessingCompletion(deployId);
   }
 
   private async cloudBuild(deployTarget: DeployTargetInfo) {
-    if (deployTarget.create) {
-      throw new Error("Incorrect deploy target state");
-    }
+    if (deployTarget.create) throw new Error("Incorrect deploy target state");
     const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
     await this.apiClient.postProjectBuild(deployTarget.project.id);
     const spinner = this.effects.clack.spinner();
@@ -366,7 +357,7 @@ class Deployer {
 
   private async startNewDeploy(): Promise<GetDeployResponse> {
     const {deployConfig, deployTarget} = await this.getDeployTarget(await this.getUpdatedDeployConfig());
-    let deployId: string | null;
+    let deployId: string;
     if (deployConfig.continuousDeployment) {
       await this.validateGitHubLink(deployTarget);
       deployId = await this.cloudBuild(deployTarget);
@@ -388,11 +379,7 @@ class Deployer {
       }
       return deployInfo;
     } catch (error) {
-      if (isHttpError(error)) {
-        throw new CliError(`Deploy ${deployId} not found.`, {
-          cause: error
-        });
-      }
+      if (isHttpError(error)) throw new CliError(`Deploy ${deployId} not found.`, {cause: error});
       throw error;
     }
   }
@@ -580,7 +567,7 @@ class Deployer {
       continuousDeployment = enable;
     }
 
-    const newDeployConfig = {
+    deployConfig = {
       projectId: deployTarget.project.id,
       projectSlug: deployTarget.project.slug,
       workspaceLogin: deployTarget.workspace.login,
@@ -590,11 +577,11 @@ class Deployer {
     await this.effects.setDeployConfig(
       this.deployOptions.config.root,
       this.deployOptions.deployConfigPath,
-      newDeployConfig,
+      deployConfig,
       this.effects
     );
 
-    return {deployConfig: newDeployConfig, deployTarget};
+    return {deployConfig, deployTarget};
   }
 
   // Create the new deploy on the server.
