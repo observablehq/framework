@@ -45,33 +45,15 @@ function settingsUrl(deployTarget: DeployTargetInfo) {
 
 /**
  * Returns the ownerName and repoName of the first GitHub remote (HTTPS or SSH)
- * on the current repository, or null.
+ * on the current repository. Supports both https and ssh URLs:
+ * - https://github.com/observablehq/framework.git
+ * - git@github.com:observablehq/framework.git
  */
-async function getGitHubRemote() {
-  const remotes = (await promisify(exec)("git remote -v")).stdout
-    .split("\n")
-    .filter((d) => d)
-    .map((d) => {
-      const [, url] = d.split(/\s/g);
-      if (url.startsWith("https://github.com/")) {
-        // HTTPS: https://github.com/observablehq/framework.git
-        const [ownerName, repoName] = new URL(url).pathname
-          .slice(1)
-          .replace(/\.git$/, "")
-          .split("/");
-        return {ownerName, repoName};
-      } else if (url.startsWith("git@github.com:")) {
-        // SSH: git@github.com:observablehq/framework.git
-        const [ownerName, repoName] = url
-          .replace(/^git@github.com:/, "")
-          .replace(/\.git$/, "")
-          .split("/");
-        return {ownerName, repoName};
-      }
-    });
-  const remote = remotes.find((d) => d && d.ownerName && d.repoName);
-  if (!remote) throw new CliError("No GitHub remote found.");
-  return remote ?? null;
+async function getGitHubRemote(): Promise<{ownerName: string; repoName: string} | undefined> {
+  const firstRemote = (await promisify(exec)("git remote -v")).stdout.match(
+    /^\S+\s(https:\/\/github.com\/|git@github.com:)(?<ownerName>[^/]+)\/(?<repoName>[^/]*?)(\.git)?\s/m
+  );
+  return firstRemote?.groups as {ownerName: string; repoName: string} | undefined;
 }
 
 export interface DeployOptions {
