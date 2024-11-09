@@ -1,6 +1,7 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
 import slugify from "@sindresorhus/slugify";
+import {spawn} from "cross-spawn";
 import he from "he";
 import MarkdownIt from "markdown-it";
 import type {RuleCore} from "markdown-it/lib/parser_core.mjs";
@@ -12,7 +13,7 @@ import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
 import type {FrontMatter} from "./frontMatter.js";
 import {readFrontMatter} from "./frontMatter.js";
-import {html, rewriteHtmlPaths} from "./html.js";
+import {html, parseHtml, rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
 import {transformJavaScriptSync} from "./javascript/module.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
@@ -31,6 +32,12 @@ export interface MarkdownCode {
   mode: "inline" | "block" | "jsx";
 }
 
+export interface FragmentLoader {
+  id: string;
+  tag: string;
+  source: string;
+}
+
 export interface MarkdownPage {
   title: string | null;
   head: string | null;
@@ -46,6 +53,7 @@ export interface MarkdownPage {
 
 interface ParseContext {
   code: MarkdownCode[];
+  fragments: FragmentLoader[];
   startLine: number;
   currentLine: number;
   path: string;
@@ -119,14 +127,25 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
     let html = "";
     let source: string | undefined;
     try {
-      source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag, attributes);
+      source =
+        attributes.server != null
+          ? token.content
+          : isFalse(attributes.run)
+          ? undefined
+          : getLiveSource(token.content, tag, attributes);
       if (source != null) {
+        let loading = false;
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
-        const node = parseJavaScript(source, {path, params});
-        context.code.push({id, node, mode: tag === "jsx" || tag === "tsx" ? "jsx" : "block"});
+        if (attributes.server != null) {
+          context.fragments.push({id, tag, source});
+        } else {
+          const node = parseJavaScript(source, {path, params});
+          context.code.push({id, node, mode: tag === "jsx" || tag === "tsx" ? "jsx" : "block"});
+          loading = node.expression;
+        }
         html += `<div class="observablehq observablehq--block">${
-          node.expression ? "<observablehq-loading></observablehq-loading>" : ""
+          loading ? "<observablehq-loading></observablehq-loading>" : ""
         }<!--:${id}:--></div>\n`;
       }
     } catch (error) {
@@ -214,6 +233,7 @@ export interface ParseOptions {
   path: string;
   style?: Config["style"];
   scripts?: Config["scripts"];
+  loaders?: Config["loaders"];
   head?: Config["head"];
   header?: Config["header"];
   footer?: Config["footer"];
@@ -247,10 +267,44 @@ export async function parseMarkdown(input: string, options: ParseOptions): Promi
   const {md, path, source = path, params} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params};
+  const fragments: FragmentLoader[] = [];
+  const context: ParseContext = {code, fragments, startLine: 0, currentLine: 0, path, params};
   const tokens = md.parse(content, context);
-  const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   const title = data.title !== undefined ? data.title : findTitle(tokens);
+  let body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
+
+  // Rewrite body to render fragments.
+  if (fragments.length) {
+    const {document} = parseHtml(body);
+    const roots = findRoots(document, document.body);
+    const interpreters = options.loaders!.interpreters;
+    for (const fragment of fragments) {
+      const root: Comment = roots.get(fragment.id);
+      const [command, ...args] = interpreters.get(`.${fragment.tag}`)!;
+      let target = "";
+      const subprocess = spawn(command, args, {
+        windowsHide: true,
+        stdio: ["pipe", "pipe", "inherit"]
+      });
+      subprocess.stdin.write(fragment.source);
+      subprocess.stdin.end();
+      subprocess.stdout.on("data", (data) => {
+        target += data.toString();
+      });
+      const code = await new Promise((resolve, reject) => {
+        subprocess.on("error", reject);
+        subprocess.on("close", resolve);
+      });
+      if (code !== 0) {
+        throw new Error(`loader exited with code ${code}`);
+      }
+      const template = document.createElement("template");
+      template.innerHTML = target;
+      root.replaceWith(template.content.cloneNode(true));
+    }
+    body = document.body.innerHTML;
+  }
+
   return {
     head: getHead(title, data, options),
     header: getHeader(title, data, options),
@@ -263,6 +317,22 @@ export async function parseMarkdown(input: string, options: ParseOptions): Promi
     path: source,
     params
   };
+}
+
+function findRoots(document, root) {
+  const roots = new Map();
+  const iterator = document.createNodeIterator(root, 128, null);
+  let node;
+  while ((node = iterator.nextNode())) {
+    if (isRoot(node)) {
+      roots.set(node.data.slice(1, -1), node);
+    }
+  }
+  return roots;
+}
+
+function isRoot(node) {
+  return node.nodeType === 8 && /^:[0-9a-f]{8}(?:-\d+)?:$/.test(node.data);
 }
 
 /** Like parseMarkdown, but optimized to return only metadata. */

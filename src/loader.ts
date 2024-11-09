@@ -62,7 +62,7 @@ export interface LoaderOptions {
 
 export class LoaderResolver {
   private readonly root: string;
-  private readonly interpreters: Map<string, string[]>;
+  public readonly interpreters: Map<string, string[]>; // TODO cleaner
 
   constructor({root, interpreters}: {root: string; interpreters?: Record<string, string[] | null>}) {
     this.root = root;
