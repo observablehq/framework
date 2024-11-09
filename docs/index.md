@@ -2,11 +2,11 @@
 index: false
 ---
 
-```js server
+```js server echo
 console.log(`The current version of Node is: <b>${process.env.npm_package_version}.`);
 ```
 
-```sh server
+```sh server echo
 uname -a
 ```
 
