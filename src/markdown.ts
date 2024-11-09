@@ -243,7 +243,7 @@ export function createMarkdownIt({
   return markdownIt === undefined ? md : markdownIt(md);
 }
 
-export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
+export async function parseMarkdown(input: string, options: ParseOptions): Promise<MarkdownPage> {
   const {md, path, source = path, params} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];

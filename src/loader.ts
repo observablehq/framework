@@ -81,7 +81,7 @@ export class LoaderResolver {
     const loader = this.findPage(path);
     if (!loader) throw enoent(path);
     const input = await readFile(join(this.root, await loader.load(options, effects)), "utf8");
-    return parseMarkdown(input, {source: loader.path, params: loader.params, ...options});
+    return await parseMarkdown(input, {source: loader.path, params: loader.params, ...options});
   }
 
   /**
