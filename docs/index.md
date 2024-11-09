@@ -10,6 +10,10 @@ console.log(`The current version of Node is: <b>${process.env.npm_package_versio
 uname -a
 ```
 
+```sh server echo
+date
+```
+
 <style>
 
 .hero {
