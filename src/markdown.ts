@@ -18,6 +18,7 @@ import {parseInfo} from "./info.js";
 import {transformJavaScriptSync} from "./javascript/module.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
+import {withParams} from "./loader.js";
 import {isAssetPath, relativePath} from "./path.js";
 import {parsePlaceholder} from "./placeholder.js";
 import type {Params} from "./route.js";
@@ -282,10 +283,19 @@ export async function parseMarkdown(input: string, options: ParseOptions): Promi
       const root: Comment = roots.get(fragment.id);
       const [command, ...args] = interpreters.get(`.${fragment.tag}`)!;
       let target = "";
-      const subprocess = spawn(command, args, {
-        windowsHide: true,
-        stdio: ["pipe", "pipe", "inherit"]
-      });
+      const subprocess = spawn(
+        command,
+        withParams(
+          command === "sh"
+            ? args.concat("-s", "--") // TODO make this configurable
+            : args.concat("-"), // TODO make this configurable
+          params
+        ),
+        {
+          windowsHide: true,
+          stdio: ["pipe", "pipe", "inherit"]
+        }
+      );
       subprocess.stdin.write(fragment.source);
       subprocess.stdin.end();
       subprocess.stdout.on("data", (data) => {

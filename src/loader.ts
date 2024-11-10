@@ -213,7 +213,7 @@ export class LoaderResolver {
       const eext = fext.slice(0, -iext.length); // .zip
       const loader = new CommandLoader({
         command: command ?? commandPath,
-        args: params ? args.concat(defineParams(params)) : args,
+        args: withParams(args, params),
         path,
         params,
         root: this.root,
@@ -330,6 +330,10 @@ export class LoaderResolver {
   resolveFilePath(path: string): string {
     return `/${join("_file", path)}?sha=${this.getSourceFileHash(path)}`;
   }
+}
+
+export function withParams(args: string[], params?: Params): string[] {
+  return params ? args.concat(defineParams(params)) : args;
 }
 
 function defineParams(params: Params): string[] {
