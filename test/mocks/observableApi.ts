@@ -265,10 +265,10 @@ class ObservableApiMock {
 
   expectStandardFiles(options: Omit<ExpectedFileSpec, "path">) {
     return this.expectFileUpload({...options, path: "index.html"})
-      .expectFileUpload({...options, path: "_observablehq/client.00000001.js"})
-      .expectFileUpload({...options, path: "_observablehq/runtime.00000002.js"})
-      .expectFileUpload({...options, path: "_observablehq/stdlib.00000003.js"})
-      .expectFileUpload({...options, path: "_observablehq/theme-air,near-midnight.00000004.css"});
+      .expectFileUpload({...options, path: "_observablehq/theme-air,near-midnight.00000001.css"})
+      .expectFileUpload({...options, path: "_observablehq/client.00000002.js"})
+      .expectFileUpload({...options, path: "_observablehq/runtime.00000003.js"})
+      .expectFileUpload({...options, path: "_observablehq/stdlib.00000004.js"});
   }
 
   /** Register a file that is expected to be uploaded. Also includes that file in
