@@ -7,13 +7,25 @@ sql:
 
 [Mosaic](https://uwdata.github.io/mosaic/) is a system for linking data visualizations, tables, and inputs, leveraging [DuckDB](./duckdb) for scalable processing. Mosaic includes an interactive grammar of graphics, [Mosaic vgplot](https://uwdata.github.io/mosaic/vgplot/), built on [Observable Plot](./plot). With vgplot, you can interactively visualize and explore millions — even billions — of data points.
 
-The example below shows the pickup and dropoff locations of one million taxi rides in New York City from Jan 1–3, 2010. The dataset is stored in a 8MB [Apache Parquet](./arrow#apache-parquet) file, generated with a [data loader](../loaders).
+The example below shows the pickup and dropoff locations of one million taxi rides in New York City from Jan 1–3, 2010. The dataset is stored in a 8MB [Apache Parquet](./arrow#apache-parquet) file, generated with a [data loader](../data-loaders).
 
 ${maps}
 
 ${histogram}
 
 The views above are coordinated: brushing a time window in the histogram, or a region in either map, will filter both maps. _What spatial patterns can you find?_
+
+Mosaic vgplot is available by default in Markdown as `vg` and is backed by the default DuckDB client that is configured using [SQL front matter](../sql). If you would prefer to initialize Mosaic yourself, you can do something like:
+
+```js run=false
+import {DuckDBClient} from "npm:@observablehq/duckdb";
+import * as vgplot from "npm:@uwdata/vgplot";
+
+const db = await DuckDBClient.of({trips: FileAttachment("nyc-taxi.parquet")});
+const coordinator = new vgplot.Coordinator();
+coordinator.databaseConnector(vgplot.wasmConnector({duckdb: db._db}));
+const vg = vgplot.createAPIContext({coordinator});
+```
 
 The code below creates three views, coordinated by Mosaic’s [crossfilter](https://uwdata.github.io/mosaic/api/core/selection.html#selection-crossfilter) helper.
 

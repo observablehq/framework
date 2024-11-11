@@ -1,5 +1,7 @@
 import assert from "node:assert";
-import {extractNpmSpecifier, parseNpmSpecifier} from "../src/npm.js";
+import {mkdir} from "node:fs/promises";
+import {join} from "node:path/posix";
+import {extractNpmSpecifier, initializeNpmVersionCache, parseNpmSpecifier} from "../src/npm.js";
 import {fromJsDelivrPath, getDependencyResolver, resolveNpmImport, rewriteNpmImports} from "../src/npm.js";
 import {relativePath} from "../src/path.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
@@ -134,14 +136,43 @@ describe("rewriteNpmImports(input, resolve)", () => {
     assert.strictEqual(rewriteNpmImports("import('/npm/d3-array@3.2.4/+esm');\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js");\n');
   });
   it("ignores dynamic imports with dynamic module specifiers", () => {
-    assert.strictEqual(rewriteNpmImports('import(`/npm/d3-array@${"3.2.4"}/+esm`);\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import(`/npm/d3-array@${"3.2.4"}/+esm`);\n');
+    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@${version}/+esm`);\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), "import(`/npm/d3-array@${version}/+esm`);\n");
   });
   it("ignores dynamic imports with dynamic module specifiers", () => {
-    assert.strictEqual(rewriteNpmImports('import(`/npm/d3-array@${"3.2.4"}/+esm`);\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import(`/npm/d3-array@${"3.2.4"}/+esm`);\n');
+    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@${version}/+esm`);\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), "import(`/npm/d3-array@${version}/+esm`);\n");
   });
   it("strips the sourceMappingURL declaration", () => {
-    assert.strictEqual(rewriteNpmImports('import(`/npm/d3-array@${"3.2.4"}/+esm`);\n//# sourceMappingURL=index.js.map', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import(`/npm/d3-array@${"3.2.4"}/+esm`);\n');
-    assert.strictEqual(rewriteNpmImports('import(`/npm/d3-array@${"3.2.4"}/+esm`);\n//# sourceMappingURL=index.js.map\n', (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import(`/npm/d3-array@${"3.2.4"}/+esm`);\n');
+    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@3.2.4/+esm`);\n//# sourceMappingURL=index.js.map", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js");\n');
+    assert.strictEqual(rewriteNpmImports("import(`/npm/d3-array@3.2.4/+esm`);\n//# sourceMappingURL=index.js.map\n", (v) => resolve("/_npm/d3@7.8.5/_esm.js", v)), 'import("../d3-array@3.2.4/_esm.js");\n');
+  });
+});
+
+describe("initializeNpmVersionCache(root, dir)", () => {
+  const root = join("test", "input", "npm");
+  const dir = join(root, ".observablehq", "cache", "_npm");
+  before(async () => {
+    await mkdir(join(dir, "@observablehq", "plot@0.6.11"), {recursive: true});
+    await mkdir(join(dir, "@observablehq", "sample-datasets@1.0.1"), {recursive: true});
+    await mkdir(join(dir, "d3-dsv@3.0.0"), {recursive: true});
+    await mkdir(join(dir, "d3-dsv@3.0.1"), {recursive: true});
+    await mkdir(join(dir, "htl@0.3.1"), {recursive: true});
+    await mkdir(join(dir, "leaflet@1.9.4"), {recursive: true});
+  });
+  it("reads the contents of the specified _npm cache", async () => {
+    const cache = await initializeNpmVersionCache(root);
+    assert.deepStrictEqual(
+      cache,
+      new Map([
+        ["@observablehq/plot", ["0.6.11"]],
+        ["@observablehq/sample-datasets", ["1.0.1"]],
+        ["d3-dsv", ["3.0.1", "3.0.0"]],
+        ["htl", ["0.3.1"]],
+        ["leaflet", ["1.9.4"]]
+      ])
+    );
+  });
+  it("dir defaults to _npm", async () => {
+    assert.deepStrictEqual(await initializeNpmVersionCache(root, "_npm"), await initializeNpmVersionCache(root));
   });
 });
 

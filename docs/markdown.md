@@ -18,10 +18,10 @@ The front matter supports the following options:
 - **title** - the page title; defaults to the (first) first-level heading of the page, if any
 - **index** - whether to index this page if [search](./search) is enabled; defaults to true for listed pages
 - **keywords** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - additional words to index for [search](./search); boosted at the same weight as the title
-- **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - whether to skip this page during build; drafts are also not listed in the default sidebar
+- **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - whether to skip this page during build; drafts are also not listed in the default sidebar nor searchable
 - **sql** <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" class="observablehq-version-badge" data-version="^1.2.0" title="Added in v1.2.0"></a> - table definitions for [SQL code blocks](./sql)
 
-The front matter can also override the following [project configuration](./config) options:
+The front matter can also override the following [app-level configuration](./config) options:
 
 - **toc** - the [table of contents](./config#toc)
 - **style** - the [custom stylesheet](./config#style)
@@ -71,7 +71,7 @@ This is **Markdown** inside of _HTML_!
 
 ## Grids
 
-The `grid` class declares a [CSS grid](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout) container. The `grid` class is designed to pair with the [`card` class](#card) and the [`dashboard` theme](./themes) for dashboard layout.
+The `grid` class declares a [CSS grid](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout) container. The `grid` class is designed to pair with the [`card` class](#cards) and the [`dashboard` theme](./themes) for dashboard layout.
 
 ```html echo
 <div class="grid grid-cols-4">
@@ -166,7 +166,7 @@ The `card` class is used to group and delineate content. The `card` classes appl
 
 <div class="tip"><a href="./lib/plot">Observable Plot</a>’s <b>title</b> and <b>subtitle</b> options generate <code>h2</code> and <code>h3</code> elements, respectively, and so will inherit these card styles.</div>
 
-Cards can be used on their own, but they most often exist in a [grid](#grid). Cards can contain whatever you like, including text, images, charts, tables, inputs, and more.
+Cards can be used on their own, but they most often exist in a [grid](#grids). Cards can contain whatever you like, including text, images, charts, tables, inputs, and more.
 
 ```html echo
 <div class="grid grid-cols-2">
@@ -183,7 +183,7 @@ Cards can be used on their own, but they most often exist in a [grid](#grid). Ca
 
 <div class="tip">Remove the padding from a card if it contains only a table.</div>
 
-To place an input inside a card, first declare a detached input as a [top-level variable](./reactivity#top-level-variables) and use [`Generators.input`](./lib/generators#inputelement) to expose its reactive value:
+To place an input inside a card, first declare a detached input as a [top-level variable](./reactivity#top-level-variables) and use [`Generators.input`](./lib/generators#input-element) to expose its reactive value:
 
 ```js echo
 const industryInput = Inputs.select(industries.map((d) => d.industry), {unique: true, sort: true, label: "Industry:"});
@@ -351,6 +351,16 @@ Cell 1-2   |   Cell 2-2   |    Cell 3-2
 ```
 
 For privacy and convenience, external links are given a default `rel` attribute of [`noreferrer`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noreferrer) [`noopener`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noopener) and a default `target` attribute of [`_blank`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). <a href="https://github.com/observablehq/framework/releases/tag/v1.5.0" class="observablehq-version-badge" data-version="^1.5.0" title="Added in 1.5.0"></a> Hence by default an external link will open in a new window and not pass the (potentially sensitive) referrer to the (potentially untrusted) external site. You can override this behavior by specifying the `rel` or `target` attribute explicitly. For example `<a href="https://example.com" target="_self">` will open in the same window, and `<a href="https://acme.com" rel="">` will allow the referrer.
+
+Framework normalizes page links, converting absolute paths into relative paths. This allows built sites to be served correctly under any root when deployed. This means you can use absolute paths, such as `/index` for the main page, to link to pages from any other page, including the global [header](./config#header) or [footer](./config#footer).
+
+To link to a page or asset that’s _not_ controlled by Framework (or to disable link normalization), set the [`rel` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel) to `external`. <a href="https://github.com/observablehq/framework/releases/tag/v1.10.1" class="observablehq-version-badge" data-version="^1.10.1" title="Added in 1.10.1"></a> For example:
+
+```html run=false
+<a href="/robots.txt" rel="external">robots.txt</a>
+```
+
+You may also want to add `noopener noreferrer` if linking to an untrusted origin. See also [Files: Media](./files#media) regarding images and other linked assets.
 
 ### Images
 

@@ -51,7 +51,7 @@ export function findFiles(
   // Support namespace imports? Error if stdlib is expressed with a version?
   simple(body, {
     ImportDeclaration(node) {
-      if (node.source.value === "npm:@observablehq/stdlib") {
+      if (node.source.value === "observablehq:stdlib" || node.source.value === "npm:@observablehq/stdlib") {
         for (const specifier of node.specifiers) {
           if (
             specifier.type === "ImportSpecifier" &&
@@ -105,11 +105,14 @@ export function findFiles(
       const filePath = resolveLocalPath(path, fileName);
       if (!filePath) throw syntaxError(`non-local file path: ${fileName}`, node, input);
       const parent = stack[stack.length - 2];
-      const fileMethod =
+      const name = relativePath(path, filePath);
+      const method =
         parent && isMemberExpression(parent) && parent.property.type === "Identifier"
-          ? parent.property.name // FileAttachment("foo.csv").csv
-          : KNOWN_FILE_EXTENSIONS[extname(fileName)]; // bare FileAttachment("foo.csv")
-      files.push({node, name: relativePath(path, filePath), method: fileMethod});
+          ? parent.property.name === "arquero" && /\.parquet$/i.test(fileName)
+            ? "arquero-parquet" // FileAttachment("foo.parquet").arquero
+            : parent.property.name // FileAttachment("foo.csv").csv
+          : KNOWN_FILE_EXTENSIONS[extname(fileName).toLowerCase()]; // bare FileAttachment("foo.csv")
+      files.push({node, name, method});
     }
   });
 

@@ -1,4 +1,5 @@
 import "npm:d3";
+import "npm:@example/url-import";
 import {bar} from "../bar/bar.js";
 export {top} from "/top.js";
 

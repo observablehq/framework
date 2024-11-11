@@ -14,8 +14,8 @@ export interface ImportReference {
   name: string;
   /** Is this a reference to a local module, or a non-local (e.g., npm) one? */
   type: "local" | "global";
-  /** Is this a static import declaration, or a dynamic import expression? */
-  method: "static" | "dynamic";
+  /** Is this a static import, a dynamic import, or import.meta.resolve? */
+  method: "static" | "dynamic" | "resolve";
 }
 
 export type ImportNode = ImportDeclaration | ImportExpression;
@@ -98,9 +98,9 @@ export function findImports(body: Node, path: string, input: string): ImportRefe
     if (isPathImport(name)) {
       const localPath = resolveLocalPath(path, name);
       if (!localPath) throw syntaxError(`non-local import: ${name}`, node, input); // prettier-ignore
-      addImport({name: relativePath(path, localPath), type: "local", method: "dynamic"});
+      addImport({name: relativePath(path, localPath), type: "local", method: "resolve"});
     } else {
-      addImport({name, type: "global", method: "dynamic"});
+      addImport({name, type: "global", method: "resolve"});
     }
   }
 
@@ -120,7 +120,7 @@ export function isImportMetaResolve(node: CallExpression): boolean {
 }
 
 export function isJavaScript(path: string): boolean {
-  return /\.(m|c)?js$/i.test(path);
+  return /\.(m|c)?js(\?|$)/i.test(path);
 }
 
 const parseImportsCache = new Map<string, Promise<ImportReference[]>>();

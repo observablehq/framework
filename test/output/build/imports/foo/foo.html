@@ -1,30 +1,35 @@
 <!DOCTYPE html>
+<html>
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="generator" content="Observable Framework v1.0.0-test">
 <title>Foo</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="preload" as="style" href="../_observablehq/theme-air,near-midnight.css">
-<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="stylesheet" type="text/css" href="../_observablehq/theme-air,near-midnight.css">
-<link rel="modulepreload" href="../_observablehq/client.js">
-<link rel="modulepreload" href="../_observablehq/runtime.js">
-<link rel="modulepreload" href="../_observablehq/stdlib.js">
-<link rel="modulepreload" href="../_npm/d3@7.8.5/_esm.js">
-<link rel="modulepreload" href="../_import/bar/bar.13bb8056.js">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="preload" as="style" href="../_observablehq/theme-air,near-midnight.00000004.css">
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="stylesheet" type="text/css" href="../_observablehq/theme-air,near-midnight.00000004.css">
+<link rel="modulepreload" href="../_observablehq/client.00000001.js">
+<link rel="modulepreload" href="../_observablehq/runtime.00000002.js">
+<link rel="modulepreload" href="../_observablehq/stdlib.00000003.js">
+<link rel="modulepreload" href="../_npm/d3@7.8.5/cd372fb8.js">
+<link rel="modulepreload" href="../_import/bar/bar.4460ccc2.js">
 <link rel="modulepreload" href="../_import/top.160847a6.js">
 <link rel="modulepreload" href="../_import/foo/foo bar.b173d3de.js">
-<link rel="modulepreload" href="../_import/bar/baz.cdbfb28b.js">
-<link rel="modulepreload" href="../_import/foo/foo.821499d0.js">
+<link rel="modulepreload" href="../_import/bar/baz.2add1dd0.js">
+<link rel="modulepreload" href="../_import/foo/foo.bcd720b2.js">
+<link rel="modulepreload" href="../_npm/@example/url-import@1.0.0/1dd108c5.js">
 <script type="module">
 
-import {define} from "../_observablehq/client.js";
-import {registerFile} from "../_observablehq/stdlib.js";
+import {define} from "../_observablehq/client.00000001.js";
+import {registerFile} from "../_observablehq/stdlib.00000003.js";
 
-registerFile("../top.js", {"name":"../top.js","mimeType":"text/javascript","path":"../_file/top.a53c5d5b.js","lastModified":/* ts */1706742000000});
+registerFile("../top.js", {"name":"../top.js","mimeType":"text/javascript","path":"../_file/top.a53c5d5b.js","lastModified":/* ts */1706742000000,"size":26});
+registerFile("./hello.txt", {"name":"./hello.txt","mimeType":"text/plain","path":"../_file/foo/hello.5891b5b5.txt","lastModified":/* ts */1706742000000,"size":6});
 
 define({id: "261e010e", inputs: ["display","FileAttachment"], outputs: ["d3","bar","top"], body: async (display,FileAttachment) => {
-const [d3, {bar}, {top}] = await Promise.all([import("../_npm/d3@7.8.5/_esm.js"), import("../_import/bar/bar.13bb8056.js"), import("../_import/top.160847a6.js")]);
+const [d3, {bar}, {top}] = await Promise.all([import("../_npm/d3@7.8.5/cd372fb8.js"), import("../_import/bar/bar.4460ccc2.js"), import("../_import/top.160847a6.js")]);
 
 display(bar);
 display(top);
@@ -38,7 +43,15 @@ display(foobar);
 return {foobar};
 }});
 
+define({id: "2a2171cf", inputs: ["display"], body: async (display) => {
+display(await(
+new URL("../_file/foo/hello.5891b5b5.txt", location).href
+))
+}});
+
 </script>
+</head>
+<body>
 <input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -52,18 +65,21 @@ return {foobar};
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
+<div id="observablehq-center">
 <aside id="observablehq-toc" data-selector="h1:not(:first-of-type)[id], h2:first-child[id], :not(h1) + h2[id]">
 <nav>
 </nav>
 </aside>
-<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="foo" tabindex="-1"><a class="observablehq-header-anchor" href="#foo">Foo</a></h1>
-<div id="cell-261e010e" class="observablehq observablehq--block"></div>
-<div id="cell-ec24b17a" class="observablehq observablehq--block"></div>
+<div class="observablehq observablehq--block"><!--:261e010e:--></div>
+<div class="observablehq observablehq--block"><!--:ec24b17a:--></div>
+<div class="observablehq observablehq--block"><observablehq-loading></observablehq-loading><!--:2a2171cf:--></div>
 </main>
 <footer id="observablehq-footer">
 <nav><a rel="prev" href="../script"><span>Scripts</span></a></nav>
 <div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
 </footer>
 </div>
+</body>
+</html>

@@ -1,8 +1,17 @@
+<style type="text/css">
+
+/* Full-width tables are too wide with only one or two columns. */
+form.inputs-3a86ea-table {
+  max-width: 640px;
+}
+
+</style>
+
 # Arquero
 
 [Arquero](https://uwdata.github.io/arquero/) is a JavaScript library for “query processing and transformation of array-backed data tables.” Arquero is available by default as `aq` in Markdown, but you can import it explicitly like so:
 
-```js echo
+```js run=false
 import * as aq from "npm:arquero";
 ```
 
@@ -16,17 +25,16 @@ const dt = aq.table({
 });
 ```
 
-Arquero is column-oriented: each column is an array of values of a given type. Here, numbers representing hours of sunshine per month. But an Arquero table is also iterable and as such, its contents can be displayed with [`Inputs.table`](/lib/inputs#table).
+Arquero is column-oriented: each column is an array of values of a given type. Here, numbers representing hours of sunshine per month. But an Arquero table is also iterable and as such, its contents can be displayed with [`Inputs.table`](/inputs/table).
 
 ```js echo
-Inputs.table(dt, {maxWidth: 640})
+Inputs.table(dt)
 ```
 
 An Arquero table can also be used to make charts with [Observable Plot](./plot):
 
 ```js echo
 Plot.plot({
-  width: Math.min(width, 640),
   x: {tickFormat: Plot.formatMonth()},
   y: {grid: true, label: "Hours of sunshine ☀️ per month"},
   marks: [
@@ -41,25 +49,25 @@ Plot.plot({
 Arquero supports a range of data transformation tasks, including filter, sample, aggregation, window, join, and reshaping operations. For example, the following operation derives differences between Seattle and Chicago and sorts the months accordingly.
 
 ```js echo
-const diffs = dt.derive({
-    month: (d) => aq.op.row_number(),
-    diff: (d) => d.Seattle - d.Chicago
-  })
-  .select("month", "diff")
-  .orderby(aq.desc("diff"));
-
-display(Inputs.table(diffs, {maxWidth: 640}));
+Inputs.table(
+  dt.derive({
+      month: (d) => aq.op.row_number(),
+      diff: (d) => d.Seattle - d.Chicago
+    })
+    .select("month", "diff")
+    .orderby(aq.desc("diff"))
+)
 ```
 
 Is Seattle more correlated with San Francisco or Chicago?
 
 ```js echo
-const correlations = dt.rollup({
-  corr_sf: aq.op.corr("Seattle", "San Francisco"),
-  corr_chi: aq.op.corr("Seattle", "Chicago")
-});
-
-display(Inputs.table(correlations, {maxWidth: 640}));
+Inputs.table(
+  dt.rollup({
+    corr_sf: aq.op.corr("Seattle", "San Francisco"),
+    corr_chi: aq.op.corr("Seattle", "Chicago")
+  })
+)
 ```
 
 We can aggregate statistics per city. The following code reshapes (or “folds”) the data into two columns _city_ & _sun_ and shows the output as objects:
@@ -68,14 +76,25 @@ We can aggregate statistics per city. The following code reshapes (or “folds�
 dt.fold(aq.all(), {as: ["city", "sun"]})
   .groupby("city")
   .rollup({
-    min: (d) => aq.op.min(d.sun), // functional form of op.min('sun')
-    max: (d) => aq.op.max(d.sun),
-    avg: (d) => aq.op.average(d.sun),
-    med: (d) => aq.op.median(d.sun),
-    // functional forms permit flexible table expressions
-    skew: ({sun: s}) => (aq.op.mean(s) - aq.op.median(s)) / aq.op.stdev(s) || 0
+    min: aq.op.min("sun"),
+    max: aq.op.max("sun"),
+    avg: (d) => aq.op.average(d.sun), // equivalent to aq.op.average("sun")
+    med: (d) => aq.op.median(d.sun), // equivalent to aq.op.median("sun")
+    skew: ({sun}) => (aq.op.mean(sun) - aq.op.median(sun)) / aq.op.stdev(sun)
   })
   .objects()
+```
+
+To load an Arquero table from an Apache Arrow, Apache Parquet, CSV, TSV, or JSON file, use [`file.arquero`](../files#supported-formats) <a href="https://github.com/observablehq/framework/releases/tag/v1.10.0" class="observablehq-version-badge" data-version="^1.10.0" title="Added in 1.10.0"></a>:
+
+```js run=false
+const flights = FileAttachment("flights-200k.arrow").arquero();
+```
+
+This is equivalent to:
+
+```js run=false
+const flights = aq.loadArrow(FileAttachment("flights-200k.arrow").href);
 ```
 
 For more, see [Arquero’s official documentation](https://uwdata.github.io/arquero/).

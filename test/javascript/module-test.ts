@@ -8,17 +8,17 @@ const emptyHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b
 // through the code and verifying that they consider all the relevant files.
 describe("getModuleHash(root, path)", () => {
   it("returns the transitive content hash for the specified module", () => {
-    assert.strictEqual(getModuleHash("test/input/build/imports", "foo/foo.js"), "32f934a52fa34ba1b06aa6089fe5922dc442c9bf2dcddef864bc649a39d9eace"); // prettier-ignore
-    assert.strictEqual(getModuleHash("test/input/build/imports", "bar/bar.js"), "7fe009c8bb0049d9b84d53a00b29fb172bbf07d8232d2ace5f7c6f220b23eb16"); // prettier-ignore
+    assert.strictEqual(getModuleHash("test/input/build/imports", "foo/foo.js"), "e743cc5455594df5a3bd78622594dfb7a8ddb9277957be9b9732f33a88955d82"); // prettier-ignore
+    assert.strictEqual(getModuleHash("test/input/build/imports", "bar/bar.js"), "34442bce5f38762986a81229c551723cdc3d4c1509ac14dde193555e65013d76"); // prettier-ignore
     assert.strictEqual(getModuleHash("test/input/build/imports", "top.js"), "160847a6b4890d59f8e8862911bfbe3b8066955d31f2708cafbe51945c3c57b6"); // prettier-ignore
-    assert.strictEqual(getModuleHash("test/input/build/fetches", "foo/foo.js"), "6fd063d5f14f3bb844cfdb599bf3bdd643c4d0f89841591f769960fd58104e6c"); // prettier-ignore
-    assert.strictEqual(getModuleHash("test/input/build/fetches", "top.js"), "d8f5cc36a8b359974a3aa89013db8d6c1dbb43b091bed4ea683a7c8c994b2a3d"); // prettier-ignore
+    assert.strictEqual(getModuleHash("test/input/build/fetches", "foo/foo.js"), "3bb4a170d2f3539934168741572d4aa3cd11da649d4ca88b408edefb5c287360"); // prettier-ignore
+    assert.strictEqual(getModuleHash("test/input/build/fetches", "top.js"), "6c858de52de6ff26b19508e95448288da02fac62251b7ca2710a308a0ebfd7ba"); // prettier-ignore
   });
   it("returns the empty hash if the specified module does not exist", () => {
     assert.strictEqual(getModuleHash("test/input/build/imports", "does-not-exist.js"), emptyHash);
   });
-  it("returns the empty hash if the specified module is invalid", () => {
-    assert.strictEqual(getModuleHash("test/input/build/imports", "foo/foo.md"), emptyHash);
+  it("returns the file hash if the specified path is not a module", () => {
+    assert.strictEqual(getModuleHash("test/input/build/imports", "foo/foo.md"), "fc5f03ef66ae950bcc54fca53c27bdd86d1d35a52cccc97d99d8585600e0cd1d"); // prettier-ignore
   });
 });
 
@@ -27,8 +27,8 @@ describe("getModuleInfo(root, path)", () => {
     assert.deepStrictEqual(redactModuleInfo("test/input/build/imports", "foo/foo.js"), {
       fileMethods: new Set(),
       files: new Set(),
-      hash: "c77c2490ea7b9a89dce7bad39973995e5158921bf8576955ae4a596c47a5a2a4",
-      globalStaticImports: new Set(["npm:d3"]),
+      hash: "17e03fbc08c28530c84ab1163901890915302d3f1d5af2c9256e3e8cab1324a9",
+      globalStaticImports: new Set(["npm:@example/url-import", "npm:d3"]),
       globalDynamicImports: new Set(),
       localDynamicImports: new Set(),
       localStaticImports: new Set(["../bar/bar.js", "../top.js"])
@@ -63,8 +63,8 @@ describe("getModuleInfo(root, path)", () => {
     assert.deepStrictEqual(redactModuleInfo("test/input/build/fetches", "foo/foo.js"), {
       fileMethods: new Set(["json", "text"]),
       files: new Set(["./foo-data.csv", "./foo-data.json"]),
-      hash: "13349148aade73f9c04f331956a8f48535958a7c7e640b025eebfb52156067fa",
-      globalStaticImports: new Set(["npm:@observablehq/stdlib"]),
+      hash: "2b1e6b6f73a700231a3c60915d358d5ac10b1665e65a1647d91bf597d48f874e",
+      globalStaticImports: new Set(["observablehq:stdlib"]),
       globalDynamicImports: new Set(),
       localDynamicImports: new Set(),
       localStaticImports: new Set()
@@ -72,8 +72,8 @@ describe("getModuleInfo(root, path)", () => {
     assert.deepStrictEqual(redactModuleInfo("test/input/build/fetches", "top.js"), {
       fileMethods: new Set(["json", "text"]),
       files: new Set(["./top-data.csv", "./top-data.json"]),
-      hash: "d755832694c7db24d3606bdef5ecfdfbd820b09576d5790feb310854f48b2228",
-      globalStaticImports: new Set(["npm:@observablehq/stdlib"]),
+      hash: "2a35a381b4975e007db01eef32f3dadd74645b61a6cf0fe3746bcb4ae8c8b3cf",
+      globalStaticImports: new Set(["observablehq:stdlib"]),
       globalDynamicImports: new Set(),
       localDynamicImports: new Set(),
       localStaticImports: new Set(["./foo/foo.js"])
@@ -116,9 +116,9 @@ describe("getFileHash(root, path)", () => {
 
 describe("getFileInfo(root, path)", () => {
   it("returns the info for the specified file", () => {
-    assert.deepStrictEqual(redactFileInfo("test/input/build/files", "file-top.csv"), {hash: "01a7ce0aea79f9cddb22e772b2cc9a9f3229a64a5fd941eec8d8ddc41fb07c34"}); // prettier-ignore
-    assert.deepStrictEqual(redactFileInfo("test/input/build/archives.posix", "dynamic.zip.sh"), {hash: "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10"}); // prettier-ignore
-    assert.deepStrictEqual(redactFileInfo("test/input/build/archives.posix", "static.zip"), {hash: "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429"}); // prettier-ignore
+    assert.deepStrictEqual(redactFileInfo("test/input/build/files", "file-top.csv"), {hash: "01a7ce0aea79f9cddb22e772b2cc9a9f3229a64a5fd941eec8d8ddc41fb07c34", size: 16}); // prettier-ignore
+    assert.deepStrictEqual(redactFileInfo("test/input/build/archives.posix", "dynamic.zip.sh"), {hash: "516cec2431ce8f1181a7a2a161db8bdfcaea132d3b2c37f863ea6f05d64d1d10", size: 51}); // prettier-ignore
+    assert.deepStrictEqual(redactFileInfo("test/input/build/archives.posix", "static.zip"), {hash: "e6afff224da77b900cfe3ab8789f2283883300e1497548c30af66dfe4c29b429", size: 180}); // prettier-ignore
   });
   it("returns undefined if the specified file is created by a data loader", () => {
     assert.strictEqual(getFileInfo("test/input/build/archives.posix", "dynamic.zip"), undefined);

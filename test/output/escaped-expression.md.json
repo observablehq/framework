@@ -2,5 +2,167 @@
   "data": {},
   "title": null,
   "style": null,
-  "code": []
+  "code": [
+    {
+      "id": "6b86b273",
+      "node": {
+        "body": {
+          "type": "Literal",
+          "start": 0,
+          "end": 1,
+          "value": 1,
+          "raw": "1"
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "input": "1"
+      },
+      "mode": "inline"
+    },
+    {
+      "id": "4e074085",
+      "node": {
+        "body": {
+          "type": "Literal",
+          "start": 0,
+          "end": 1,
+          "value": 3,
+          "raw": "3"
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "input": "3"
+      },
+      "mode": "inline"
+    },
+    {
+      "id": "ef2d127d",
+      "node": {
+        "body": {
+          "type": "Literal",
+          "start": 0,
+          "end": 1,
+          "value": 5,
+          "raw": "5"
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "input": "5"
+      },
+      "mode": "inline"
+    },
+    {
+      "id": "4523540f",
+      "node": {
+        "body": {
+          "type": "Literal",
+          "start": 0,
+          "end": 2,
+          "value": 17,
+          "raw": "17"
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "input": "17"
+      },
+      "mode": "inline"
+    },
+    {
+      "id": "6f4b6612",
+      "node": {
+        "body": {
+          "type": "Literal",
+          "start": 0,
+          "end": 2,
+          "value": 21,
+          "raw": "21"
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "input": "21"
+      },
+      "mode": "inline"
+    },
+    {
+      "id": "535fa30d",
+      "node": {
+        "body": {
+          "type": "Literal",
+          "start": 0,
+          "end": 2,
+          "value": 23,
+          "raw": "23"
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "input": "23"
+      },
+      "mode": "inline"
+    },
+    {
+      "id": "b7a56873",
+      "node": {
+        "body": {
+          "type": "Literal",
+          "start": 0,
+          "end": 2,
+          "value": 25,
+          "raw": "25"
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "input": "25"
+      },
+      "mode": "inline"
+    },
+    {
+      "id": "35135aaa",
+      "node": {
+        "body": {
+          "type": "Literal",
+          "start": 0,
+          "end": 2,
+          "value": 29,
+          "raw": "29"
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "input": "29"
+      },
+      "mode": "inline"
+    }
+  ],
+  "path": "escaped-expression.md"
 }

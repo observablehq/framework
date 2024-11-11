@@ -29,7 +29,7 @@ describe("telemetry", () => {
 
   it("sends data", async () => {
     Telemetry._instance = new Telemetry(noopEffects);
-    Telemetry.record({event: "build", step: "start", test: true});
+    Telemetry.record({event: "build", step: "start"});
     await Telemetry.instance.pending;
     agent.assertNoPendingInterceptors();
   });
@@ -37,14 +37,14 @@ describe("telemetry", () => {
   it("shows a banner", async () => {
     const logger = new MockLogger();
     const telemetry = new Telemetry({...noopEffects, logger, readFile: () => Promise.reject()});
-    telemetry.record({event: "build", step: "start", test: true});
+    telemetry.record({event: "build", step: "start"});
     await telemetry.pending;
     logger.assertExactErrors([/Attention.*observablehq.com.*OBSERVABLE_TELEMETRY_DISABLE=true/s]);
   });
 
   it("can be disabled", async () => {
     const telemetry = new Telemetry({...noopEffects, process: processMock({env: {OBSERVABLE_TELEMETRY_DISABLE: "1"}})});
-    telemetry.record({event: "build", step: "start", test: true});
+    telemetry.record({event: "build", step: "start"});
     await telemetry.pending;
     assert.equal(agent.pendingInterceptors().length, 1);
   });
@@ -56,7 +56,7 @@ describe("telemetry", () => {
       logger,
       process: processMock({env: {OBSERVABLE_TELEMETRY_DEBUG: "1"}})
     });
-    telemetry.record({event: "build", step: "start", test: true});
+    telemetry.record({event: "build", step: "start"});
     await telemetry.pending;
     assert.equal(logger.errorLines.length, 1);
     assert.equal(logger.errorLines[0][0], "[telemetry]");
@@ -71,7 +71,7 @@ describe("telemetry", () => {
       process: processMock({env: {OBSERVABLE_TELEMETRY_DEBUG: "1"}}),
       writeFile: () => Promise.reject()
     });
-    telemetry.record({event: "build", step: "start", test: true});
+    telemetry.record({event: "build", step: "start"});
     await telemetry.pending;
     assert.notEqual(logger.errorLines[0][1].ids.session, null);
     assert.equal(logger.errorLines[0][1].ids.device, null);
@@ -86,7 +86,7 @@ describe("telemetry", () => {
       logger,
       process: processMock({env: {OBSERVABLE_TELEMETRY_ORIGIN: "https://invalid."}})
     });
-    telemetry.record({event: "build", step: "start", test: true});
+    telemetry.record({event: "build", step: "start"});
     await telemetry.pending;
     assert.equal(logger.errorLines.length, 0);
     assert.equal(agent.pendingInterceptors().length, 1);
@@ -104,8 +104,8 @@ describe("telemetry", () => {
   it("saves a signal record on exit", async () => {
     const logger = new MockLogger();
     const listeners = {};
-    let exit: (value: unknown) => void;
-    const exited = new Promise((resolve) => (exit = resolve));
+    let kill: (value: unknown) => void;
+    const killed = new Promise((resolve) => (kill = resolve));
     new Telemetry({
       ...noopEffects,
       logger,
@@ -115,14 +115,14 @@ describe("telemetry", () => {
           listeners[event] = listener;
           return this;
         },
-        exit(code?: number) {
-          exit(code);
+        kill(pid: number, signal?: string) {
+          kill(signal);
           throw new Error("exit");
         }
       })
     });
     listeners["SIGINT"]("SIGINT");
-    assert.equal(await exited, 130);
+    assert.equal(await killed, "SIGINT");
     assert.equal(logger.errorLines.length, 1);
     assert.deepEqual(logger.errorLines[0][1].data, {event: "signal", signal: "SIGINT"});
   });

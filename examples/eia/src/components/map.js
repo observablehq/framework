@@ -25,7 +25,7 @@ export function balancingAuthoritiesMap({
 }) {
   return Plot.plot({
     width,
-    height: width * 0.6,
+    height: width * 0.67,
     color: {
       ...color,
       transform: (d) => d / 100,
@@ -33,6 +33,7 @@ export function balancingAuthoritiesMap({
     },
     projection: {
       type: "albers",
+      domain: nation,
       insetTop: 15
     },
     r: {
@@ -122,9 +123,10 @@ export function balancingAuthoritiesMap({
 export function balancingAuthoritiesLegend(width) {
   return Plot.plot({
     marginTop: 15,
-    width: Math.min(width - 30, 400),
+    marginRight: 80,
+    width,
     height: 60,
-    y: {axis: null},
+    y: {axis: null, domain: [0, 1]},
     marks: [
       Plot.raster({
         y1: 0,
@@ -136,14 +138,16 @@ export function balancingAuthoritiesLegend(width) {
       Plot.ruleX([-0.15, 0, 0.15], {insetBottom: -5}),
       Plot.axisX([-0.15, 0, 0.15], {tickFormat: format("+.0%"), tickSize: 0}),
       Plot.dot(["Generating only", "Unavailable"], {
-        x: [0.23, 0.4],
+        x: [0.26, 0.26],
+        y: [0.75, -.25],
         r: 5,
         dx: -8,
         fill: [colorGenerating, colorUnavailable],
         stroke: "grey"
       }),
       Plot.text(["Generating only", "Unavailable"], {
-        x: [0.23, 0.4],
+        x: [0.26, 0.26],
+        y: [0.75, -.25],
         textAnchor: "start"
       })
     ]

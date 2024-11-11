@@ -5,14 +5,19 @@ import op from "node:path";
 import {basename, dirname, extname, join} from "node:path/posix";
 import {cwd} from "node:process";
 import {pathToFileURL} from "node:url";
+import he from "he";
 import type MarkdownIt from "markdown-it";
 import wrapAnsi from "wrap-ansi";
-import {LoaderResolver} from "./dataloader.js";
-import {visitMarkdownFiles} from "./files.js";
+import {DUCKDB_CORE_ALIASES, DUCKDB_CORE_EXTENSIONS} from "./duckdb.js";
+import {visitFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
+import {findModule} from "./javascript/module.js";
+import {LoaderResolver} from "./loader.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
+import {getPagePaths} from "./pager.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
+import {isParameterized} from "./route.js";
 import {resolveTheme} from "./theme.js";
 import {bold, yellow} from "./tty.js";
 
@@ -31,6 +36,8 @@ export interface Section<T = Page> {
   name: string;
   collapsible: boolean; // defaults to false
   open: boolean; // defaults to true; always true if collapsible is false
+  path: string | null;
+  pager: string | null;
   pages: T[];
 }
 
@@ -44,9 +51,7 @@ export interface Script {
   type: string | null;
 }
 
-/**
- * A function that generates a page fragment such as head, header or footer.
- */
+/** A function that generates a page fragment such as head, header or footer. */
 export type PageFragmentFunction = ({
   title,
   data,
@@ -57,25 +62,61 @@ export type PageFragmentFunction = ({
   path: string;
 }) => string | null;
 
+export interface SearchResult {
+  path: string;
+  title: string | null;
+  text: string;
+  keywords?: string;
+}
+
+export interface SearchConfig {
+  index: (() => AsyncIterable<SearchResult>) | null;
+}
+
+export interface SearchConfigSpec {
+  index?: unknown;
+}
+
+export interface DuckDBConfig {
+  platforms: {[name: string]: true};
+  extensions: {[name: string]: DuckDBExtensionConfig};
+}
+
+export interface DuckDBExtensionConfig {
+  source: string;
+  install: boolean;
+  load: boolean;
+}
+
+interface DuckDBExtensionConfigSpec {
+  source: unknown;
+  install: unknown;
+  load: unknown;
+}
+
 export interface Config {
   root: string; // defaults to src
   output: string; // defaults to dist
   base: string; // defaults to "/"
+  home: string; // defaults to the (escaped) title, or "Home"
   title?: string;
   sidebar: boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
+  paths: () => AsyncIterable<string>; // defaults to static Markdown files
   scripts: Script[]; // deprecated; defaults to empty array
   head: PageFragmentFunction | string | null; // defaults to null
   header: PageFragmentFunction | string | null; // defaults to null
   footer: PageFragmentFunction | string | null; // defaults to “Built with Observable on [date].”
   toc: TableOfContents;
   style: null | Style; // defaults to {theme: ["light", "dark"]}
-  search: boolean; // default to false
+  globalStylesheets: string[]; // defaults to Source Serif from Google Fonts
+  search: SearchConfig | null; // default to null
   md: MarkdownIt;
   normalizePath: (path: string) => string;
   loaders: LoaderResolver;
   watchPath?: string;
+  duckdb: DuckDBConfig;
 }
 
 export interface ConfigSpec {
@@ -84,6 +125,7 @@ export interface ConfigSpec {
   base?: unknown;
   sidebar?: unknown;
   style?: unknown;
+  globalStylesheets?: unknown;
   theme?: unknown;
   search?: unknown;
   scripts?: unknown;
@@ -91,15 +133,20 @@ export interface ConfigSpec {
   header?: unknown;
   footer?: unknown;
   interpreters?: unknown;
+  home?: unknown;
   title?: unknown;
   pages?: unknown;
   pager?: unknown;
+  dynamicPaths?: unknown;
   toc?: unknown;
   linkify?: unknown;
   typographer?: unknown;
   quotes?: unknown;
   cleanUrls?: unknown;
+  preserveIndex?: unknown;
+  preserveExtension?: unknown;
   markdownIt?: unknown;
+  duckdb?: unknown;
 }
 
 interface ScriptSpec {
@@ -112,6 +159,7 @@ interface SectionSpec {
   name?: unknown;
   open?: unknown;
   collapsible?: unknown;
+  path?: unknown;
   pages?: unknown;
   pager?: unknown;
 }
@@ -161,8 +209,10 @@ let cachedPages: {key: string; pages: Page[]} | null = null;
 function readPages(root: string, md: MarkdownIt): Page[] {
   const files: {file: string; source: string}[] = [];
   const hash = createHash("sha256");
-  for (const file of visitMarkdownFiles(root)) {
-    if (file === "index.md" || file === "404.md") continue;
+  for (const file of visitFiles(root, (name) => !isParameterized(name))) {
+    if (extname(file) !== ".md" || file === "index.md" || file === "404.md") continue;
+    const path = file.slice(0, -".md".length);
+    if (path.endsWith(".js") && findModule(root, path)) continue;
     const source = readFileSync(join(root, file), "utf8");
     files.push({file, source});
     hash.update(file).update(source);
@@ -208,6 +258,10 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
       : spec.style !== undefined
       ? {path: String(spec.style)}
       : {theme: normalizeTheme(spec.theme === undefined ? "default" : spec.theme)};
+  const globalStylesheets =
+    spec.globalStylesheets === undefined
+      ? defaultGlobalStylesheets()
+      : normalizeGlobalStylesheets(spec.globalStylesheets);
   const md = createMarkdownIt({
     linkify: spec.linkify === undefined ? undefined : Boolean(spec.linkify),
     typographer: spec.typographer === undefined ? undefined : Boolean(spec.typographer),
@@ -215,35 +269,72 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     markdownIt: spec.markdownIt as any
   });
   const title = spec.title === undefined ? undefined : String(spec.title);
+  const home = spec.home === undefined ? he.escape(title ?? "Home") : String(spec.home); // eslint-disable-line import/no-named-as-default-member
   const pages = spec.pages === undefined ? undefined : normalizePages(spec.pages);
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
+  const dynamicPaths = normalizeDynamicPaths(spec.dynamicPaths);
   const toc = normalizeToc(spec.toc as any);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
   const head = pageFragment(spec.head === undefined ? "" : spec.head);
   const header = pageFragment(spec.header === undefined ? "" : spec.header);
   const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
-  const search = Boolean(spec.search);
+  const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
+  const normalizePath = getPathNormalizer(spec);
+  const duckdb = normalizeDuckDB(spec.duckdb);
+
+  // If this path ends with a slash, then add an implicit /index to the
+  // end of the path. Otherwise, remove the .html extension (we use clean
+  // paths as the internal canonical representation; see normalizePage).
+  function normalizePagePath(pathname: string): string {
+    ({pathname} = parseRelativeUrl(pathname)); // ignore query & anchor
+    pathname = normalizePath(pathname);
+    if (pathname.endsWith("/")) pathname = join(pathname, "index");
+    else pathname = pathname.replace(/\.html$/, "");
+    return pathname;
+  }
+
   const config: Config = {
     root,
     output,
     base,
+    home,
     title,
     sidebar: sidebar!, // see below
     pages: pages!, // see below
     pager,
+    async *paths() {
+      const visited = new Set<string>();
+      function* visit(path: string): Generator<string> {
+        if (!visited.has((path = normalizePagePath(path)))) {
+          visited.add(path);
+          yield path;
+        }
+      }
+      for (const path of this.loaders.findPagePaths()) {
+        yield* visit(path);
+      }
+      for (const path of getPagePaths(this)) {
+        yield* visit(path);
+      }
+      for await (const path of dynamicPaths()) {
+        yield* visit(path);
+      }
+    },
     scripts,
     head,
     header,
     footer,
     toc,
     style,
+    globalStylesheets,
     search,
     md,
-    normalizePath: getPathNormalizer(spec.cleanUrls),
+    normalizePath,
     loaders: new LoaderResolver({root, interpreters}),
-    watchPath
+    watchPath,
+    duckdb
   };
   if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
@@ -251,19 +342,40 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   return config;
 }
 
-function getPathNormalizer(spec: unknown = true): (path: string) => string {
-  const cleanUrls = Boolean(spec);
+function normalizeDynamicPaths(spec: unknown): Config["paths"] {
+  if (typeof spec === "function") return spec as () => AsyncIterable<string>;
+  const paths = Array.from((spec ?? []) as ArrayLike<string>, String);
+  return async function* () { yield* paths; }; // prettier-ignore
+}
+
+function normalizeCleanUrls(spec: unknown): boolean {
+  console.warn(`${yellow("Warning:")} the ${bold("cleanUrls")} option is deprecated; use ${bold("preserveIndex")} and ${bold("preserveExtension")} instead.`); // prettier-ignore
+  return !spec;
+}
+
+function getPathNormalizer(spec: ConfigSpec): (path: string) => string {
+  const preserveIndex = spec.preserveIndex !== undefined ? Boolean(spec.preserveIndex) : false;
+  const preserveExtension = spec.preserveExtension !== undefined ? Boolean(spec.preserveExtension) : spec.cleanUrls !== undefined ? normalizeCleanUrls(spec.cleanUrls) : false; // prettier-ignore
   return (path) => {
-    if (path && !path.endsWith("/") && !extname(path)) path += ".html";
-    if (path === "index.html") path = ".";
-    else if (path.endsWith("/index.html")) path = path.slice(0, -"index.html".length);
-    else if (cleanUrls) path = path.replace(/\.html$/, "");
+    const ext = extname(path);
+    if (path.endsWith(".")) path += "/";
+    if (ext === ".html") path = path.slice(0, -".html".length);
+    if (path.endsWith("/index")) path = path.slice(0, -"index".length);
+    if (preserveIndex && path.endsWith("/")) path += "index";
+    if (!preserveIndex && path === "index") path = ".";
+    if (preserveExtension && path && !path.endsWith(".") && !path.endsWith("/") && !extname(path)) path += ".html";
     return path;
   };
 }
 
 function pageFragment(spec: unknown): PageFragmentFunction | string | null {
   return typeof spec === "function" ? (spec as PageFragmentFunction) : stringOrNull(spec);
+}
+
+function defaultGlobalStylesheets(): string[] {
+  return [
+    "https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap"
+  ];
 }
 
 function defaultFooter(): string {
@@ -293,6 +405,10 @@ function findDefaultRoot(defaultRoot?: string): string {
   return root;
 }
 
+function normalizeArray<T>(spec: unknown, f: (spec: unknown) => T): T[] {
+  return spec == null ? [] : Array.from(spec as ArrayLike<unknown>, f);
+}
+
 function normalizeBase(spec: unknown): string {
   let base = String(spec);
   if (!base.startsWith("/")) throw new Error(`base must start with slash: ${base}`);
@@ -300,13 +416,17 @@ function normalizeBase(spec: unknown): string {
   return base;
 }
 
+function normalizeGlobalStylesheets(spec: unknown): string[] {
+  return normalizeArray(spec, String);
+}
+
 export function normalizeTheme(spec: unknown): string[] {
-  return resolveTheme(typeof spec === "string" ? [spec] : spec === null ? [] : Array.from(spec as any, String));
+  return resolveTheme(typeof spec === "string" ? [spec] : normalizeArray(spec, String));
 }
 
 function normalizeScripts(spec: unknown): Script[] {
   console.warn(`${yellow("Warning:")} the ${bold("scripts")} option is deprecated; use ${bold("head")} instead.`);
-  return Array.from(spec as any, normalizeScript);
+  return normalizeArray(spec, normalizeScript);
 }
 
 function normalizeScript(spec: unknown): Script {
@@ -318,7 +438,7 @@ function normalizeScript(spec: unknown): Script {
 }
 
 function normalizePages(spec: unknown): Config["pages"] {
-  return Array.from(spec as any, (spec: SectionSpec | PageSpec) =>
+  return normalizeArray(spec, (spec: any) =>
     "pages" in spec ? normalizeSection(spec, normalizePage) : normalizePage(spec)
   );
 }
@@ -331,13 +451,26 @@ function normalizeSection<T>(
   const collapsible = spec.collapsible === undefined ? spec.open !== undefined : Boolean(spec.collapsible);
   const open = collapsible ? Boolean(spec.open) : true;
   const pager = spec.pager === undefined ? "main" : stringOrNull(spec.pager);
-  const pages = Array.from(spec.pages as any, (spec: PageSpec) => normalizePage(spec, pager));
-  return {name, collapsible, open, pages};
+  const path = spec.path == null ? null : normalizePath(spec.path);
+  const pages = normalizeArray(spec.pages, (spec: any) => normalizePage(spec, pager));
+  return {name, collapsible, open, path, pager, pages};
 }
 
 function normalizePage(spec: PageSpec, defaultPager: string | null = "main"): Page {
   const name = String(spec.name);
-  let path = String(spec.path);
+  const path = normalizePath(spec.path);
+  const pager = spec.pager === undefined && isAssetPath(path) ? defaultPager : stringOrNull(spec.pager);
+  return {name, path, pager};
+}
+
+function normalizeSearch(spec: SearchConfigSpec): SearchConfig {
+  const index = spec.index == null ? null : (spec.index as SearchConfig["index"]);
+  if (index !== null && typeof index !== "function") throw new Error("search.index is not a function");
+  return {index};
+}
+
+function normalizePath(spec: unknown): string {
+  let path = String(spec);
   if (isAssetPath(path)) {
     const u = parseRelativeUrl(join("/", path)); // add leading slash
     let {pathname} = u;
@@ -345,14 +478,13 @@ function normalizePage(spec: PageSpec, defaultPager: string | null = "main"): Pa
     pathname = pathname.replace(/\/$/, "/index"); // add trailing index
     path = pathname + u.search + u.hash;
   }
-  const pager = spec.pager === undefined && isAssetPath(path) ? defaultPager : stringOrNull(spec.pager);
-  return {name, path, pager};
+  return path;
 }
 
 function normalizeInterpreters(spec: {[key: string]: unknown} = {}): {[key: string]: string[] | null} {
   return Object.fromEntries(
     Object.entries(spec).map(([key, value]): [string, string[] | null] => {
-      return [String(key), value == null ? null : Array.from(value as any, String)];
+      return [String(key), normalizeArray(value, String)];
     })
   );
 }
@@ -388,4 +520,50 @@ export function mergeStyle(
 
 export function stringOrNull(spec: unknown): string | null {
   return spec == null || spec === false ? null : String(spec);
+}
+
+function normalizeDuckDB(spec: unknown): DuckDBConfig {
+  const {mvp = true, eh = true} = spec?.["platforms"] ?? {};
+  const extensions: {[name: string]: DuckDBExtensionConfig} = {};
+  let extspec: Record<string, unknown> = spec?.["extensions"] ?? {};
+  if (Array.isArray(extspec)) extspec = Object.fromEntries(extspec.map((name) => [name, {}]));
+  if (extspec.json === undefined) extspec = {...extspec, json: false};
+  if (extspec.parquet === undefined) extspec = {...extspec, parquet: false};
+  for (let name in extspec) {
+    if (!/^\w+$/.test(name)) throw new Error(`invalid extension: ${name}`);
+    const vspec = extspec[name];
+    if (vspec == null) continue;
+    name = DUCKDB_CORE_ALIASES[name] ?? name;
+    const {
+      source = name in DUCKDB_CORE_EXTENSIONS ? "core" : "community",
+      install = true,
+      load = !DUCKDB_CORE_EXTENSIONS[name]
+    } = typeof vspec === "boolean"
+      ? {load: vspec}
+      : typeof vspec === "string"
+      ? {source: vspec}
+      : (vspec as DuckDBExtensionConfigSpec);
+    extensions[name] = {
+      source: normalizeDuckDBSource(String(source)),
+      install: Boolean(install),
+      load: Boolean(load)
+    };
+  }
+  return {
+    platforms: Object.fromEntries(
+      [
+        ["mvp", mvp],
+        ["eh", eh]
+      ].filter(([, enabled]) => enabled)
+    ),
+    extensions
+  };
+}
+
+function normalizeDuckDBSource(source: string): string {
+  if (source === "core") return "https://extensions.duckdb.org/";
+  if (source === "community") return "https://community-extensions.duckdb.org/";
+  const url = new URL(source);
+  if (url.protocol !== "https:") throw new Error(`invalid source: ${source}`);
+  return String(url);
 }

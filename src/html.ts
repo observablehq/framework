@@ -3,7 +3,7 @@ import he from "he";
 import hljs from "highlight.js";
 import type {DOMWindow} from "jsdom";
 import {JSDOM, VirtualConsole} from "jsdom";
-import {isAssetPath, relativePath, resolveLocalPath} from "./path.js";
+import {isAssetPath, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
 const ASSET_ATTRIBUTES: readonly [selector: string, src: string][] = [
   ["a[href][download]", "href"],
@@ -41,6 +41,8 @@ export function parseHtml(html: string): DOMWindow {
 
 interface Assets {
   files: Set<string>;
+  anchors: Set<string>;
+  localLinks: Set<string>;
   localImports: Set<string>;
   globalImports: Set<string>;
   staticImports: Set<string>;
@@ -49,6 +51,8 @@ interface Assets {
 export function findAssets(html: string, path: string): Assets {
   const {document} = parseHtml(html);
   const files = new Set<string>();
+  const anchors = new Set<string>();
+  const localLinks = new Set<string>();
   const localImports = new Set<string>();
   const globalImports = new Set<string>();
   const staticImports = new Set<string>();
@@ -65,6 +69,7 @@ export function findAssets(html: string, path: string): Assets {
 
   for (const [selector, src] of ASSET_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
+      if (isExternal(element)) continue;
       const source = decodeURI(element.getAttribute(src)!);
       if (src === "srcset") {
         for (const s of parseSrcset(source)) {
@@ -77,6 +82,7 @@ export function findAssets(html: string, path: string): Assets {
   }
 
   for (const script of document.querySelectorAll<HTMLScriptElement>("script[src]")) {
+    if (isExternal(script)) continue;
     let src = script.getAttribute("src")!;
     if (isJavaScript(script)) {
       if (isAssetPath(src)) {
@@ -97,7 +103,20 @@ export function findAssets(html: string, path: string): Assets {
     }
   }
 
-  return {files, localImports, globalImports, staticImports};
+  for (const element of document.querySelectorAll<HTMLElement>("[id],[name]")) {
+    if (isExternal(element)) continue;
+    anchors.add(element.getAttribute("id") ?? element.getAttribute("name")!);
+  }
+
+  for (const a of document.querySelectorAll<HTMLAnchorElement>("a[href]")) {
+    if (isExternal(a) || a.hasAttribute("download")) continue;
+    const href = a.getAttribute("href")!;
+    if (/^\w+:/.test(href)) continue; // URL
+    const {pathname, search, hash} = parseRelativeUrl(href);
+    localLinks.add(resolvePath(path, pathname).replace(/\.html$/i, "").replace(/\/$/, "/index") + search + hash); // prettier-ignore
+  }
+
+  return {files, localImports, globalImports, staticImports, localLinks, anchors};
 }
 
 export function rewriteHtmlPaths(html: string, path: string): string {
@@ -109,6 +128,7 @@ export function rewriteHtmlPaths(html: string, path: string): string {
 
   for (const [selector, src] of PATH_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
+      if (isExternal(element)) continue;
       const source = decodeURI(element.getAttribute(src)!);
       element.setAttribute(src, src === "srcset" ? resolveSrcset(source, resolvePath) : encodeURI(resolvePath(source)));
     }
@@ -136,17 +156,20 @@ export function rewriteHtml(
 
   for (const [selector, src] of ASSET_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
+      if (isExternal(element)) continue;
       const source = decodeURI(element.getAttribute(src)!);
       element.setAttribute(src, src === "srcset" ? resolveSrcset(source, resolvePath) : encodeURI(resolvePath(source)));
     }
   }
 
   for (const script of document.querySelectorAll<HTMLScriptElement>("script[src]")) {
+    if (isExternal(script)) continue;
     const src = decodeURI(script.getAttribute("src")!);
     script.setAttribute("src", encodeURI((isJavaScript(script) ? resolveScript : resolveFile)(src)));
   }
 
   for (const a of document.querySelectorAll<HTMLAnchorElement>("a[href]")) {
+    if (isExternal(a)) continue;
     const href = decodeURI(a.getAttribute("href")!);
     a.setAttribute("href", encodeURI(resolveLink(href)));
     if (!/^(\w+:)/.test(href)) continue;
@@ -169,6 +192,8 @@ export function rewriteHtml(
         ? hljs.highlight(child.textContent!, {language}).value
         : isElement(child)
         ? child.outerHTML
+        : isComment(child)
+        ? `<!--${he.escape(child.data)}-->`
         : "";
     }
     code.innerHTML = html;
@@ -181,6 +206,31 @@ export function rewriteHtml(
     a.href = `#${h.id}`;
     a.append(...h.childNodes);
     h.append(a);
+  }
+
+  // For incremental update during preview, we need to know the direct children
+  // of the body statically; therefore we must wrap any top-level cells with a
+  // span to avoid polluting the direct children with dynamic content.
+  for (let child = document.body.firstChild; child; child = child.nextSibling) {
+    if (isRoot(child)) {
+      const parent = document.createElement("span");
+      const loading = findLoading(child);
+      child.replaceWith(parent);
+      if (loading) parent.appendChild(loading);
+      parent.appendChild(child);
+      child = parent;
+    }
+  }
+
+  // In some contexts, such as a table, the <observablehq-loading> element may
+  // be reparented; enforce the requirement that the <observablehq-loading>
+  // element immediately precedes its root by removing any violating elements.
+  // Also, <observablehq-loading> only works in an HTML context and won’t work
+  // in SVG or MathML or other non-HTML markup.
+  for (const l of document.querySelectorAll("observablehq-loading")) {
+    if (!l.nextSibling || !isRoot(l.nextSibling) || l.namespaceURI !== "http://www.w3.org/1999/xhtml") {
+      l.remove();
+    }
   }
 
   return document.body.innerHTML;
@@ -208,12 +258,33 @@ function resolveSrcset(srcset: string, resolve: (specifier: string) => string): 
     .join(", ");
 }
 
-function isText(node: Node): node is Text {
+export function isText(node: Node): node is Text {
   return node.nodeType === 3;
 }
 
-function isElement(node: Node): node is Element {
+export function isComment(node: Node): node is Comment {
+  return node.nodeType === 8;
+}
+
+export function isElement(node: Node): node is Element {
   return node.nodeType === 1;
+}
+
+function isRoot(node: Node): node is Comment {
+  return isComment(node) && /^:[0-9a-f]{8}(?:-\d+)?:$/.test(node.data);
+}
+
+function isLoading(node: Node): node is Element {
+  return isElement(node) && node.tagName === "OBSERVABLEHQ-LOADING";
+}
+
+function isExternal(a: Element): boolean {
+  return /(?:^|\s)external(?:\s|$)/i.test(a.getAttribute("rel") ?? ""); // e.g., <a href rel="external">
+}
+
+function findLoading(node: Node): Element | null {
+  const sibling = node.previousSibling;
+  return sibling && isLoading(sibling) ? sibling : null;
 }
 
 /**

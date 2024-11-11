@@ -4,19 +4,24 @@ keywords: file, fileattachment, attachment
 
 # Files
 
-Load files — whether static or generated dynamically by a [data loader](./loaders) — using the built-in `FileAttachment` function. This is available by default in Markdown, but you can import it explicitly like so:
+Load files — whether static or generated dynamically by a [data loader](./data-loaders) — using the built-in `FileAttachment` function. This is available by default in Markdown, but you can import it explicitly like so:
 
 ```js echo
-import {FileAttachment} from "npm:@observablehq/stdlib";
+import {FileAttachment} from "observablehq:stdlib";
 ```
 
-The `FileAttachment` function takes a path and returns a file handle. This handle exposes the file’s name, [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types), and modification time <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> (represented as the number of milliseconds since UNIX epoch).
+The `FileAttachment` function takes a path and returns a file handle. This handle exposes:
+
+* `name` - the file’s name (such as `volcano.json`),
+* `mimeType` - [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) (such as `application/json`),
+* `lastModified` - modification time <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> (in milliseconds since epoch), and
+* `size` - size in bytes <a href="https://github.com/observablehq/framework/releases/tag/v1.11.0" class="observablehq-version-badge" data-version="^1.11.0" title="Added in 1.11.0"></a>.
 
 ```js echo
 FileAttachment("volcano.json")
 ```
 
-Like a [local import](./imports#local-imports), the path is relative to the calling code’s source file: either the page’s Markdown file or the imported local JavaScript module. To load a remote file, use [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), or use a [data loader](./loaders) to download the file at build time.
+Like a [local import](./imports#local-imports), the path is relative to the calling code’s source file: either the page’s Markdown file or the imported local JavaScript module. To load a remote file, use [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), or use a [data loader](./data-loaders) to download the file at build time.
 
 Calling `FileAttachment` doesn’t actually load the file; the contents are only loaded when you invoke a [file contents method](#supported-formats). For example, to load a JSON file:
 
@@ -32,7 +37,7 @@ volcano
 
 ## Static analysis
 
-The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as `FileAttachment("my" + "file.csv")` is invalid syntax. Static analysis is used to invoke [data loaders](./loaders) at build time, and ensures that only referenced files are included in the generated output during build. This also allows a content hash in the file name for cache breaking during deploy.
+The `FileAttachment` function can _only_ be passed a static string literal; constructing a dynamic path such as <code>FileAttachment(\`frame$\{i}.png\`)</code> is invalid syntax. Static analysis is used to invoke [data loaders](./data-loaders) at build time, and ensures that only referenced files are included in the generated output during build. This also allows a content hash in the file name for cache breaking during deploy.
 
 If you have multiple files, you can enumerate them explicitly like so:
 
@@ -52,7 +57,7 @@ const frames = [
 
 None of the files in `frames` above are loaded until a [content method](#supported-formats) is invoked, for example by saying `frames[0].image()`.
 
-For missing files, `file.lastModified` is undefined. The `file.mimeType` is determined by checking the file extension against the [`mime-db` media type database](https://github.com/jshttp/mime-db); it defaults to `application/octet-stream`.
+For missing files, `file.size` and `file.lastModified` are undefined. The `file.mimeType` is determined by checking the file extension against the [`mime-db` media type database](https://github.com/jshttp/mime-db); it defaults to `application/octet-stream`.
 
 ## Supported formats
 
@@ -60,15 +65,16 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 
 | method                       | return type
 | -                            | -
+| [`file.arquero`][arquero]    | Arquero [`Table`][arquero-table]
 | [`file.arrayBuffer`][binary] | [`ArrayBuffer`][array-buffer]
-| [`file.arrow`][arrow]        | [`Table`][arrow-table]
+| [`file.arrow`][arrow]        | Arrow [`Table`][arrow-table]
 | [`file.blob`][binary]        | [`Blob`][blob]
 | [`file.csv`][csv]            | [`Array`][array]
 | [`file.dsv`][csv]            | [`Array`][array]
 | [`file.html`][markup]        | [`Document`][document]
 | [`file.image`][media]        | [`HTMLImageElement`][image]
 | [`file.json`][json]          | [`Array`][array], [`Object`][object], _etc._
-| [`file.parquet`][arrow]      | [`Table`][arrow-table]
+| [`file.parquet`][arrow]      | Arrow [`Table`][arrow-table]
 | [`file.sqlite`][sqlite]      | [`SQLiteDatabaseClient`][sqlite]
 | [`file.stream`][binary]      | [`ReadableStream`][stream]
 | [`file.text`][text]          | [`string`][string]
@@ -77,6 +83,8 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 | [`file.xml`][markup]         | [`Document`][document]
 | [`file.zip`][zip]            | [`ZipArchive`][zip]
 
+[arquero]: ./lib/arquero
+[arquero-table]: https://idl.uw.edu/arquero/api/#table
 [array-buffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
 [arrow-table]: https://arrow.apache.org/docs/js/classes/Arrow_dom.Table.html
 [blob]: https://developer.mozilla.org/en-US/docs/Web/API/Blob
@@ -98,7 +106,7 @@ For missing files, `file.lastModified` is undefined. The `file.mimeType` is dete
 [xlsx]: ./lib/xlsx
 [zip]: ./lib/zip
 
-The contents of a file often dictate the appropriate method — for example, an Apache Arrow file is almost always read with `file.arrow`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.text` to implement parsing yourself.
+The contents of a file often dictate the appropriate method — for example, an Excel XLSX file is almost always read with `file.xlsx`. When multiple methods are valid, choose based on your needs. For example, you can load a CSV file using `file.arquero` to load it into [Arquero](./lib/arquero)<a href="https://github.com/observablehq/framework/releases/tag/v1.10.0" class="observablehq-version-badge" data-version="^1.10.0" title="Added in 1.10.0"></a>, or even using `file.text` to implement parsing yourself.
 
 In addition to the above, you can get the resolved absolute URL of the file using `file.href`: <a href="https://github.com/observablehq/framework/releases/tag/v1.5.0" class="observablehq-version-badge" data-version="^1.5.0" title="Added in 1.5.0"></a>
 
@@ -146,7 +154,7 @@ A common gotcha with JSON is that it has no built-in date type; dates are theref
 
 ### Media
 
-To display an image, you can use a static image in [Markdown](../markdown) such as `<img src="horse.jpg">` or `![horse](horse.jpg)`. Likewise, you can use a `video` or `audio` element. Per [file-based routing](#routing), static references to these files are automatically detected and therefore these files will be included in the built output.
+To display an image, you can use a static image in [Markdown](./markdown) such as `<img src="horse.jpg">` or `![horse](horse.jpg)`. Likewise, you can use a `video` or `audio` element. Per [file-based routing](#routing), static references to these files are automatically detected and therefore these files will be included in the built output.
 
 <video src="horse.mp4" autoplay muted loop controls></video>
 
@@ -218,7 +226,7 @@ Attached files live in the source root (typically `src`) alongside your Markdown
 ├─ src
 │  ├─ index.md
 │  └─ quakes.csv
-└─ ...
+└─ …
 ```
 
 On build, any files referenced by `FileAttachment` will automatically be copied to the `_file` folder under the output root (`dist`), here resulting in:
@@ -229,9 +237,9 @@ On build, any files referenced by `FileAttachment` will automatically be copied 
 │  ├─ _file
 │  │  └─ quakes.e5f2eb94.csv
 │  ├─ _observablehq
-│  │  └─ ... # additional assets for serving the site
+│  │  └─ … # additional assets
 │  └─ index.html
-└─ ...
+└─ …
 ```
 
 `FileAttachment` references are automatically rewritten during build; for example, a reference to `quakes.csv` might be replaced with `_file/quakes.e5f2eb94.csv`. (As with imports, file names are given a content hash, here `e5f2eb94`, to improve performance.) Only the files you reference statically are copied to the output root (`dist`), so nothing extra or unused is included in the built site.

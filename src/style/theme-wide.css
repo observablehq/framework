@@ -1,5 +1,3 @@
-#observablehq-main,
-#observablehq-header,
-#observablehq-footer {
-  max-width: none;
+:root {
+  --observablehq-max-width: 100vw;
 }
