@@ -374,7 +374,13 @@ class Deployer {
         } else {
           this.effects.clack.log.error(
             wrapAnsi(
-              `Could not create app: ${error instanceof Error ? error.message : error}`,
+              `Could not create app: ${
+                isHttpError(error) && error.statusCode === 409
+                  ? "conflicting slug."
+                  : error instanceof Error
+                  ? error.message
+                  : error
+              }`,
               this.effects.outputColumns
             )
           );
@@ -471,14 +477,7 @@ class Deployer {
           doBuild = true;
         }
       } else {
-        clack.log.error(
-          wrapAnsi(
-            `Could not create project: ${
-              (error as any)?.statusCode === 409 ? "conflicting slug." : error instanceof Error ? error.message : error
-            }`,
-            effects.outputColumns
-          )
-        );
+        throw error;
       }
     }
 
