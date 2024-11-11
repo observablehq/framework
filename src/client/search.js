@@ -8,7 +8,7 @@ const resultsContainer = document.querySelector("#observablehq-search-results");
 const activeClass = "observablehq-link-active";
 let currentValue;
 
-const index = await fetch(import.meta.resolve(global.__minisearch))
+const index = await fetch(import.meta.resolve("observablehq:minisearch.json"))
   .then((response) => {
     if (!response.ok) throw new Error(`unable to load minisearch.json: ${response.status}`);
     return response.json();
@@ -16,6 +16,9 @@ const index = await fetch(import.meta.resolve(global.__minisearch))
   .then((json) =>
     MiniSearch.loadJS(json, {
       ...json.options,
+      searchOptions: {
+        boostDocument: (id) => (isExternal(id) ? 1 / 3 : 1)
+      },
       processTerm: (term) =>
         term
           .slice(0, 15)
@@ -45,10 +48,17 @@ input.addEventListener("input", () => {
           .join("")}</ol>`;
 });
 
+function isExternal(id) {
+  return /^\w+:/.test(id);
+}
+
 function renderResult({id, score, title}, i) {
+  const external = /^\w+:/.test(id);
   return `<li data-score="${Math.min(5, Math.round(0.6 * score))}" class="observablehq-link${
     i === 0 ? ` ${activeClass}` : ""
-  }"><a href="${escapeDoubleQuote(import.meta.resolve(`../${id}`))}">${escapeText(String(title ?? "—"))}</a></li>`;
+  }"><a href="${escapeDoubleQuote(external ? id : import.meta.resolve(`..${id}`))}"${
+    external ? ' target="_blank"' : ""
+  }><span>${escapeText(String(title ?? "—"))}</span></a></li>`;
 }
 
 function escapeDoubleQuote(text) {
@@ -73,7 +83,12 @@ input.addEventListener("keydown", (event) => {
     const results = resultsContainer.querySelector("ol");
     if (!results) return;
     let activeResult = results.querySelector(`.${activeClass}`);
-    if (code === "Enter") return activeResult.querySelector("a").click();
+    if (code === "Enter") {
+      const a = activeResult.querySelector("a");
+      if (/Mac|iPhone/.test(navigator.platform) ? event.metaKey : event.ctrlKey) open(a.href, "_blank");
+      else a.click();
+      return;
+    }
     activeResult.classList.remove(activeClass);
     if (code === "ArrowUp") activeResult = activeResult.previousElementSibling ?? results.lastElementChild;
     else activeResult = activeResult.nextElementSibling ?? results.firstElementChild;

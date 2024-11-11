@@ -53,9 +53,10 @@
         "imports": [],
         "expression": true,
         "async": true,
-        "inline": false,
         "input": "await mermaid`graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;`"
-      }
+      },
+      "mode": "block"
     }
-  ]
+  ],
+  "path": "mermaid.md"
 }

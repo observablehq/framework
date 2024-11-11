@@ -1,0 +1,2 @@
+geopandas==0.14.4
+matplotlib==3.9.0

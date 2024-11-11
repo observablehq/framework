@@ -7,9 +7,18 @@
   font: 14px var(--sans-serif);
 }
 
-.grid > .card,
-.card figure {
+.grid > .card {
   margin: 0;
+}
+
+.card > :first-child,
+.card > :first-child > :first-child {
+  margin-top: 0;
+}
+
+.card > :last-child,
+.card > :last-child > :last-child {
+  margin-bottom: 0;
 }
 
 .card h2,

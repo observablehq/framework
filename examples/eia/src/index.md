@@ -1,5 +1,6 @@
 ---
 theme: dashboard
+toc: false
 ---
 
 # U.S. electricity grid
@@ -170,7 +171,7 @@ function centerResize(render) {
     <h2>US electricity generation demand vs. day-ahead forecast (GWh)</h2>
     ${resize((width, height) => usGenDemandForecastChart(width, height, usDemandGenForecast, currentHour))}
   </div>
-  <div class="card grid-colspan-2">
+  <div class="card grid-colspan-2" style="min-height: 160px;">
     <h2>Neighboring country interchange (GWh)</h2>
     ${resize((width, height) => countryInterchangeChart(width, height, usDemandGenForecast, countryInterchangeSeries, currentHour))}
   </div>

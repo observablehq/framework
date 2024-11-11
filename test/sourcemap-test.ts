@@ -97,4 +97,12 @@ describe("new Sourcemap(source)", () => {
     sm.trim();
     assert.strictEqual(sm.toString(), "hello;");
   });
+  it("replace a replacement", () => {
+    const input = "FileAttachment(`${observable.params.foo}.json`)";
+    const sourcemap = new Sourcemap(input);
+    sourcemap.replaceLeft(18, 39, '"foo"');
+    assert.strictEqual(sourcemap.toString(), 'FileAttachment(`${"foo"}.json`)');
+    sourcemap.replaceLeft(15, 46, '"./foo.json"');
+    assert.strictEqual(sourcemap.toString(), 'FileAttachment("./foo.json")');
+  });
 });

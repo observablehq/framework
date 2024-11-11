@@ -18,7 +18,7 @@ const iframeWidth = view(Inputs.range([200, 640], {step: 1, value: document.quer
 iframe.width = iframeWidth; // set the iframe width reactively
 ```
 
-On the embeded page (`src/embed.md`), the following code uses a [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) to observe the content height and posts a message to the parent frame reporting the new height.
+On the embedded page (`src/embed.md`), the following code uses a [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) to observe the content height and posts a message to the parent frame reporting the new height.
 
 ```js run=false
 const observer = new ResizeObserver(([entry]) => parent.postMessage({height: entry.target.offsetHeight}, "*"));
@@ -40,7 +40,7 @@ addEventListener("message", messaged);
 invalidation.then(() => removeEventListener("message", messaged));
 ```
 
-Lastly, the embeded page uses front matter to turn off the sidebar, header, footer, and pager. If you prefer, you can disable these for the entire project by adding these same options to the `observablehq.config.js` file.
+Lastly, the embedded page uses front matter to turn off the sidebar, header, footer, and pager. If you prefer, you can disable these for the entire project by adding these same options to the `observablehq.config.js` file.
 
 ```yaml run=false
 ---

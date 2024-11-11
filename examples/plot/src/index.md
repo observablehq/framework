@@ -20,7 +20,7 @@ const stars = FileAttachment("data/plot-github-stars.csv").csv({typed: true});
 
 ```js
 // These dates are declared globally to ensure consistency across plots.
-const end = d3.utcDay(d3.utcHour.offset(d3.utcHour(), -10));
+const end = downloads[0].date;
 const start = d3.utcYear.offset(end, -2);
 const lastMonth = d3.utcDay.offset(end, -28);
 const lastWeek = d3.utcDay.offset(end, -7);
@@ -31,7 +31,7 @@ const x = {domain: [start, end]};
   <a class="card" href="https://github.com/observablehq/plot/releases" style="color: inherit;">
     <h2>Latest release</h2>
     <span class="big">${versions.at(-1).version}</span>
-    <span class="muted">${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.  utcDay.count(versions.at(-1).date, new Date()))}</span>
+    <span class="muted">${((days) => days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`)(d3.utcDay.count(versions.at(-1).date, end))}</span>
   </a>
   <a class="card" href="https://github.com/observablehq/plot" style="color: inherit;">
     <h2>GitHub stars</h2>
@@ -85,7 +85,7 @@ const x = {domain: [start, end]};
           tip: {
             channels: {
               version: "version",
-              released: (d) => `${d3.utcDay.count(d.date, Date.now()).toLocaleString("en-US")} days ago`,
+              released: (d) => `${d3.utcDay.count(d.date, end).toLocaleString("en-US")} days ago`,
               downloads: "downloads",
             },
             format: {fill: false, x: false, y: false}

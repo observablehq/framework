@@ -30,9 +30,10 @@
         "imports": [],
         "expression": true,
         "async": false,
-        "inline": true,
         "input": "`}'\"`"
-      }
+      },
+      "mode": "inline"
     }
-  ]
+  ],
+  "path": "template-expression.md"
 }

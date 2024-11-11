@@ -32,9 +32,10 @@
         "imports": [],
         "expression": true,
         "async": false,
-        "inline": true,
         "input": "1 + 2"
-      }
+      },
+      "mode": "inline"
     }
-  ]
+  ],
+  "path": "dollar-expression.md"
 }

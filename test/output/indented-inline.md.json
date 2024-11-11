@@ -1,0 +1,28 @@
+{
+  "data": {},
+  "title": null,
+  "style": null,
+  "code": [
+    {
+      "id": "5aa762ae",
+      "node": {
+        "body": {
+          "type": "Literal",
+          "start": 0,
+          "end": 7,
+          "value": "hello",
+          "raw": "\"hello\""
+        },
+        "declarations": null,
+        "references": [],
+        "files": [],
+        "imports": [],
+        "expression": true,
+        "async": false,
+        "input": "\"hello\""
+      },
+      "mode": "inline"
+    }
+  ],
+  "path": "indented-inline.md"
+}

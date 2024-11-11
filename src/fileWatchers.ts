@@ -1,8 +1,8 @@
 import type {FSWatcher} from "node:fs";
 import {watch} from "node:fs";
-import type {LoaderResolver} from "./dataloader.js";
 import {isEnoent} from "./error.js";
 import {maybeStat} from "./files.js";
+import type {LoaderResolver} from "./loader.js";
 import {resolvePath} from "./path.js";
 
 export class FileWatchers {

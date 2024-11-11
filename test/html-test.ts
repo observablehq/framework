@@ -100,6 +100,26 @@ describe("findAssets(html, path)", () => {
     const html = '<script src="test.js" type="other">';
     assert.deepStrictEqual(findAssets(html, "foo").files, new Set(["./test.js"]));
   });
+  it("finds anchors by [id] or [name]", () => {
+    const html = '<a id="id1">foo</a> <a name="id2">bar</a>';
+    assert.deepStrictEqual(findAssets(html, "foo").anchors, new Set(["id1", "id2"]));
+  });
+  it("finds local links by a[href]", () => {
+    const html = '<a href="#anchor">a</a> <a href="other#baz">b</a> <a href="?test">self</a>';
+    assert.deepStrictEqual(findAssets(html, "foo").localLinks, new Set(["/foo#anchor", "/other#baz", "/foo?test"]));
+  });
+  it("finds relative links", () => {
+    const html = '<a href="./test">a</a>';
+    assert.deepStrictEqual(findAssets(html, "foo/bar").localLinks, new Set(["/foo/test"]));
+  });
+  it("finds links that go up", () => {
+    const html = '<a href="../test">a</a>';
+    assert.deepStrictEqual(findAssets(html, "foo/bar").localLinks, new Set(["/test"]));
+  });
+  it("finds links that go above the root", () => {
+    const html = '<a href="../test">a</a>';
+    assert.deepStrictEqual(findAssets(html, "foo").localLinks, new Set(["../test"]));
+  });
 });
 
 describe("rewriteHtml(html, resolve)", () => {
@@ -143,6 +163,11 @@ describe("rewriteHtml(html, resolve)", () => {
   it("ignores non-local files from video source[src]", () => {
     const html = '<video width="320" height="240" controls><source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube"><source src="observable.mov" type="video/mov"></video>'; // prettier-ignore
     const expected = '<video width="320" height="240" controls=""><source src="https://www.youtube.com/watch?v=SsFyayu5csc" type="video/youtube"><source src="observable.mov?sha=e9864d5e85a350487f7283e3b82deb9253ea67bb93f3155a0c45f4988ad1c674" type="video/mov"></video>'; // prettier-ignore
+    assert.strictEqual(rewriteHtml(html, resolvers), expected);
+  });
+  it("removes <observablehq-loading> from SVG contexts", () => {
+    const html = "<svg width=640 height=120><text x=20 y=20><observablehq-loading></observablehq-loading><!--:5aa762ae:--></text></svg>"; // prettier-ignore
+    const expected = '<svg width="640" height="120"><text x="20" y="20"><!--:5aa762ae:--></text></svg>'; // prettier-ignore
     assert.strictEqual(rewriteHtml(html, resolvers), expected);
   });
 });

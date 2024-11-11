@@ -48,9 +48,9 @@
         "imports": [],
         "expression": true,
         "async": false,
-        "inline": true,
         "input": "tex`\\KaTeX`"
-      }
+      },
+      "mode": "inline"
     },
     {
       "id": "828eccc1",
@@ -97,9 +97,10 @@
         "imports": [],
         "expression": true,
         "async": false,
-        "inline": true,
         "input": "tex`E = mc^2`"
-      }
+      },
+      "mode": "inline"
     }
-  ]
+  ],
+  "path": "tex-expression.md"
 }

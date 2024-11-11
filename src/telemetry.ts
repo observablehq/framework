@@ -1,4 +1,5 @@
 import {exec} from "node:child_process";
+import type {UUID} from "node:crypto";
 import {createHash, randomUUID} from "node:crypto";
 import {readFile, writeFile} from "node:fs/promises";
 import os from "node:os";
@@ -6,42 +7,8 @@ import {join} from "node:path/posix";
 import {CliError} from "./error.js";
 import type {Logger} from "./logger.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
+import type {TelemetryData, TelemetryEnvironment, TelemetryIds, TelemetryTime} from "./telemetryData.js";
 import {link, magenta} from "./tty.js";
-
-type uuid = ReturnType<typeof randomUUID>;
-
-type TelemetryIds = {
-  session: uuid | null; // random, held in memory for the duration of the process
-  device: uuid | null; // persists to ~/.observablehq
-  project: string | null; // one-way hash of private salt + repository URL or cwd
-};
-
-type TelemetryEnvironment = {
-  version: string; // version from package.json
-  node: string; // node.js version
-  systemPlatform: string; // linux, darwin, win32, ...
-  systemRelease: string; // 20.04, 11.2.3, ...
-  systemArchitecture: string; // x64, arm64, ...
-  cpuCount: number; // number of cpu cores
-  cpuModel: string | null; // cpu model name
-  cpuSpeed: number | null; // cpu speed in MHz
-  memoryInMb: number; // truncated to mb
-  isCI: string | boolean; // inside CI heuristic, name or false
-  isDocker: boolean; // inside Docker heuristic
-  isWSL: boolean; // inside WSL heuristic
-};
-
-type TelemetryTime = {
-  now: number; // performance.now
-  timeOrigin: number; // performance.timeOrigin
-  timeZoneOffset: number; // minutes from UTC
-};
-
-type TelemetryData = {
-  event: "build" | "deploy" | "preview" | "signal" | "login";
-  step?: "start" | "finish" | "error";
-  [key: string]: unknown;
-};
 
 type TelemetryEffects = {
   logger: Logger;
@@ -77,17 +44,17 @@ export class Telemetry {
   private debug: boolean;
   private endpoint: URL;
   private timeZoneOffset = new Date().getTimezoneOffset();
-  private readonly _pending = new Set<Promise<any>>();
-  private _config: Promise<Record<string, uuid>> | undefined;
+  private readonly _pending = new Set<Promise<unknown>>();
+  private _config: Promise<Record<string, UUID>> | undefined;
   private _ids: Promise<TelemetryIds> | undefined;
   private _environment: Promise<TelemetryEnvironment> | undefined;
 
   static _instance: Telemetry;
-  static get instance() {
+  static get instance(): Telemetry {
     return (this._instance ??= new Telemetry());
   }
 
-  static record(data: TelemetryData) {
+  static record(data: TelemetryData): void {
     return Telemetry.instance.record(data);
   }
 
@@ -97,9 +64,9 @@ export class Telemetry {
     this.disabled = !!process.env.OBSERVABLE_TELEMETRY_DISABLE;
     this.debug = !!process.env.OBSERVABLE_TELEMETRY_DEBUG;
     this.endpoint = new URL("/cli", getOrigin(process.env));
-    process.on("SIGHUP", this.handleSignal(1));
-    process.on("SIGINT", this.handleSignal(2));
-    process.on("SIGTERM", this.handleSignal(15));
+    this.handleSignal("SIGHUP");
+    this.handleSignal("SIGINT");
+    this.handleSignal("SIGTERM");
   }
 
   record(data: TelemetryData) {
@@ -122,20 +89,26 @@ export class Telemetry {
     return Promise.all(this._pending);
   }
 
-  private handleSignal(value: number) {
-    const code = 128 + value;
-    return async (signal: NodeJS.Signals) => {
-      const {process} = this.effects;
-      // Give ourselves 1s to record a signal event and flush.
-      const deadline = setTimeout(() => process.exit(code), 1000);
+  private handleSignal(name: string): void {
+    const {process} = this.effects;
+    let exiting = false;
+    const signaled = async (signal: NodeJS.Signals) => {
+      if (exiting) return; // already exiting
+      exiting = true;
       this.record({event: "signal", signal});
-      await this.pending;
-      clearTimeout(deadline);
-      process.exit(code);
+      try {
+        // Allow one second to record a signal event and flush.
+        await Promise.race([this.pending, new Promise((resolve) => setTimeout(resolve, 1000))]);
+      } catch {
+        // ignore error
+      }
+      process.off(name, signaled); // don’t handle our own kill
+      process.kill(process.pid, signal);
     };
+    process.on(name, signaled);
   }
 
-  private async getPersistentId(name: string, generator = randomUUID) {
+  private async getPersistentId(name: string, generator = randomUUID): Promise<UUID | null> {
     const {readFile, writeFile} = this.effects;
     const file = join(os.homedir(), ".observablehq");
     if (!this._config) {
@@ -156,7 +129,7 @@ export class Telemetry {
     return config[name];
   }
 
-  private async getProjectId() {
+  private async getProjectId(): Promise<string | null> {
     const salt = await this.getPersistentId("cli_telemetry_salt");
     if (!salt) return null;
     const remote: string | null = await new Promise((resolve) => {
@@ -168,22 +141,26 @@ export class Telemetry {
     return hash.digest("base64");
   }
 
-  private get ids() {
+  private get ids(): Promise<TelemetryIds> {
     return (this._ids ??= Promise.all([this.getPersistentId("cli_telemetry_device"), this.getProjectId()]).then(
-      ([device, project]) => ({
-        session: randomUUID(),
-        device,
-        project
-      })
+      ([device, project]) => {
+        const ids: TelemetryIds = {
+          session: randomUUID(),
+          device,
+          project
+        };
+        return ids;
+      }
     ));
   }
 
-  private get environment() {
+  private get environment(): Promise<TelemetryEnvironment> {
     return (this._environment ??= Promise.all([import("ci-info"), import("is-docker"), import("is-wsl")]).then(
       ([ci, {default: isDocker}, {default: isWSL}]) => {
         const cpus = os.cpus() || [];
-        return {
+        const environment: TelemetryEnvironment = {
           version: process.env.npm_package_version!,
+          userAgent: process.env.npm_config_user_agent!,
           node: process.versions.node,
           systemPlatform: os.platform(),
           systemRelease: os.release(),
@@ -196,12 +173,13 @@ export class Telemetry {
           isDocker: isDocker(),
           isWSL
         };
+        return environment;
       }
     ));
   }
 
   private async showBannerIfNeeded() {
-    let called: uuid | undefined;
+    let called: UUID | undefined;
     await this.getPersistentId("cli_telemetry_banner", () => (called = randomUUID()));
     if (called) {
       this.effects.logger.error(

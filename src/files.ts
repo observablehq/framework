@@ -2,18 +2,13 @@ import type {Stats} from "node:fs";
 import {existsSync, readdirSync, statSync} from "node:fs";
 import {mkdir, stat} from "node:fs/promises";
 import op from "node:path";
-import {extname, join, normalize, relative, sep} from "node:path/posix";
+import {join, normalize, relative, sep} from "node:path/posix";
 import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {isEnoent} from "./error.js";
 
-export function toOsPath(path: string): string {
-  return path.split(sep).join(op.sep);
-}
-
-export function fromOsPath(path: string): string {
-  return path.split(op.sep).join(sep);
-}
+export const toOsPath = sep === op.sep ? (path: string) => path : (path: string) => path.split(sep).join(op.sep);
+export const fromOsPath = sep === op.sep ? (path: string) => path : (path: string) => path.split(op.sep).join(sep);
 
 /**
  * Returns the relative path from the current working directory to the given
@@ -40,29 +35,31 @@ export function getStylePath(entry: string): string {
   return fromOsPath(op.relative(cwd(), op.join(fileURLToPath(import.meta.url), "..", "style", entry)));
 }
 
-/** Yields every Markdown (.md) file within the given root, recursively. */
-export function* visitMarkdownFiles(root: string): Generator<string> {
-  for (const file of visitFiles(root)) {
-    if (extname(file) !== ".md") continue;
-    yield file;
-  }
-}
-
-/** Yields every file within the given root, recursively, ignoring .observablehq. */
-export function* visitFiles(root: string): Generator<string> {
+/**
+ * Yields every file within the given root, recursively, ignoring .observablehq.
+ * If a test function is specified, any directories or files whose names don’t
+ * pass the specified test will be skipped (in addition to .observablehq). This
+ * is typically used to skip parameterized paths.
+ */
+export function* visitFiles(root: string, test?: (name: string) => boolean): Generator<string> {
   const visited = new Set<number>();
   const queue: string[] = [(root = normalize(root))];
   for (const path of queue) {
-    const status = statSync(path);
-    if (status.isDirectory()) {
-      if (visited.has(status.ino)) continue; // circular symlink
-      visited.add(status.ino);
-      for (const entry of readdirSync(path)) {
-        if (entry === ".observablehq") continue; // ignore the .observablehq directory
-        queue.push(join(path, entry));
+    try {
+      const status = statSync(path);
+      if (status.isDirectory()) {
+        if (visited.has(status.ino)) continue; // circular symlink
+        visited.add(status.ino);
+        for (const entry of readdirSync(path)) {
+          if (entry === ".observablehq") continue; // ignore the .observablehq directory
+          if (test !== undefined && !test(entry)) continue;
+          queue.push(join(path, entry));
+        }
+      } else {
+        yield relative(root, path);
       }
-    } else {
-      yield relative(root, path);
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
     }
   }
 }

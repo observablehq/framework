@@ -1,3 +1,4 @@
+/* eslint-disable import/no-named-as-default-member */
 import {exec} from "node:child_process";
 import {accessSync, existsSync, readdirSync, statSync} from "node:fs";
 import {constants, copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
@@ -6,7 +7,7 @@ import {basename, dirname, join, normalize} from "node:path/posix";
 import {setTimeout as sleep} from "node:timers/promises";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
-import * as clack from "@clack/prompts";
+import he from "he";
 import untildify from "untildify";
 import wrapAnsi from "wrap-ansi";
 import type {ClackEffects} from "./clack.js";
@@ -23,7 +24,6 @@ export interface CreateEffects extends TtyEffects {
 
 const defaultEffects: CreateEffects = {
   ...defaultTtyEffects,
-  clack,
   sleep,
   async mkdir(outputPath: string, options): Promise<void> {
     await mkdir(outputPath, options);
@@ -43,7 +43,7 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
   const defaultRootPathError = validateRootPath(defaultRootPath);
   clack.log.success(
     wrapAnsi(
-      "Welcome to Observable Framework! 👋 This command will help you create a new project. When prompted, you can press Enter to accept the default value.",
+      "Welcome to Observable Framework! 👋 This command will help you create a new app. When prompted, you can press Enter to accept the default value.",
       Math.min(80, effects.outputColumns)
     ) + `\n\nWant help? ${link("https://observablehq.com/framework/getting-started")}`
   );
@@ -56,11 +56,11 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
           defaultValue: defaultRootPathError ? undefined : defaultRootPath,
           validate: (input) => validateRootPath(input, defaultRootPathError)
         }),
-      projectTitle: ({results: {rootPath}}) =>
+      appTitle: ({results: {rootPath}}) =>
         clack.text({
-          message: "What should we title your project?",
-          placeholder: inferTitle(rootPath!),
-          defaultValue: inferTitle(rootPath!)
+          message: "What should we title your app?",
+          placeholder: inferTitle(rootPath),
+          defaultValue: inferTitle(rootPath)
         }),
       includeSampleFiles: () =>
         clack.select({
@@ -85,7 +85,7 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         clack.confirm({
           message: "Initialize git repository?"
         }),
-      installing: async ({results: {rootPath, projectTitle, includeSampleFiles, packageManager, initializeGit}}) => {
+      installing: async ({results: {rootPath, appTitle, includeSampleFiles, packageManager, initializeGit}}) => {
         rootPath = untildify(rootPath!);
         let spinning = true;
         const s = clack.spinner();
@@ -102,8 +102,8 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
             runCommand,
             installCommand,
             rootPath: rootPath!,
-            projectTitle: projectTitle as string,
-            projectTitleString: JSON.stringify(projectTitle as string),
+            appTitleHtml: he.escape(appTitle as string),
+            appTitleString: JSON.stringify(appTitle as string),
             frameworkVersionString: JSON.stringify(`^${process.env.npm_package_version}`)
           },
           effects
@@ -135,7 +135,10 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
           }
         }
         if (spinning) s.stop("Installed! 🎉");
-        const instructions = [`cd ${rootPath}`, ...(packageManager ? [] : [installCommand]), `${runCommand} dev`];
+        const instructions: string[] = [];
+        if (rootPath !== ".") instructions.push(`cd ${rootPath}`);
+        if (!packageManager) instructions.push(installCommand);
+        instructions.push(`${runCommand} dev`);
         clack.note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
         clack.outro(`Problems? ${link("https://github.com/observablehq/framework/discussions")}`);
       }
@@ -159,8 +162,8 @@ function validateRootPath(rootPath: string, defaultError?: string): string | und
   if (readdirSync(rootPath).length !== 0) return "Directory is not empty.";
 }
 
-function inferTitle(rootPath: string): string {
-  return basename(rootPath!)
+function inferTitle(rootPath = "."): string {
+  return basename(join(process.cwd(), rootPath))
     .split(/[-_\s]/)
     .map(([c, ...rest]) => c.toUpperCase() + rest.join(""))
     .join(" ");

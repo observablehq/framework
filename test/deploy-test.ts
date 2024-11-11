@@ -2,6 +2,7 @@ import assert, {fail} from "node:assert";
 import type {Stats} from "node:fs";
 import {stat} from "node:fs/promises";
 import {Readable, Writable} from "node:stream";
+import type {BuildManifest} from "../src/build.js";
 import {normalizeConfig, setCurrentDate} from "../src/config.js";
 import type {DeployEffects, DeployOptions} from "../src/deploy.js";
 import {deploy, promptDeployTarget} from "../src/deploy.js";
@@ -36,6 +37,7 @@ interface MockDeployEffectsOptions {
   debug?: boolean;
   fixedInputStatTime?: Date;
   fixedOutputStatTime?: Date;
+  buildManifest?: BuildManifest;
 }
 
 class MockDeployEffects extends MockAuthEffects implements DeployEffects {
@@ -43,19 +45,21 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   public input = new Readable();
   public output: NodeJS.WritableStream;
   public observableApiKey: string | null = null;
-  public deployConfig: DeployConfig | null = null;
   public projectTitle = "My Project";
   public projectSlug = "my-project";
   public isTty: boolean;
   public outputColumns: number;
   public clack = new TestClackEffects();
 
+  private deployConfigs: Record<string, DeployConfig>;
+  private defaultDeployConfig: DeployConfig | null;
   private ioResponses: {prompt: RegExp; response: string}[] = [];
   private debug: boolean;
   private configEffects: MockConfigEffects;
   private authEffects: MockAuthEffects;
   private fixedInputStatTime: Date | undefined;
   private fixedOutputStatTime: Date | undefined;
+  private buildManifest: BuildManifest | undefined;
 
   constructor({
     apiKey = validApiKey,
@@ -64,19 +68,22 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     outputColumns = 80,
     debug = false,
     fixedInputStatTime,
-    fixedOutputStatTime
+    fixedOutputStatTime,
+    buildManifest
   }: MockDeployEffectsOptions = {}) {
     super();
     this.authEffects = new MockAuthEffects();
     this.configEffects = new MockConfigEffects();
 
     this.observableApiKey = apiKey;
-    this.deployConfig = deployConfig;
+    this.deployConfigs = {};
+    this.defaultDeployConfig = deployConfig;
     this.isTty = isTty;
     this.outputColumns = outputColumns;
     this.debug = debug;
     this.fixedInputStatTime = fixedInputStatTime;
     this.fixedOutputStatTime = fixedOutputStatTime;
+    this.buildManifest = buildManifest;
 
     this.output = new Writable({
       write: (data, _enc, callback) => {
@@ -101,17 +108,26 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     });
   }
 
-  async getDeployConfig(): Promise<DeployConfig> {
-    return this.deployConfig ?? {projectId: null, projectSlug: null, workspaceLogin: null};
+  private getDeployConfigKey(sourceRoot: string, deployConfigPath?: string): string {
+    return `${sourceRoot}::${deployConfigPath ?? "<default>"}`;
   }
 
-  async setDeployConfig(sourceRoot: string, config: DeployConfig) {
-    this.deployConfig = config;
+  async getDeployConfig(sourceRoot: string, deployConfigPath?: string): Promise<DeployConfig> {
+    const key = this.getDeployConfigKey(sourceRoot, deployConfigPath);
+    return (
+      this.deployConfigs[key] ?? this.defaultDeployConfig ?? {projectId: null, projectSlug: null, workspaceLogin: null}
+    );
+  }
+
+  async setDeployConfig(sourceRoot: string, deployConfigPath: string | undefined, config: DeployConfig) {
+    const key = this.getDeployConfigKey(sourceRoot, deployConfigPath);
+    this.deployConfigs[key] = config;
   }
 
   *visitFiles(path: string) {
     yield* visitFiles(path);
   }
+
   async stat(path: string) {
     function overrideTime(s: Stats, date: Date) {
       for (const key of ["a", "c", "m", "birth"] as const) {
@@ -146,6 +162,14 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
     if (this.observableApiKey) opts.apiKey = {key: this.observableApiKey, source: "test"};
     return new ObservableApiClient(opts);
   }
+
+  readCacheFile(sourceRoot: string, path: string): Promise<string> {
+    if (path === "_build.json") {
+      if (this.buildManifest) return Promise.resolve(JSON.stringify(this.buildManifest));
+      throw Object.assign(new Error("no build manifest configured for this test"), {code: "ENOENT"});
+    }
+    throw Object.assign(new Error("non-manifest cache files aren't available in tests"), {code: "ENOENT"});
+  }
 }
 
 // This test should have exactly one index.md in it, and nothing else; that one
@@ -160,7 +184,8 @@ const TEST_OPTIONS: DeployOptions = {
   config: TEST_CONFIG,
   message: undefined,
   deployPollInterval: 0,
-  force: "deploy" // default to not re-building and just deploying output as-is
+  force: "deploy", // default to not re-building and just deploying output as-is
+  deployConfigPath: undefined
 };
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
   projectId: "project123",
@@ -179,11 +204,7 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .expectFileUpload({deployId, path: "index.html"})
-      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
-      .expectFileUpload({deployId, path: "_observablehq/client.js"})
-      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
-      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId, deployStatus: "uploaded"})
       .start();
@@ -199,19 +220,81 @@ describe("deploy", () => {
     effects.close();
   });
 
+  it("makes expected API calls for an existing project and deploy", async () => {
+    const deployId = "deploy456";
+    getCurrentObservableApi()
+      .handleGetCurrentUser()
+      .handleGetDeploy({deployId, deployStatus: "created"})
+      .expectStandardFiles({deployId})
+      .handlePostDeployUploaded({deployId})
+      .handleGetDeploy({deployId, deployStatus: "uploaded"})
+      .start();
+
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      fixedInputStatTime: new Date("2024-03-09"),
+      fixedOutputStatTime: new Date("2024-03-10")
+    });
+    effects.clack.inputs = ["fix some bugs"]; // "what changed?"
+    await deploy({...TEST_OPTIONS, deployId}, effects);
+
+    effects.close();
+  });
+
+  it("won't deploy to a non-existent deploy", async () => {
+    const deployId = "deploy456";
+    getCurrentObservableApi().handleGetCurrentUser().handleGetDeploy({deployId, status: 404}).start();
+
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      fixedInputStatTime: new Date("2024-03-09"),
+      fixedOutputStatTime: new Date("2024-03-10")
+    });
+    effects.clack.inputs = ["fix some bugs"]; // "what changed?"
+
+    try {
+      await deploy({...TEST_OPTIONS, deployId}, effects);
+      assert.fail("expected error");
+    } catch (error) {
+      CliError.assert(error, {message: "Deploy deploy456 not found.", print: true, exitCode: 1});
+    }
+
+    effects.close();
+  });
+
+  it("won't deploy to an existing deploy with an unexpected status", async () => {
+    const deployId = "deploy456";
+    getCurrentObservableApi().handleGetCurrentUser().handleGetDeploy({deployId, deployStatus: "uploaded"}).start();
+
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      fixedInputStatTime: new Date("2024-03-09"),
+      fixedOutputStatTime: new Date("2024-03-10")
+    });
+    effects.clack.inputs = ["fix some bugs"]; // "what changed?"
+
+    try {
+      await deploy({...TEST_OPTIONS, deployId}, effects);
+      assert.fail("expected error");
+    } catch (error) {
+      CliError.assert(error, {
+        message: "Deploy deploy456 has an unexpected status: uploaded",
+        print: true,
+        exitCode: 1
+      });
+    }
+
+    effects.close();
+  });
+
   it("updates title for existing project if it doesn't match", async () => {
     const deployId = "deploy456";
     const oldTitle = `${TEST_CONFIG.title!} old`;
     getCurrentObservableApi()
       .handleGetCurrentUser()
       .handleGetProject({...DEPLOY_CONFIG, title: oldTitle})
-      .handleUpdateProject({projectId: DEPLOY_CONFIG.projectId, title: TEST_CONFIG.title!})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .expectFileUpload({deployId, path: "index.html"})
-      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
-      .expectFileUpload({deployId, path: "_observablehq/client.js"})
-      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
-      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -237,14 +320,9 @@ describe("deploy", () => {
         projects: [{id: DEPLOY_CONFIG.projectId, slug: DEPLOY_CONFIG.projectSlug, title: oldTitle}]
       })
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .expectFileUpload({deployId, path: "index.html"})
-      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
-      .expectFileUpload({deployId, path: "_observablehq/client.js"})
-      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
-      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
-      .handleUpdateProject({projectId: DEPLOY_CONFIG.projectId, title: TEST_CONFIG.title!})
       .start();
 
     const effects = new MockDeployEffects({
@@ -270,11 +348,7 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(deployConfig)
       .handlePostDeploy({projectId: deployConfig.projectId, deployId})
-      .expectFileUpload({deployId, path: "index.html"})
-      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
-      .expectFileUpload({deployId, path: "_observablehq/client.js"})
-      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
-      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -297,11 +371,7 @@ describe("deploy", () => {
       })
       .handlePostProject({projectId: DEPLOY_CONFIG.projectId})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .expectFileUpload({deployId, path: "index.html"})
-      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
-      .expectFileUpload({deployId, path: "_observablehq/client.js"})
-      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
-      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -406,6 +476,7 @@ describe("deploy", () => {
       ...DEPLOY_CONFIG,
       workspaceLogin: "ACME Inc."
     };
+    getCurrentObservableApi().handleGetCurrentUser().start();
     const effects = new MockDeployEffects({deployConfig, isTty: true});
 
     try {
@@ -426,13 +497,14 @@ describe("deploy", () => {
       ...DEPLOY_CONFIG,
       projectSlug: "Business Intelligence"
     };
+    getCurrentObservableApi().handleGetCurrentUser().start();
     const effects = new MockDeployEffects({deployConfig, isTty: true});
 
     try {
       await deploy({...TEST_OPTIONS, config}, effects);
       assert.fail("expected error");
     } catch (err) {
-      CliError.assert(err, {message: /Found invalid project slug.*Business Intelligence/});
+      CliError.assert(err, {message: /Found invalid `projectSlug`.*Business Intelligence/});
     }
 
     effects.close();
@@ -474,6 +546,23 @@ describe("deploy", () => {
       assert.ok(error instanceof Error, `error should be an Error (got ${typeof error})`);
       assert.match(error.message, /^out of inputs for select: Your authentication is invalid/);
     }
+  });
+
+  it("non interactive terminals throw an error when unauthenticated", async () => {
+    const effects = new MockDeployEffects({isTty: false, apiKey: null});
+    await assert.rejects(
+      async () => await deploy(TEST_OPTIONS, effects),
+      (error) => (CliError.assert(error, {message: "No authentication provided"}), true)
+    );
+  });
+
+  it("non interactive terminals throw an error when unauthorized", async () => {
+    getCurrentObservableApi().handleGetCurrentUser({status: 403}).start();
+    const effects = new MockDeployEffects({isTty: false, apiKey: invalidApiKey});
+    await assert.rejects(
+      async () => await deploy(TEST_OPTIONS, effects),
+      (error) => (CliError.assert(error, {message: "Authentication was rejected by the server: forbidden"}), true)
+    );
   });
 
   it("throws an error if deploy creation fails", async () => {
@@ -532,11 +621,7 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .expectFileUpload({deployId, path: "index.html"})
-      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
-      .expectFileUpload({deployId, path: "_observablehq/client.js"})
-      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
-      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId, status: 500})
       .start();
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
@@ -564,7 +649,7 @@ describe("deploy", () => {
       await deploy({...TEST_OPTIONS, config}, effects);
       assert.fail("expected error");
     } catch (err) {
-      assert.ok(err instanceof Error && err.message.match(/out of inputs for.*Do you want to create a new project/));
+      assert.ok(err instanceof Error && err.message.match(/out of inputs for.*Do you want to create a new app/));
     }
   });
 
@@ -589,7 +674,7 @@ describe("deploy", () => {
     } catch (err) {
       CliError.assert(err, {message: "Error during deploy", print: false});
     }
-    effects.clack.log.assertLogged({message: /Starter tier can only deploy one project/, level: "error"});
+    effects.clack.log.assertLogged({message: /Starter tier can only deploy one app/, level: "error"});
   });
 
   it("gives a nice error when there are no workspaces to deploy to", async () => {
@@ -637,6 +722,43 @@ describe("deploy", () => {
     }
   });
 
+  it("includes a build manifest if one was generated", async () => {
+    const deployId = "deploy456";
+    let buildManifestPages: BuildManifest["pages"] | null = null;
+    getCurrentObservableApi()
+      .handleGetCurrentUser()
+      .handleGetProject(DEPLOY_CONFIG)
+      .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
+      .expectStandardFiles({deployId})
+      .handlePostDeployUploaded({
+        deployId,
+        pageMatch: (pages) => {
+          buildManifestPages = pages;
+          return true;
+        }
+      })
+      .handleGetDeploy({deployId, deployStatus: "uploaded"})
+      .start();
+
+    const effects = new MockDeployEffects({
+      deployConfig: DEPLOY_CONFIG,
+      fixedInputStatTime: new Date("2024-03-09"),
+      fixedOutputStatTime: new Date("2024-03-10"),
+      buildManifest: {
+        config: {root: "src"},
+        pages: [{path: "/", title: "Build test case"}],
+        modules: [],
+        files: []
+      }
+    });
+    effects.clack.inputs = ["fix some bugs"]; // "what changed?"
+    await deploy(TEST_OPTIONS, effects);
+
+    assert.deepEqual(buildManifestPages, [{path: "/", title: "Build test case"}]);
+
+    effects.close();
+  });
+
   describe("when deploy state doesn't match", () => {
     it("interactive, when the user chooses to update", async () => {
       const newProjectId = "newProjectId";
@@ -649,11 +771,7 @@ describe("deploy", () => {
           projectId: newProjectId
         })
         .handlePostDeploy({projectId: newProjectId, deployId})
-        .expectFileUpload({deployId, path: "index.html"})
-        .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
-        .expectFileUpload({deployId, path: "_observablehq/client.js"})
-        .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
-        .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+        .expectStandardFiles({deployId})
         .handlePostDeployUploaded({deployId})
         .handleGetDeploy({deployId})
         .start();
@@ -737,11 +855,7 @@ describe("deploy", () => {
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .expectFileUpload({deployId, path: "index.html"})
-      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
-      .expectFileUpload({deployId, path: "_observablehq/client.js"})
-      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
-      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -759,23 +873,17 @@ describe("deploy", () => {
   it("will re-poll for both created and pending deploy statuses", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
-      .handlePostAuthRequest()
-      .handlePostAuthRequestPoll("accepted")
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .expectFileUpload({deployId, path: "index.html"})
-      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
-      .expectFileUpload({deployId, path: "_observablehq/client.js"})
-      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
-      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId, deployStatus: "created"})
       .handleGetDeploy({deployId, deployStatus: "pending"})
       .handleGetDeploy({deployId, deployStatus: "uploaded"})
       .start();
 
-    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG, apiKey: null});
+    const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
     effects.clack.inputs = [
       true, // do you want to log in?
       "fix some bugs" // deploy message
@@ -866,16 +974,10 @@ describe("deploy", () => {
   it("can force a deploy", async () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
-      .handlePostAuthRequest()
-      .handlePostAuthRequestPoll("accepted")
       .handleGetCurrentUser()
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
-      .expectFileUpload({deployId, path: "index.html"})
-      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css"})
-      .expectFileUpload({deployId, path: "_observablehq/client.js"})
-      .expectFileUpload({deployId, path: "_observablehq/runtime.js"})
-      .expectFileUpload({deployId, path: "_observablehq/stdlib.js"})
+      .expectStandardFiles({deployId})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId})
       .start();
@@ -887,7 +989,6 @@ describe("deploy", () => {
 
     const effects = new MockDeployEffects({
       deployConfig: DEPLOY_CONFIG,
-      apiKey: null,
       fixedInputStatTime: new Date("2024-03-11"), // newer source files
       fixedOutputStatTime: new Date("2024-03-10")
     });
@@ -908,10 +1009,10 @@ describe("deploy", () => {
       .handleGetProject(DEPLOY_CONFIG)
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId})
       .expectFileUpload({deployId, path: "index.html", action: "upload"})
-      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.css", action: "skip"})
-      .expectFileUpload({deployId, path: "_observablehq/client.js", action: "skip"})
-      .expectFileUpload({deployId, path: "_observablehq/runtime.js", action: "skip"})
-      .expectFileUpload({deployId, path: "_observablehq/stdlib.js", action: "skip"})
+      .expectFileUpload({deployId, path: "_observablehq/client.00000001.js", action: "skip"})
+      .expectFileUpload({deployId, path: "_observablehq/runtime.00000002.js", action: "skip"})
+      .expectFileUpload({deployId, path: "_observablehq/stdlib.00000003.js", action: "skip"})
+      .expectFileUpload({deployId, path: "_observablehq/theme-air,near-midnight.00000004.css", action: "skip"})
       .handlePostDeployUploaded({deployId})
       .handleGetDeploy({deployId, deployStatus: "uploaded"})
       .start();
@@ -950,7 +1051,7 @@ describe("promptDeployTarget", () => {
     const effects = new MockDeployEffects({isTty: false});
     const api = effects.makeApiClient();
     try {
-      await promptDeployTarget(effects, api, TEST_CONFIG, {} as GetCurrentUserResponse);
+      await promptDeployTarget(effects, TEST_CONFIG, api, {} as GetCurrentUserResponse);
     } catch (error) {
       CliError.assert(error, {message: "Deploy not configured."});
     }
@@ -960,7 +1061,7 @@ describe("promptDeployTarget", () => {
     const effects = new MockDeployEffects();
     const api = effects.makeApiClient();
     try {
-      await promptDeployTarget(effects, api, TEST_CONFIG, userWithZeroWorkspaces);
+      await promptDeployTarget(effects, TEST_CONFIG, api, userWithZeroWorkspaces);
     } catch (error) {
       effects.clack.log.assertLogged({message: /You don’t have any Observable workspaces/});
       CliError.assert(error, {message: "No Observable workspace found.", print: false});
@@ -980,7 +1081,7 @@ describe("promptDeployTarget", () => {
     ];
     const api = effects.makeApiClient();
     getCurrentObservableApi().handleGetWorkspaceProjects({workspaceLogin: workspace.login, projects: []}).start();
-    const result = await promptDeployTarget(effects, api, TEST_CONFIG, userWithTwoWorkspaces);
+    const result = await promptDeployTarget(effects, TEST_CONFIG, api, userWithTwoWorkspaces);
     assert.deepEqual(result, {
       accessLevel,
       create: true,

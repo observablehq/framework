@@ -3,8 +3,10 @@ import {mkdir, readFile, readdir, writeFile} from "node:fs/promises";
 import {dirname, extname, join} from "node:path/posix";
 import type {CallExpression} from "acorn";
 import {simple} from "acorn-walk";
-import {rsort, satisfies} from "semver";
+import {maxSatisfying, rsort, satisfies, validRange} from "semver";
+import {DUCKDB_WASM_VERSION} from "./duckdb.js";
 import {isEnoent} from "./error.js";
+import {annotatePath} from "./javascript/annotate.js";
 import type {ExportNode, ImportNode, ImportReference} from "./javascript/imports.js";
 import {isImportMetaResolve, parseImports} from "./javascript/imports.js";
 import {parseProgram} from "./javascript/parse.js";
@@ -36,7 +38,7 @@ export function formatNpmSpecifier({name, range, path}: NpmSpecifier): string {
 }
 
 /** Rewrites /npm/ import specifiers to be relative paths to /_npm/. */
-export function rewriteNpmImports(input: string, resolve: (specifier: string) => string = String): string {
+export function rewriteNpmImports(input: string, resolve: (s: string) => string | void = () => undefined): string {
   const body = parseProgram(input);
   const output = new Sourcemap(input);
 
@@ -63,7 +65,8 @@ export function rewriteNpmImports(input: string, resolve: (specifier: string) =>
   function rewriteImportSource(source: StringLiteral) {
     const value = getStringLiteralValue(source);
     const resolved = resolve(value);
-    if (value !== resolved) output.replaceLeft(source.start, source.end, JSON.stringify(resolved));
+    if (resolved === undefined || value === resolved) return;
+    output.replaceLeft(source.start, source.end, annotatePath(resolved));
   }
 
   // TODO Preserve the source map, but download it too.
@@ -80,14 +83,22 @@ export async function populateNpmCache(root: string, path: string): Promise<stri
   let promise = npmRequests.get(outputPath);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async () => {
-    const specifier = extractNpmSpecifier(path);
+    let specifier = extractNpmSpecifier(path);
+    const s = parseNpmSpecifier(specifier);
+    // https://github.com/sql-js/sql.js/issues/284
+    if (s.name === "sql.js" && s.path === "+esm") {
+      specifier = formatNpmSpecifier({...s, path: "dist/sql-wasm.js"});
+    }
     const href = `https://cdn.jsdelivr.net/npm/${specifier}`;
     console.log(`npm:${specifier} ${faint("→")} ${outputPath}`);
     const response = await fetch(href);
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
     await mkdir(dirname(outputPath), {recursive: true});
     if (/^application\/javascript(;|$)/i.test(response.headers.get("content-type")!)) {
-      const source = await response.text();
+      let source = await response.text();
+      if (s.name === "sql.js" && s.path === "+esm") {
+        source = "var module;\n" + source + "\nexport default initSqlJs;";
+      }
       const resolver = await getDependencyResolver(root, path, source);
       await writeFile(outputPath, rewriteNpmImports(source, resolver), "utf-8");
     } else {
@@ -161,7 +172,7 @@ export async function getDependencyResolver(
         (name === "arquero" || name === "@uwdata/mosaic-core" || name === "@duckdb/duckdb-wasm") && depName === "apache-arrow" // prettier-ignore
           ? "latest" // force Arquero, Mosaic & DuckDB-Wasm to use the (same) latest version of Arrow
           : name === "@uwdata/mosaic-core" && depName === "@duckdb/duckdb-wasm"
-          ? "1.28.0" // force Mosaic to use the latest (stable) version of DuckDB-Wasm
+          ? DUCKDB_WASM_VERSION // force Mosaic to use the latest (stable) version of DuckDB-Wasm
           : pkg.dependencies?.[depName] ??
             pkg.devDependencies?.[depName] ??
             pkg.peerDependencies?.[depName] ??
@@ -178,9 +189,9 @@ export async function getDependencyResolver(
   };
 }
 
-async function initializeNpmVersionCache(root: string): Promise<Map<string, string[]>> {
+export async function initializeNpmVersionCache(root: string, dir = "_npm"): Promise<Map<string, string[]>> {
   const cache = new Map<string, string[]>();
-  const cacheDir = join(root, ".observablehq", "cache", "_npm");
+  const cacheDir = join(root, ".observablehq", "cache", dir);
   try {
     for (const entry of await readdir(cacheDir)) {
       if (entry.startsWith("@")) {
@@ -211,29 +222,32 @@ const npmVersionRequests = new Map<string, Promise<string>>();
 
 function getNpmVersionCache(root: string): Promise<Map<string, string[]>> {
   let cache = npmVersionCaches.get(root);
-  if (!cache) npmVersionCaches.set(root, (cache = initializeNpmVersionCache(root)));
+  if (!cache) npmVersionCaches.set(root, (cache = initializeNpmVersionCache(root, "_npm")));
   return cache;
 }
 
-async function resolveNpmVersion(root: string, specifier: NpmSpecifier): Promise<string> {
-  const {name, range} = specifier;
+async function resolveNpmVersion(root: string, {name, range}: NpmSpecifier): Promise<string> {
   if (range && /^\d+\.\d+\.\d+([-+].*)?$/.test(range)) return range; // exact version specified
   const cache = await getNpmVersionCache(root);
-  const versions = cache.get(specifier.name);
+  const versions = cache.get(name);
   if (versions) for (const version of versions) if (!range || satisfies(version, range)) return version;
-  const href = `https://data.jsdelivr.com/v1/packages/npm/${name}/resolved${range ? `?specifier=${range}` : ""}`;
+  if (range === undefined) range = "latest";
+  const disttag = validRange(range) ? null : range;
+  const href = `https://registry.npmjs.org/${name}${disttag ? `/${disttag}` : ""}`;
   let promise = npmVersionRequests.get(href);
   if (promise) return promise; // coalesce concurrent requests
   promise = (async function () {
-    process.stdout.write(`npm:${formatNpmSpecifier(specifier)} ${faint("→")} `);
-    const response = await fetch(href);
+    const input = formatNpmSpecifier({name, range});
+    process.stdout.write(`npm:${input} ${faint("→")} `);
+    const response = await fetch(href, {...(!disttag && {headers: {Accept: "application/vnd.npm.install-v1+json"}})});
     if (!response.ok) throw new Error(`unable to fetch: ${href}`);
-    const {version} = await response.json();
-    if (!version) throw new Error(`unable to resolve version: ${formatNpmSpecifier({name, range})}`);
-    const spec = formatNpmSpecifier({name, range: version});
-    process.stdout.write(`npm:${spec}\n`);
-    cache.set(specifier.name, versions ? rsort(versions.concat(version)) : [version]);
-    mkdir(join(root, ".observablehq", "cache", "_npm", spec), {recursive: true}); // disk cache
+    const body = await response.json();
+    const version = disttag ? body.version : maxSatisfying(Object.keys(body.versions), range);
+    if (!version) throw new Error(`unable to resolve version: ${input}`);
+    const output = formatNpmSpecifier({name, range: version});
+    process.stdout.write(`npm:${output}\n`);
+    cache.set(name, versions ? rsort(versions.concat(version)) : [version]);
+    mkdir(join(root, ".observablehq", "cache", "_npm", output), {recursive: true}); // disk cache
     return version;
   })();
   promise.catch(console.error).then(() => npmVersionRequests.delete(href));
@@ -244,9 +258,7 @@ async function resolveNpmVersion(root: string, specifier: NpmSpecifier): Promise
 export async function resolveNpmImport(root: string, specifier: string): Promise<string> {
   const {
     name,
-    range = name === "@duckdb/duckdb-wasm"
-      ? "1.28.0" // https://github.com/duckdb/duckdb-wasm/issues/1561
-      : undefined,
+    range = name === "@duckdb/duckdb-wasm" ? DUCKDB_WASM_VERSION : undefined,
     path = name === "mermaid"
       ? "dist/mermaid.esm.min.mjs/+esm"
       : name === "echarts"

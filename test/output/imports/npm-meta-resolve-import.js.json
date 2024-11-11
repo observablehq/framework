@@ -85,10 +85,9 @@
     {
       "name": "npm:d3",
       "type": "global",
-      "method": "dynamic"
+      "method": "resolve"
     }
   ],
   "expression": false,
-  "async": false,
-  "inline": false
+  "async": false
 }

@@ -1,6 +1,6 @@
 [Framework examples →](../)
 
-# Framework + NetCDF
+# NetCDF
 
 View live: <https://observablehq.observablehq.cloud/framework-example-netcdf/>
 
