@@ -1,8 +1,6 @@
 # Toggle input
 
-[API Reference ›](https://github.com/observablehq/inputs/blob/main/README.md#toggle)
-
-The toggle input allows the user to choose one of two values, representing on or off. It is a specialized form of the [checkbox input](./checkbox).
+<a href="https://github.com/observablehq/inputs/blob/main/README.md#toggle">API</a> · <a href="https://github.com/observablehq/inputs/blob/main/src/checkbox.js">Source</a> · The toggle input allows the user to choose one of two values, representing on or off. It is a specialized form of the [checkbox input](./checkbox).
 
 The initial value of a toggle defaults to false. You can override this by specifying the *value* option.
 
@@ -50,7 +48,7 @@ frozen
 
 The available toggle input options are:
 
-* *label* - a label; either a string or an HTML element.
-* *values* - the two values to toggle between; defaults to [true, false].
-* *value* - the initial value; defaults to the second value (false).
-* *disabled* - whether input is disabled; defaults to false.
+* *label* - a label; either a string or an HTML element
+* *values* - the two values to toggle between; defaults to [true, false]
+* *value* - the initial value; defaults to the second value (false)
+* *disabled* - whether input is disabled; defaults to false

@@ -14,6 +14,10 @@ FileAttachment("subsection/file-sub.csv")
 FileAttachment("observable logo.png")
 ```
 
+```js
+FileAttachment("unknown-mime-extension.really")
+```
+
 ![](observable%20logo%20small.png)
 
 

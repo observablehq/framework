@@ -16,18 +16,18 @@ yarn dev
 
 Lastly visit <http://127.0.0.1:3000>.
 
-The local preview server restarts automatically if you edit any of the TypeScript files, though you may need to reload. The default page is [docs/index.md](https://github.com/observablehq/framework/blob/main/docs/index.md?plain=1); if you edit that file and save changes, the live preview in the browser will automatically update.
+The local preview server restarts automatically if you edit any of the TypeScript files, though you may need to reload. The default page is [`docs/index.md`](https://github.com/observablehq/framework/blob/main/docs/index.md?plain=1); if you edit that file and save changes, the live preview in the browser will automatically update.
 
 To generate the static site:
 
 ```sh
-yarn build
+yarn docs:build
 ```
 
-This creates the `dist` folder. View the site using your preferred web server, such as:
+This creates the `docs/.observablehq/dist` folder. View the site using your preferred web server, such as:
 
 ```sh
-http-server dist
+http-server docs/.observablehq/dist
 ```
 
 This documentation site is built on GitHub using Observable Framework; see the [deploy workflow](https://github.com/observablehq/framework/blob/main/.github/workflows/deploy.yml). Please open a pull request if you’d like to contribute. Contributors are expected to follow our [code of conduct](https://github.com/observablehq/.github/blob/master/CODE_OF_CONDUCT.md). 🙏

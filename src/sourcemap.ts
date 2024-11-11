@@ -39,20 +39,33 @@ export class Sourcemap {
     }
     return lo;
   }
-  insertLeft(index: number, value: string): void {
-    this.replaceLeft(index, index, value);
+  private _subsume(start: number, end: number): void {
+    let n = 0;
+    for (let i = 0; i < this._edits.length; ++i) {
+      const e = this._edits[i];
+      if (start <= e.start && e.end < end) continue;
+      this._edits[n++] = e;
+    }
+    this._edits.length = n;
   }
-  insertRight(index: number, value: string): void {
-    this.replaceRight(index, index, value);
+  insertLeft(index: number, value: string): typeof this {
+    return this.replaceLeft(index, index, value);
   }
-  delete(start: number, end: number): void {
-    this.replaceRight(start, end, "");
+  insertRight(index: number, value: string): typeof this {
+    return this.replaceRight(index, index, value);
   }
-  replaceLeft(start: number, end: number, value: string): void {
+  delete(start: number, end: number): typeof this {
+    return this.replaceRight(start, end, "");
+  }
+  replaceLeft(start: number, end: number, value: string): typeof this {
+    this._subsume(start, end);
     this._edits.splice(this._bisectLeft(start), 0, {start, end, value});
+    return this;
   }
-  replaceRight(start: number, end: number, value: string): void {
+  replaceRight(start: number, end: number, value: string): typeof this {
+    this._subsume(start, end);
     this._edits.splice(this._bisectRight(start), 0, {start, end, value});
+    return this;
   }
   translate(position: Position): Position {
     let index = 0;
@@ -79,10 +92,11 @@ export class Sourcemap {
     const l = positionSubtract(position, co);
     return positionAdd(ci, l);
   }
-  trim(): void {
+  trim(): typeof this {
     const input = this.input;
     if (input.startsWith("\n")) this.delete(0, 1); // TODO better trim
     if (input.endsWith("\n")) this.delete(input.length - 1, input.length); // TODO better trim
+    return this;
   }
   toString(): string {
     let output = "";

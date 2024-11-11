@@ -1,0 +1,13 @@
+{
+  "body": {
+    "type": "ThisExpression",
+    "start": 0,
+    "end": 4
+  },
+  "declarations": null,
+  "references": [],
+  "files": [],
+  "imports": [],
+  "expression": true,
+  "async": false
+}

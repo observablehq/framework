@@ -13,3 +13,17 @@ export function formatLocaleDate(date: Date, locale: Intl.LocalesArgument = "en-
 function pad(number: number, length: number): string {
   return String(number).padStart(length, "0");
 }
+
+export function formatByteSize(x: number, locale: Intl.LocalesArgument = "en-US"): string {
+  const formatOptions = {maximumSignificantDigits: 3, maximumFractionDigits: 2};
+  for (const [k, suffix] of [
+    [1e9, " GB"],
+    [1e6, " MB"],
+    [1e3, " kB"]
+  ] as const) {
+    if (Math.round((x / k) * 1e3) >= 1e3) {
+      return (x / k).toLocaleString(locale, formatOptions) + suffix;
+    }
+  }
+  return x.toLocaleString(locale, formatOptions) + " B";
+}

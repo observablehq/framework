@@ -1,76 +1,53 @@
-import {parseHTML} from "linkedom";
-import type {Config, Page, Script, Section} from "./config.js";
+import mime from "mime";
+import type {Config, Page, Section} from "./config.js";
 import {mergeToc} from "./config.js";
+import {enoent} from "./error.js";
 import {getClientPath} from "./files.js";
-import {type Html, html} from "./html.js";
-import type {ImportResolver} from "./javascript/imports.js";
-import {createImportResolver, resolveModuleIntegrity, resolveModulePreloads} from "./javascript/imports.js";
-import type {FileReference, ImportReference, Transpile} from "./javascript.js";
-import {addImplicitSpecifiers, addImplicitStylesheets} from "./libraries.js";
-import {type ParseResult, parseMarkdown} from "./markdown.js";
-import {type PageLink, findLink, normalizePath} from "./pager.js";
-import {getPreviewStylesheet} from "./preview.js";
+import type {Html, HtmlResolvers} from "./html.js";
+import {html, parseHtml, rewriteHtml} from "./html.js";
+import {isJavaScript} from "./javascript/imports.js";
+import type {FileInfo} from "./javascript/module.js";
+import {findModule} from "./javascript/module.js";
+import type {TranspileModuleOptions} from "./javascript/transpile.js";
+import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
+import type {MarkdownPage} from "./markdown.js";
+import type {PageLink} from "./pager.js";
+import {findLink, normalizePath} from "./pager.js";
+import {isAssetPath, resolvePath, resolveRelativePath} from "./path.js";
+import type {Resolvers} from "./resolvers.js";
+import {getModuleResolver, getModuleStaticImports, getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
-import {relativeUrl} from "./url.js";
-
-export interface Render {
-  html: string;
-  files: FileReference[];
-  imports: ImportReference[];
-  data: ParseResult["data"];
-}
 
 export interface RenderOptions extends Config {
   root: string;
   path: string;
-}
-
-export async function renderPreview(sourcePath: string, options: RenderOptions): Promise<Render> {
-  const parseResult = await parseMarkdown(sourcePath, options);
-  return {
-    html: await render(parseResult, {...options, preview: true}),
-    files: parseResult.files,
-    imports: parseResult.imports,
-    data: parseResult.data
-  };
-}
-
-export async function renderServerless(sourcePath: string, options: RenderOptions): Promise<Render> {
-  const parseResult = await parseMarkdown(sourcePath, options);
-  return {
-    html: await render(parseResult, options),
-    files: parseResult.files,
-    imports: parseResult.imports,
-    data: parseResult.data
-  };
-}
-
-export function renderDefineCell(cell: Transpile): string {
-  const {id, inline, inputs, outputs, files, body} = cell;
-  return `define({${Object.entries({id, inline, inputs, outputs, files})
-    .filter((arg) => arg[1] !== undefined)
-    .map((arg) => `${arg[0]}: ${JSON.stringify(arg[1])}`)
-    .join(", ")}, body: ${body}});\n`;
+  resolvers?: Resolvers;
 }
 
 type RenderInternalOptions =
-  | {preview?: false} // serverless
+  | {preview?: false} // build
   | {preview: true}; // preview
 
-async function render(parseResult: ParseResult, options: RenderOptions & RenderInternalOptions): Promise<string> {
-  const {root, base, path, pages, title, preview} = options;
-  const sidebar = parseResult.data?.sidebar !== undefined ? Boolean(parseResult.data.sidebar) : options.sidebar;
-  const toc = mergeToc(parseResult.data?.toc, options.toc);
+export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
+  const {data, params} = page;
+  const {base, path, title, preview} = options;
+  const {loaders, resolvers = await getResolvers(page, options)} = options;
+  const {draft = false, sidebar = options.sidebar} = data;
+  const toc = mergeToc(data.toc, options.toc);
+  const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
+<html>
+<head>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="generator" content="Observable Framework v${process.env.npm_package_version}">
 ${
-  parseResult.title || title
-    ? html`<title>${[parseResult.title, parseResult.title === title ? null : title]
+  page.title || title
+    ? html`<title>${[page.title, page.title === title ? null : title]
         .filter((title): title is string => !!title)
         .join(" | ")}</title>\n`
     : ""
-}${await renderHead(parseResult, options, path, createImportResolver(root, "_import"))}${
+}${renderHead(page.head, resolvers)}${
     path === "/404"
       ? html.unsafe(`\n<script type="module">
 
@@ -84,23 +61,84 @@ if (location.pathname.endsWith("/")) {
   }
 <script type="module">${html.unsafe(`
 
-import ${preview || parseResult.cells.length > 0 ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
-    relativeUrl(path, "/_observablehq/client.js")
-  )};
-${
-  preview ? `\nopen({hash: ${JSON.stringify(parseResult.hash)}, eval: (body) => (0, eval)(body)});\n` : ""
-}${parseResult.cells.map((cell) => `\n${renderDefineCell(cell)}`).join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(title, pages, path)}` : ""}${
-    toc.show ? html`\n${renderToc(findHeaders(parseResult), toc.label)}` : ""
+import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
+    resolveImport("observablehq:client")
+  )};${
+    files.size
+      ? `\nimport {registerFile${data?.sql ? ", FileAttachment" : ""}} from ${JSON.stringify(
+          resolveImport("observablehq:stdlib")
+        )};`
+      : ""
+  }${data?.sql ? `\nimport {registerTable} from ${JSON.stringify(resolveImport("npm:@observablehq/duckdb"))};` : ""}${
+    files.size
+      ? `\n${registerFiles(
+          files,
+          resolveFile,
+          preview
+            ? (name) => loaders.getSourceInfo(resolvePath(path, name))
+            : (name) => loaders.getOutputInfo(resolvePath(path, name))
+        )}`
+      : ""
+  }${data?.sql ? `\n${registerTables(data.sql, options)}` : ""}
+${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
+    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, params, mode, resolveImport, resolveFile})}`)
+    .join("")}`)}
+</script>
+</head>
+<body>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}
+<div id="observablehq-center">${renderHeader(page.header, resolvers)}${
+    toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(options, parseResult.data)}
-<main id="observablehq-main" class="observablehq">
-${html.unsafe(parseResult.html)}</main>${renderFooter(path, options, parseResult.data)}
+<main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
+${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
 </div>
+</body>
+</html>
 `);
 }
 
-async function renderSidebar(title = "Home", pages: (Page | Section)[], path: string): Promise<Html> {
+function registerTables(sql: Record<string, string>, options: RenderOptions): string {
+  return Object.entries(sql)
+    .map(([name, source]) => registerTable(name, source, options))
+    .join("\n");
+}
+
+function registerTable(name: string, source: string, {path}: RenderOptions): string {
+  return `registerTable(${JSON.stringify(name)}, ${
+    isAssetPath(source)
+      ? `FileAttachment(${JSON.stringify(resolveRelativePath(path, source))})`
+      : JSON.stringify(source)
+  });`;
+}
+
+function registerFiles(
+  files: Iterable<string>,
+  resolve: (name: string) => string,
+  getInfo: (name: string) => FileInfo | undefined
+): string {
+  return Array.from(files)
+    .sort()
+    .map((f) => registerFile(f, resolve, getInfo))
+    .join("");
+}
+
+function registerFile(
+  name: string,
+  resolve: (name: string) => string,
+  getInfo: (name: string) => FileInfo | undefined
+): string {
+  const info = getInfo(name);
+  return `\nregisterFile(${JSON.stringify(name)}, ${JSON.stringify({
+    name,
+    mimeType: mime.getType(name) ?? undefined,
+    path: resolve(name),
+    lastModified: info?.mtimeMs,
+    size: info?.size
+  })});`;
+}
+
+async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink}: Resolvers): Promise<Html> {
+  const {home, pages, root, path, search} = options;
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -108,31 +146,38 @@ async function renderSidebar(title = "Home", pages: (Page | Section)[], path: st
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
-    }"><a href="${relativeUrl(path, "/")}">${title}</a></li>
-  </ol>
-  <ol>${pages.map((p, i) =>
-    "pages" in p
-      ? html`${i > 0 && "path" in pages[i - 1] ? html`</ol>` : ""}
-    <details${
-      p.pages.some((p) => normalizePath(p.path) === path)
-        ? html` open class="observablehq-section-active"`
-        : p.open
-        ? " open"
-        : ""
-    }>
-      <summary>${p.name}</summary>
-      <ol>${p.pages.map((p) => renderListItem(p, path))}
-      </ol>
-    </details>`
-      : "path" in p
-      ? html`${i > 0 && "pages" in pages[i - 1] ? html`\n  </ol>\n  <ol>` : ""}${renderListItem(p, path)}`
+    }"><a href="${encodeURI(resolveLink("/"))}">${html.unsafe(home)}</a></li>
+  </ol>${
+    search
+      ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
+  <div id="observablehq-search-results"></div>
+  <script>{${html.unsafe(
+    (await rollupClient(getClientPath("search-init.js"), root, path, {resolveImport, minify: true})).trim()
+  )}}</script>`
       : ""
+  }${pages.map((p, i) =>
+    "pages" in p
+      ? html`\n  <${p.collapsible ? (p.open || isSectionActive(p, path) ? "details open" : "details") : "section"}${
+          isSectionActive(p, path) ? html` class="observablehq-section-active"` : ""
+        }>
+    ${renderSectionHeader(p, path, resolveLink)}
+    <ol>${p.pages.map((p) => renderListItem(p, path, resolveLink))}
+    </ol>
+  </${p.collapsible ? "details" : "section"}>`
+      : "pages" in p
+      ? ""
+      : html`${i === 0 || "pages" in pages[i - 1] ? html`\n  <ol>` : ""}${renderListItem(p, path, resolveLink)}${
+          i === pages.length - 1 || "pages" in pages[i + 1] ? html`\n  </ol>` : ""
+        }`
   )}
-  </ol>
 </nav>
 <script>{${html.unsafe(
-    (await rollupClient(getClientPath("./src/client/sidebar-init.ts"), {minify: true})).trim()
+    (await rollupClient(getClientPath("sidebar-init.js"), root, path, {resolveImport, minify: true})).trim()
   )}}</script>`;
+}
+
+function isSectionActive(s: Section<Page>, path: string): boolean {
+  return s.pages.some((p) => normalizePath(p.path) === path) || (s.path !== null && normalizePath(s.path) === path);
 }
 
 interface Header {
@@ -140,18 +185,16 @@ interface Header {
   href: string;
 }
 
-const tocSelector = ["h1:not(:first-of-type)", "h2:not(h1 + h2):has(a.observablehq-header-anchor)"];
+const tocSelector = "h1:not(:first-of-type)[id], h2:first-child[id], :not(h1) + h2[id]";
 
-function findHeaders(parseResult: ParseResult): Header[] {
-  return Array.from(parseHTML(parseResult.html).document.querySelectorAll(tocSelector.join(", ")))
-    .map((node) => ({label: node.textContent, href: node.firstElementChild?.getAttribute("href")}))
-    .filter((d): d is Header => !!d.label && !!d.href);
+function findHeaders(page: MarkdownPage): Header[] {
+  return Array.from(parseHtml(page.body).document.querySelectorAll(tocSelector))
+    .map((node) => ({label: node.textContent, href: `#${node.id}`}))
+    .filter((d): d is Header => !!d.label);
 }
 
 function renderToc(headers: Header[], label: string): Html {
-  return html`<aside id="observablehq-toc" data-selector="${tocSelector
-    .map((selector) => `#observablehq-main ${selector}`)
-    .join(", ")}">
+  return html`<aside id="observablehq-toc" data-selector="${tocSelector}">
 <nav>${
     headers.length > 0
       ? html`
@@ -166,60 +209,38 @@ function renderToc(headers: Header[], label: string): Html {
 </aside>`;
 }
 
-function renderListItem(p: Page, path: string): Html {
+function renderSectionHeader(section: Section<Page>, path: string, resolveLink: (href: string) => string): Html {
+  if (section.path === null) return html`<summary>${section.name}</summary>`;
+  const external = !isAssetPath(section.path);
+  return html`<summary class="observablehq-link${
+    normalizePath(section.path) === path ? " observablehq-link-active" : ""
+  }"><a href="${encodeURI(resolveLink(section.path))}"${external ? html` target="_blank"` : null}>${
+    external ? html`<span>${section.name}</span>` : section.name
+  }</a></summary>`;
+}
+
+function renderListItem(page: Page, path: string, resolveLink: (href: string) => string): Html {
+  const external = !isAssetPath(page.path);
   return html`\n    <li class="observablehq-link${
-    normalizePath(p.path) === path ? " observablehq-link-active" : ""
-  }"><a href="${relativeUrl(path, prettyPath(p.path))}">${p.name}</a></li>`;
+    normalizePath(page.path) === path ? " observablehq-link-active" : ""
+  }"><a href="${encodeURI(resolveLink(page.path))}"${external ? html` target="_blank"` : null}>${
+    external ? html`<span>${page.name}</span>` : page.name
+  }</a></li>`;
 }
 
-function prettyPath(path: string): string {
-  return path.replace(/\/index$/, "/") || "/";
-}
-
-async function renderHead(
-  parseResult: ParseResult,
-  options: Pick<Config, "scripts" | "style" | "head">,
-  path: string,
-  resolver: ImportResolver
-): Promise<Html> {
-  const scripts = options.scripts;
-  const head = parseResult.data?.head !== undefined ? parseResult.data.head : options.head;
-  const stylesheets = new Set<string>(["https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"]); // prettier-ignore
-  const style = getPreviewStylesheet(path, parseResult.data, options.style);
-  if (style) stylesheets.add(style);
-  const specifiers = new Set<string>(["npm:@observablehq/runtime", "npm:@observablehq/stdlib"]);
-  for (const {name} of parseResult.imports) specifiers.add(name);
-  const inputs = new Set(parseResult.cells.flatMap((cell) => cell.inputs ?? []));
-  addImplicitSpecifiers(specifiers, inputs);
-  await addImplicitStylesheets(stylesheets, specifiers);
-  const preloads = new Set<string>([relativeUrl(path, "/_observablehq/client.js")]);
-  for (const specifier of specifiers) preloads.add(await resolver(path, specifier));
-  await resolveModulePreloads(preloads);
-  return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
-    Array.from(stylesheets)
-      .sort()
-      .map((href) => resolveStylesheet(path, href))
-      .map(renderStylesheetPreload) // <link rel=preload as=style>
+function renderHead(head: MarkdownPage["head"], resolvers: Resolvers): Html {
+  const {stylesheets, staticImports, resolveImport, resolveStylesheet} = resolvers;
+  return html`${
+    hasGoogleFonts(stylesheets) ? html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>` : null
   }${
-    Array.from(stylesheets)
-      .sort()
-      .map((href) => resolveStylesheet(path, href))
-      .map(renderStylesheet) // <link rel=stylesheet>
+    Array.from(new Set(Array.from(stylesheets, resolveStylesheet)), renderStylesheetPreload) // <link rel=preload as=style>
   }${
-    Array.from(preloads).sort().map(renderModulePreload) // <link rel=modulepreload>
-  }${head ? html`\n${html.unsafe(head)}` : null}${html.unsafe(scripts.map((s) => renderScript(s, path)).join(""))}`;
-}
-
-export function resolveStylesheet(path: string, href: string): string {
-  return href.startsWith("observablehq:")
-    ? relativeUrl(path, `/_observablehq/${href.slice("observablehq:".length)}`)
-    : href;
-}
-
-function renderScript(script: Script, path: string): Html {
-  return html`\n<script${script.type ? html` type="${script.type}"` : null}${script.async ? html` async` : null} src="${
-    /^\w+:/.test(script.src) ? script.src : relativeUrl(path, `/_import/${script.src}`)
-  }"></script>`;
+    Array.from(new Set(Array.from(stylesheets, resolveStylesheet)), renderStylesheet) // <link rel=stylesheet>
+  }${
+    Array.from(new Set(Array.from(staticImports, resolveImport)), renderModulePreload) // <link rel=modulepreload>
+  }${
+    head ? html`\n${html.unsafe(rewriteHtml(head, resolvers))}` : null // arbitrary user content
+  }`;
 }
 
 function renderStylesheet(href: string): Html {
@@ -230,36 +251,62 @@ function renderStylesheetPreload(href: string): Html {
   return html`\n<link rel="preload" as="style" href="${href}"${/^\w+:/.test(href) ? " crossorigin" : ""}>`;
 }
 
-function renderModulePreload(href: string): Html {
-  const integrity: string | undefined = resolveModuleIntegrity(href);
-  return html`\n<link rel="modulepreload" href="${href}"${integrity ? html` integrity="${integrity}"` : ""}>`;
+function renderModulePreload(href: string): Html | null {
+  return isJavaScript(href) ? html`\n<link rel="modulepreload" href="${href}">` : null;
 }
 
-function renderHeader({header}: Pick<Config, "header">, data: ParseResult["data"]): Html | null {
-  if (data?.header !== undefined) header = data?.header;
-  return header ? html`\n<header id="observablehq-header">\n${html.unsafe(header)}\n</header>` : null;
+function renderHeader(header: MarkdownPage["header"], resolvers: HtmlResolvers): Html | null {
+  return header
+    ? html`\n<header id="observablehq-header">\n${html.unsafe(rewriteHtml(header, resolvers))}\n</header>`
+    : null;
 }
 
-function renderFooter(
-  path: string,
-  options: Pick<Config, "pages" | "pager" | "title" | "footer">,
-  data: ParseResult["data"]
-): Html | null {
-  let footer = options.footer;
-  if (data?.footer !== undefined) footer = data?.footer;
+function renderFooter(footer: MarkdownPage["footer"], resolvers: HtmlResolvers, options: RenderOptions): Html | null {
+  const {path} = options;
   const link = options.pager ? findLink(path, options) : null;
   return link || footer
-    ? html`\n<footer id="observablehq-footer">${link ? renderPager(path, link) : ""}${
-        footer ? html`\n<div>${html.unsafe(footer)}</div>` : ""
+    ? html`\n<footer id="observablehq-footer">${link ? renderPager(link, resolvers.resolveLink) : ""}${
+        footer ? html`\n<div>${html.unsafe(rewriteHtml(footer, resolvers))}</div>` : ""
       }
 </footer>`
     : null;
 }
 
-function renderPager(path: string, {prev, next}: PageLink): Html {
-  return html`\n<nav>${prev ? renderRel(path, prev, "prev") : ""}${next ? renderRel(path, next, "next") : ""}</nav>`;
+function renderPager({prev, next}: PageLink, resolveLink: (href: string) => string): Html {
+  return html`\n<nav>${prev ? renderRel(prev, "prev", resolveLink) : ""}${
+    next ? renderRel(next, "next", resolveLink) : ""
+  }</nav>`;
 }
 
-function renderRel(path: string, page: Page, rel: "prev" | "next"): Html {
-  return html`<a rel="${rel}" href="${relativeUrl(path, prettyPath(page.path))}"><span>${page.name}</span></a>`;
+function renderRel(page: Page, rel: "prev" | "next", resolveLink: (href: string) => string): Html {
+  return html`<a rel="${rel}" href="${encodeURI(resolveLink(page.path))}"><span>${page.name}</span></a>`;
+}
+
+function hasGoogleFonts(stylesheets: Set<string>): boolean {
+  for (const s of stylesheets) if (s.startsWith("https://fonts.googleapis.com/")) return true;
+  return false;
+}
+
+export type RenderModuleOptions = Omit<TranspileModuleOptions, "root" | "path" | "servePath" | "params">;
+
+export async function renderModule(
+  root: string,
+  path: string,
+  {resolveImport = getModuleResolver(root, path), ...options}: RenderModuleOptions = {}
+): Promise<string> {
+  const module = findModule(root, path);
+  if (!module) throw enoent(path);
+  const imports = new Set<string>();
+  const resolutions = new Set<string>();
+  for (const i of await getModuleStaticImports(root, path)) {
+    const r = await resolveImport(i);
+    if (!resolutions.has(r)) {
+      resolutions.add(r);
+      imports.add(i);
+    }
+  }
+  const input = Array.from(imports, (i) => `import ${JSON.stringify(i)};\n`)
+    .concat(`export * from ${JSON.stringify(path)};\n`)
+    .join("");
+  return await transpileModule(input, {root, path, servePath: path, params: module.params, resolveImport, ...options});
 }

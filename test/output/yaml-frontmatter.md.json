@@ -1,0 +1,14 @@
+{
+  "data": {
+    "title": "YAML",
+    "keywords": [
+      "one",
+      "two"
+    ],
+    "style": "custom.css"
+  },
+  "title": "YAML",
+  "style": "./custom.css",
+  "code": [],
+  "path": "yaml-frontmatter.md"
+}

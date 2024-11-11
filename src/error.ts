@@ -17,6 +17,10 @@ export class HttpError extends Error {
   }
 }
 
+export function enoent(path: string): NodeJS.ErrnoException {
+  return Object.assign(new Error(`Not found: ${path}`), {code: "ENOENT"});
+}
+
 export function isEnoent(error: unknown): error is NodeJS.ErrnoException {
   return isSystemError(error) && error.code === "ENOENT";
 }
@@ -71,5 +75,19 @@ export class CliError extends Error {
     }
     assert.equal(error.exitCode, exitCode, `Expected exit code to be ${exitCode}, but got ${error.exitCode}`);
     assert.equal(error.print, print, `Expected print to be ${print}, but got ${error.print}`);
+  }
+
+  /** Use in tests to check if a thrown error is the error you expected. */
+  static match(
+    error: unknown,
+    {message, exitCode, print}: {message?: RegExp | string; exitCode?: number; print?: boolean} = {}
+  ): error is CliError {
+    if (!(error instanceof Error)) return false;
+    if (!(error instanceof CliError)) return false;
+    if (message !== undefined && typeof message === "string" && error.message !== message) return false;
+    if (message !== undefined && message instanceof RegExp && !message.test(error.message)) return false;
+    if (exitCode !== undefined && error.exitCode !== exitCode) return false;
+    if (print !== undefined && error.print !== print) return false;
+    return true;
   }
 }

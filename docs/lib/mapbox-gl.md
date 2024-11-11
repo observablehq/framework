@@ -1,3 +1,7 @@
+---
+keywords: geojson, maps
+---
+
 # Mapbox GL JS
 
 [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides/) is a library for building web maps and web applications with Mapbox’s modern mapping technology. Mapbox GL JS is available by default as `mapboxgl` in Markdown, but you can import it explicitly like so:
@@ -30,6 +34,6 @@ invalidation.then(() => map.remove());
 const ACCESS_TOKEN = "pk.eyJ1Ijoib2JzZXJ2YWJsZWhxLWVuZy1hZG1pbiIsImEiOiJjbHMxaTBwdDkwYnRsMmpxeG12M2kzdWFvIn0.Ga6eIWP2YNQrEW4FzHRcTQ";
 ```
 
-<div class="tip">You will need to create a <a href="https://account.mapbox.com/">Mapbox account</a> and obtain an API access token for your project. Replace <code>ACCESS_TOKEN</code> with your token above.</div>
+<div class="tip">You will need to create a <a href="https://account.mapbox.com/">Mapbox account</a> and obtain an API access token. Replace <code>ACCESS_TOKEN</code> with your token above.</div>
 
 For inspiration, see Mapbox’s [examples page](https://docs.mapbox.com/mapbox-gl-js/example/).

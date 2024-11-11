@@ -1,0 +1,2 @@
+# Ask git to not change line endings (to preserve content hashes).
+* -text

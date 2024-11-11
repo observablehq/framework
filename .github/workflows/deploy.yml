@@ -4,6 +4,8 @@ on:
   workflow_dispatch: {}
   push:
     branches: [main]
+  schedule:
+    - cron: "15 10 * * *"
 
 jobs:
   deploy:
@@ -19,57 +21,16 @@ jobs:
         with:
           node-version: 20
           cache: 'yarn'
-          cache-dependency-path: |
-            yarn.lock
-            'examples/*/yarn.lock'
       - run: yarn --frozen-lockfile
-      - run: yarn build
-      - name: Build example "api"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/api
-      - name: Build example "chess"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/chess
-      - name: Build example "eia"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/eia
-        env:
-          EIA_KEY: ${{ secrets.EIA_KEY }}
-      - name: Build example "google-analytics"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/google-analytics
-        env:
-          GA_PROPERTY_ID: ${{ vars.GA_PROPERTY_ID }}
-          GA_CLIENT_EMAIL: ${{ secrets.GA_CLIENT_EMAIL }}
-          GA_PRIVATE_KEY: ${{ secrets.GA_PRIVATE_KEY }}
-      - name: Build example "hello-world"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/hello-world
-      - name: Build example "mortgage-rates"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/mortgage-rates
-      - name: Build example "penguin-classification"
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          yarn --frozen-lockfile && yarn build
-        working-directory: examples/penguin-classification
-      - name: Build example "plot"
-        run: yarn --frozen-lockfile && yarn build
-        working-directory: examples/plot
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: mkdir dist/examples && for i in examples/*; do if [ -d $i/dist ]; then mv -v $i/dist dist/examples/$(basename $i); fi; done
-      - uses: cloudflare/pages-action@1
+      - id: date
+        run: echo "date=$(TZ=America/Los_Angeles date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+      - id: cache-data
+        uses: actions/cache@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: framework-pages
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-      # TODO: This doesn't include the examples. How can we fix that?
-      # TODO: Re-enable deploy to Observable
-      # - name: Deploy to Observable
-      #   run: yarn deploy -m "$(git log -1 --pretty=%s)"
-      #   env:
-      #     OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}
+          path: docs/.observablehq/cache
+          key: data-${{ hashFiles('docs/data/*') }}-${{ steps.date.outputs.date }}
+      - run: yarn build
+      - run: yarn docs:build
+      - run: yarn docs:deploy
+        env:
+          OBSERVABLE_TOKEN: ${{ secrets.OBSERVABLE_API_TOKEN }}

@@ -1,12 +1,12 @@
-# XLSX
+# Microsoft Excel (XLSX)
 
-[`FileAttachment`](../javascript/files) supports the [Microsoft Excel Open XML format](https://en.wikipedia.org/wiki/Office_Open_XML) via the `file.xlsx` method. This is implemented using the MIT-licensed [ExcelJS](https://github.com/exceljs/exceljs) library.
+[`FileAttachment`](../files) supports the [Microsoft Excel Open XML format](https://en.wikipedia.org/wiki/Office_Open_XML) via the `file.xlsx` method. This is implemented using the MIT-licensed [ExcelJS](https://github.com/exceljs/exceljs) library.
 
 ```js echo
 const workbook = FileAttachment("laser-report.xlsx").xlsx();
 ```
 
-This returns a [promise](../javascript/promises) to a `Workbook` instance.
+This returns a [promise](../reactivity#promises) to a `Workbook` instance.
 
 ```js echo
 workbook
@@ -32,7 +32,7 @@ reports
 
 Each object represents a row, and each object property represents a cell value. Values may be represented as numbers, strings, booleans, Date objects, or [other values](https://github.com/exceljs/exceljs/blob/master/README.md#value-types). Row numbers are also exposed as a non-enumerable `#` property to assist with recognition and range specification.
 
-We can display these objects using [`Inputs.table`](./inputs#table):
+We can display these objects using [`Inputs.table`](../inputs/table):
 
 ```js echo
 Inputs.table(reports)
@@ -60,6 +60,6 @@ Some additional details on values: dates are interpreted as UTC; formula results
 
 If you’d prefer to use [ExcelJS](https://github.com/exceljs/exceljs) directly, you can import it like so:
 
-```js echo
+```js run=false
 import Excel from "npm:exceljs";
 ```

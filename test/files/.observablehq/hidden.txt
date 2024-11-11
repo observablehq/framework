@@ -1,0 +1,1 @@
+This file shouldn’t be found by visitFiles.

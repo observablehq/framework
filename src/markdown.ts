@@ -1,80 +1,62 @@
+/* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
-import {readFile} from "node:fs/promises";
-import {type Patch, type PatchItem, getPatch} from "fast-array-diff";
-import equal from "fast-deep-equal";
-import matter from "gray-matter";
-import hljs from "highlight.js";
-import {parseHTML} from "linkedom";
+import slugify from "@sindresorhus/slugify";
+import he from "he";
 import MarkdownIt from "markdown-it";
-import {type RuleCore} from "markdown-it/lib/parser_core.js";
-import {type RuleInline} from "markdown-it/lib/parser_inline.js";
-import {type RenderRule, type default as Renderer} from "markdown-it/lib/renderer.js";
+import type {RuleCore} from "markdown-it/lib/parser_core.mjs";
+import type {RuleInline} from "markdown-it/lib/parser_inline.mjs";
+import type {RenderRule} from "markdown-it/lib/renderer.mjs";
+import type Token from "markdown-it/lib/token.mjs";
 import MarkdownItAnchor from "markdown-it-anchor";
-import {isEnoent} from "./error.js";
-import {fileReference, getLocalPath} from "./files.js";
-import {computeHash} from "./hash.js";
+import type {Config} from "./config.js";
+import {mergeStyle} from "./config.js";
+import type {FrontMatter} from "./frontMatter.js";
+import {readFrontMatter} from "./frontMatter.js";
+import {html, rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
-import type {FileReference, ImportReference, PendingTranspile, Transpile} from "./javascript.js";
-import {transpileJavaScript} from "./javascript.js";
+import {transformJavaScriptSync} from "./javascript/module.js";
+import type {JavaScriptNode} from "./javascript/parse.js";
+import {parseJavaScript} from "./javascript/parse.js";
+import {isAssetPath, relativePath} from "./path.js";
+import {parsePlaceholder} from "./placeholder.js";
+import type {Params} from "./route.js";
+import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
-import {resolvePath} from "./url.js";
+import {InvalidThemeError} from "./theme.js";
+import {red} from "./tty.js";
 
-export interface HtmlPiece {
-  type: "html";
+export interface MarkdownCode {
   id: string;
-  html: string;
-  cellIds?: string[];
+  node: JavaScriptNode;
+  mode: "inline" | "block" | "jsx";
 }
 
-export interface CellPiece extends Transpile {
-  type: "cell";
-}
-
-export type ParsePiece = HtmlPiece | CellPiece;
-
-export interface ParseResult {
+export interface MarkdownPage {
   title: string | null;
-  html: string;
-  data: {[key: string]: any} | null;
-  files: FileReference[];
-  imports: ImportReference[];
-  pieces: HtmlPiece[];
-  cells: CellPiece[];
-  hash: string;
-}
-
-interface RenderPiece {
-  html: string;
-  code: PendingTranspile[];
+  head: string | null;
+  header: string | null;
+  body: string;
+  footer: string | null;
+  data: FrontMatter;
+  style: string | null;
+  code: MarkdownCode[];
+  path: string;
+  params?: Params;
 }
 
 interface ParseContext {
-  pieces: RenderPiece[];
-  files: FileReference[];
-  imports: ImportReference[];
+  code: MarkdownCode[];
   startLine: number;
   currentLine: number;
-}
-
-const ELEMENT_NODE = 1; // Node.ELEMENT_NODE
-const TEXT_NODE = 3; // Node.TEXT_NODE
-
-// Returns true if the given document contains exactly one top-level element,
-// ignoring any surrounding whitespace text nodes.
-function isSingleElement(document: Document): boolean {
-  let {firstChild: first, lastChild: last} = document;
-  while (first?.nodeType === TEXT_NODE && !first?.textContent?.trim()) first = first.nextSibling;
-  while (last?.nodeType === TEXT_NODE && !last?.textContent?.trim()) last = last.previousSibling;
-  return first !== null && first === last && first.nodeType === ELEMENT_NODE;
+  path: string;
+  params?: Params;
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
-  const hash = computeHash(content).slice(0, 8);
+  const hash = createHash("sha256").update(content).digest("hex").slice(0, 8);
   let id = hash;
   let count = 1;
-  while (context.pieces.some((piece) => piece.code.some((code) => code.id === id))) {
-    id = `${hash}-${count++}`;
-  }
+  while (context.code.some((code) => code.id === id)) id = `${hash}-${count++}`;
   return id;
 }
 
@@ -82,15 +64,27 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
-function getLiveSource(content: string, tag: string): string | undefined {
+function transpileJavaScript(content: string, tag: "ts" | "jsx" | "tsx"): string {
+  try {
+    return transformJavaScriptSync(content, tag);
+  } catch (error: any) {
+    throw new SyntaxError(error.message);
+  }
+}
+
+function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
+    : tag === "ts" || tag === "jsx" || tag === "tsx"
+    ? transpileJavaScript(content, tag)
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"
-    ? transpileTag(content, "html", true)
+    ? transpileTag(content, "html.fragment", true)
+    : tag === "sql"
+    ? transpileSql(content, attributes)
     : tag === "svg"
-    ? transpileTag(content, "svg", true)
+    ? transpileTag(content, "svg.fragment", true)
     : tag === "dot"
     ? transpileTag(content, "dot", false)
     : tag === "mermaid"
@@ -98,185 +92,113 @@ function getLiveSource(content: string, tag: string): string | undefined {
     : undefined;
 }
 
-function makeFenceRenderer(root: string, baseRenderer: RenderRule, sourcePath: string): RenderRule {
+// TODO sourceLine and remap syntax error position; consider showing a code
+// snippet along with the error. Also, consider whether we want to show the
+// file name here.
+//
+// const message = error.message;
+// if (verbose) {
+//   let warning = error.message;
+//   const match = /^(.+)\s\((\d+):(\d+)\)$/.exec(message);
+//   if (match) {
+//     const line = +match[2] + (options?.sourceLine ?? 0);
+//     const column = +match[3] + 1;
+//     warning = `${match[1]} at line ${line}, column ${column}`;
+//   } else if (options?.sourceLine) {
+//     warning = `${message} at line ${options.sourceLine + 1}`;
+//   }
+//   console.error(red(`${error.name}: ${warning}`));
+// }
+
+function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
+    const {path, params} = context;
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
-    let result = "";
-    let count = 0;
-    const source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag);
-    if (source != null) {
-      const id = uniqueCodeId(context, token.content);
-      const sourceLine = context.startLine + context.currentLine;
-      const transpile = transpileJavaScript(source, {
-        id,
-        root,
-        sourcePath,
-        sourceLine
-      });
-      extendPiece(context, {code: [transpile]});
-      if (transpile.files) context.files.push(...transpile.files);
-      if (transpile.imports) context.imports.push(...transpile.imports);
-      result += `<div id="cell-${id}" class="observablehq observablehq--block${
-        transpile.expression ? " observablehq--loading" : ""
-      }"></div>\n`;
-      count++;
+    let html = "";
+    let source: string | undefined;
+    try {
+      source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag, attributes);
+      if (source != null) {
+        const id = uniqueCodeId(context, source);
+        // TODO const sourceLine = context.startLine + context.currentLine;
+        const node = parseJavaScript(source, {path, params});
+        context.code.push({id, node, mode: tag === "jsx" || tag === "tsx" ? "jsx" : "block"});
+        html += `<div class="observablehq observablehq--block">${
+          node.expression ? "<observablehq-loading></observablehq-loading>" : ""
+        }<!--:${id}:--></div>\n`;
+      }
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      html += `<div class="observablehq observablehq--block">
+  <div class="observablehq--inspect observablehq--error">SyntaxError: ${he.escape(error.message)}</div>
+</div>\n`;
     }
     if (attributes.echo == null ? source == null : !isFalse(attributes.echo)) {
-      result += baseRenderer(tokens, idx, options, context, self);
-      count++;
+      html += baseRenderer(tokens, idx, options, context, self);
     }
-    // Tokens should always be rendered as a single block element.
-    if (count > 1) result = "<div>" + result + "</div>";
-    return result;
+    return html;
   };
 }
 
 const CODE_DOLLAR = 36;
 const CODE_BRACEL = 123;
-const CODE_BRACER = 125;
-const CODE_BACKSLASH = 92;
-const CODE_QUOTE = 34;
-const CODE_SINGLE_QUOTE = 39;
-const CODE_BACKTICK = 96;
-
-function parsePlaceholder(content: string, replacer: (i: number, j: number) => void) {
-  let afterDollar = false;
-  for (let j = 0, n = content.length; j < n; ++j) {
-    const cj = content.charCodeAt(j);
-    if (cj === CODE_BACKSLASH) {
-      ++j; // skip next character
-      continue;
-    }
-    if (cj === CODE_DOLLAR) {
-      afterDollar = true;
-      continue;
-    }
-    if (afterDollar) {
-      if (cj === CODE_BRACEL) {
-        let quote = 0; // TODO detect comments, too
-        let braces = 0;
-        let k = j + 1;
-        inner: for (; k < n; ++k) {
-          const ck = content.charCodeAt(k);
-          if (ck === CODE_BACKSLASH) {
-            ++k;
-            continue;
-          }
-          if (quote) {
-            if (ck === quote) quote = 0;
-            continue;
-          }
-          switch (ck) {
-            case CODE_QUOTE:
-            case CODE_SINGLE_QUOTE:
-            case CODE_BACKTICK:
-              quote = ck;
-              break;
-            case CODE_BRACEL:
-              ++braces;
-              break;
-            case CODE_BRACER:
-              if (--braces < 0) {
-                replacer(j - 1, k + 1);
-                break inner;
-              }
-              break;
-          }
-        }
-        j = k;
-      }
-      afterDollar = false;
-    }
-  }
-}
-
-function transformPlaceholderBlock(token) {
-  const input = token.content;
-  if (/^\s*<script(\s|>)/.test(input)) return [token]; // ignore <script> elements
-  const output: any[] = [];
-  let i = 0;
-  parsePlaceholder(input, (j, k) => {
-    output.push({...token, level: i > 0 ? token.level + 1 : token.level, content: input.slice(i, j)});
-    output.push({type: "placeholder", level: token.level + 1, content: input.slice(j + 2, k - 1)});
-    i = k;
-  });
-  if (i === 0) return [token];
-  else if (i < input.length) output.push({...token, content: input.slice(i), nesting: -1});
-  return output;
-}
 
 const transformPlaceholderInline: RuleInline = (state, silent) => {
   if (silent || state.pos + 2 > state.posMax) return false;
   const marker1 = state.src.charCodeAt(state.pos);
   const marker2 = state.src.charCodeAt(state.pos + 1);
-  if (!(marker1 === CODE_DOLLAR && marker2 === CODE_BRACEL)) return false;
-  let quote = 0;
-  let braces = 0;
-  for (let pos = state.pos + 2; pos < state.posMax; ++pos) {
-    const code = state.src.charCodeAt(pos);
-    if (code === CODE_BACKSLASH) {
-      ++pos; // skip next character
-      continue;
-    }
-    if (quote) {
-      if (code === quote) quote = 0;
-      continue;
-    }
-    switch (code) {
-      case CODE_QUOTE:
-      case CODE_SINGLE_QUOTE:
-      case CODE_BACKTICK:
-        quote = code;
-        break;
-      case CODE_BRACEL:
-        ++braces;
-        break;
-      case CODE_BRACER:
-        if (--braces < 0) {
-          const token = state.push("placeholder", "", 0);
-          token.content = state.src.slice(state.pos + 2, pos);
-          state.pos = pos + 1;
-          return true;
-        }
-        break;
-    }
+  if (marker1 !== CODE_DOLLAR || marker2 !== CODE_BRACEL) return false;
+  for (const {type, content, pos} of parsePlaceholder(state.src, state.pos, state.posMax)) {
+    if (type !== "placeholder") break;
+    const token = state.push(type, "", 0);
+    token.content = content;
+    state.pos = pos;
+    return true;
   }
   return false;
 };
 
 const transformPlaceholderCore: RuleCore = (state) => {
-  const input = state.tokens;
-  const output: any[] = [];
-  for (const token of input) {
-    switch (token.type) {
-      case "html_block":
-        output.push(...transformPlaceholderBlock(token));
-        break;
-      default:
-        output.push(token);
-        break;
+  const {tokens} = state;
+  for (let i = 0, n = tokens.length; i < n; ++i) {
+    const token = tokens[i];
+    if (token.type === "html_block") {
+      const children: Token[] = [];
+      for (const {type, content} of parsePlaceholder(token.content)) {
+        const child = new state.Token(type, "", 0);
+        child.content = content;
+        children.push(child);
+      }
+      if (children.length === 1 && children[0].type === "html_block") {
+        tokens[i].content = children[0].content;
+      } else {
+        const inline = new state.Token("inline", "", 0);
+        inline.children = children;
+        tokens[i] = inline;
+      }
     }
   }
-  state.tokens = output;
 };
 
-function makePlaceholderRenderer(root: string, sourcePath: string): RenderRule {
+function makePlaceholderRenderer(): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
-    const id = uniqueCodeId(context, tokens[idx].content);
+    const {path, params} = context;
     const token = tokens[idx];
-    const transpile = transpileJavaScript(token.content, {
-      id,
-      root,
-      sourcePath,
-      inline: true,
-      sourceLine: context.startLine + context.currentLine
-    });
-    extendPiece(context, {code: [transpile]});
-    if (transpile.files) context.files.push(...transpile.files);
-    if (transpile.imports) context.imports.push(...transpile.imports);
-    return `<span id="cell-${id}" class="observablehq--loading"></span>`;
+    const id = uniqueCodeId(context, token.content);
+    try {
+      // TODO sourceLine: context.startLine + context.currentLine
+      // TODO allow TypeScript?
+      const node = parseJavaScript(token.content, {path, params, inline: true});
+      context.code.push({id, node, mode: "inline"});
+      return `<observablehq-loading></observablehq-loading><!--:${id}:-->`;
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      return `<span class="observablehq--inspect observablehq--error" style="display: block;">SyntaxError: ${he.escape(
+        error.message
+      )}</span>`;
+    }
   };
 }
 
@@ -287,191 +209,125 @@ function makeSoftbreakRenderer(baseRenderer: RenderRule): RenderRule {
   };
 }
 
-function extendPiece(context: ParseContext, extend: Partial<RenderPiece>) {
-  if (context.pieces.length === 0) context.pieces.push({html: "", code: []});
-  const last = context.pieces[context.pieces.length - 1];
-  context.pieces[context.pieces.length - 1] = {
-    html: last.html + (extend.html ?? ""),
-    code: [...last.code, ...(extend.code ? extend.code : [])]
-  };
-}
-
-function renderIntoPieces(renderer: Renderer, root: string, sourcePath: string): Renderer["render"] {
-  return (tokens, options, context: ParseContext) => {
-    const rules = renderer.rules;
-    for (let i = 0, len = tokens.length; i < len; i++) {
-      const type = tokens[i].type;
-      if (tokens[i].map) context.currentLine = tokens[i].map![0];
-      let html = "";
-      if (type === "inline") {
-        html = renderer.renderInline(tokens[i].children!, options, context);
-      } else if (typeof rules[type] !== "undefined") {
-        if (tokens[i].level === 0 && tokens[i].nesting !== -1) context.pieces.push({html: "", code: []});
-        html = rules[type]!(tokens, i, options, context, renderer);
-      } else {
-        if (tokens[i].level === 0 && tokens[i].nesting !== -1) context.pieces.push({html: "", code: []});
-        html = renderer.renderToken(tokens, i, options);
-      }
-      extendPiece(context, {html});
-    }
-    let result = "";
-    for (const piece of context.pieces) {
-      result += piece.html = normalizePieceHtml(piece.html, sourcePath, context);
-    }
-    return result;
-  };
-}
-
-const SUPPORTED_PROPERTIES: readonly {query: string; src: "href" | "src" | "srcset"}[] = Object.freeze([
-  {query: "a[href][download]", src: "href"},
-  {query: "audio[src]", src: "src"},
-  {query: "audio source[src]", src: "src"},
-  {query: "img[src]", src: "src"},
-  {query: "img[srcset]", src: "srcset"},
-  {query: "link[href]", src: "href"},
-  {query: "picture source[srcset]", src: "srcset"},
-  {query: "video[src]", src: "src"},
-  {query: "video source[src]", src: "src"}
-]);
-
-export function normalizePieceHtml(html: string, sourcePath: string, context: ParseContext): string {
-  const {document} = parseHTML(html);
-
-  // Extracting references to files (such as from linked stylesheets).
-  const filePaths = new Set<FileReference["path"]>();
-  const resolvePath = (source: string): FileReference | undefined => {
-    const path = getLocalPath(sourcePath, source);
-    if (!path) return;
-    const file = fileReference(path, sourcePath);
-    if (!filePaths.has(file.path)) {
-      filePaths.add(file.path);
-      context.files.push(file);
-    }
-    return file;
-  };
-  for (const {query, src} of SUPPORTED_PROPERTIES) {
-    for (const element of document.querySelectorAll(query)) {
-      if (src === "srcset") {
-        const srcset = element.getAttribute(src)!;
-        const paths = srcset
-          .split(",")
-          .map((p) => {
-            const parts = p.trim().split(/\s+/);
-            const source = decodeURIComponent(parts[0]);
-            const file = resolvePath(source);
-            return file ? `${file.path} ${parts.slice(1).join(" ")}`.trim() : parts.join(" ");
-          })
-          .filter((p) => !!p);
-        if (paths && paths.length > 0) element.setAttribute(src, paths.join(", "));
-      } else {
-        const source = decodeURIComponent(element.getAttribute(src)!);
-        const file = resolvePath(source);
-        if (file) element.setAttribute(src, file.path);
-      }
-    }
-  }
-
-  // Syntax highlighting for <code> elements. The code could contain an inline
-  // expression within, or other HTML, but we only highlight text nodes that are
-  // direct children of code elements.
-  for (const code of document.querySelectorAll("code[class*='language-']")) {
-    const language = [...code.classList].find((c) => c.startsWith("language-"))?.slice("language-".length);
-    if (!language) continue;
-    if (code.parentElement?.tagName === "PRE") code.parentElement.setAttribute("data-language", language);
-    if (!hljs.getLanguage(language)) continue;
-    let html = "";
-    code.normalize(); // coalesce adjacent text nodes
-    for (const child of code.childNodes) {
-      html += child.nodeType === TEXT_NODE ? hljs.highlight(child.textContent!, {language}).value : String(child);
-    }
-    code.innerHTML = html;
-  }
-
-  // Ensure that the HTML for each piece generates exactly one top-level
-  // element. This is necessary for incremental update, and ensures that our
-  // parsing of the Markdown is consistent with the resulting HTML structure.
-  return isSingleElement(document) ? String(document) : `<span>${document}</span>`;
-}
-
-function toParsePieces(pieces: RenderPiece[]): HtmlPiece[] {
-  return pieces.map((piece) => ({
-    type: "html",
-    id: "",
-    cellIds: piece.code.map((code) => `${code.id}`),
-    html: piece.html
-  }));
-}
-
-async function toParseCells(pieces: RenderPiece[]): Promise<CellPiece[]> {
-  const cellPieces: CellPiece[] = [];
-  for (const piece of pieces) {
-    for (const {body, ...rest} of piece.code) {
-      cellPieces.push({type: "cell", ...rest, body: await body()});
-    }
-  }
-  return cellPieces;
-}
-
 export interface ParseOptions {
-  root: string;
+  md: MarkdownIt;
   path: string;
+  style?: Config["style"];
+  scripts?: Config["scripts"];
+  head?: Config["head"];
+  header?: Config["header"];
+  footer?: Config["footer"];
+  source?: string;
+  params?: Params;
 }
 
-export async function parseMarkdown(sourcePath: string, {root, path}: ParseOptions): Promise<ParseResult> {
-  const source = await readFile(sourcePath, "utf-8");
-  const parts = matter(source, {});
-  const md = MarkdownIt({html: true});
-  md.use(MarkdownItAnchor, {permalink: MarkdownItAnchor.permalink.headerLink({class: "observablehq-header-anchor"})});
+export function createMarkdownIt({
+  markdownIt,
+  linkify = true,
+  quotes = "“”‘’",
+  typographer = false
+}: {
+  markdownIt?: (md: MarkdownIt) => MarkdownIt;
+  linkify?: boolean;
+  quotes?: string | string[];
+  typographer?: boolean;
+} = {}): MarkdownIt {
+  const md = MarkdownIt({html: true, linkify, typographer, quotes});
+  if (linkify) md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
+  md.use(MarkdownItAnchor, {slugify: (s) => slugify(s)});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
-  md.core.ruler.before("linkify", "placeholder", transformPlaceholderCore);
-  md.renderer.rules.placeholder = makePlaceholderRenderer(root, path);
-  md.renderer.rules.fence = makeFenceRenderer(root, md.renderer.rules.fence!, path);
+  md.core.ruler.after("inline", "placeholder", transformPlaceholderCore);
+  md.renderer.rules.placeholder = makePlaceholderRenderer();
+  md.renderer.rules.fence = makeFenceRenderer(md.renderer.rules.fence!);
   md.renderer.rules.softbreak = makeSoftbreakRenderer(md.renderer.rules.softbreak!);
-  md.renderer.render = renderIntoPieces(md.renderer, root, path);
-  const context: ParseContext = {files: [], imports: [], pieces: [], startLine: 0, currentLine: 0};
-  const tokens = md.parse(parts.content, context);
-  const html = md.renderer.render(tokens, md.options, context); // Note: mutates context.pieces, context.files!
+  return markdownIt === undefined ? md : markdownIt(md);
+}
+
+export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
+  const {md, path, source = path, params} = options;
+  const {content, data} = readFrontMatter(input);
+  const code: MarkdownCode[] = [];
+  const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params};
+  const tokens = md.parse(content, context);
+  const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
+  const title = data.title !== undefined ? data.title : findTitle(tokens);
   return {
-    html,
-    data: isEmpty(parts.data) ? null : parts.data,
-    title: parts.data?.title ?? findTitle(tokens) ?? null,
-    files: context.files,
-    imports: context.imports,
-    pieces: toParsePieces(context.pieces),
-    cells: await toParseCells(context.pieces),
-    hash: await computeMarkdownHash(source, root, path, context.imports)
+    head: getHead(title, data, options),
+    header: getHeader(title, data, options),
+    body,
+    footer: getFooter(title, data, options),
+    data,
+    title,
+    style: getStyle(data, options),
+    code,
+    path: source,
+    params
   };
 }
 
-async function computeMarkdownHash(
-  contents: string,
-  root: string,
-  path: string,
-  imports: ImportReference[]
-): Promise<string> {
-  const hash = createHash("sha256").update(contents);
-  // TODO can’t simply concatenate here; we need a delimiter
-  for (const i of imports) {
-    if (i.type === "local") {
-      try {
-        hash.update(await readFile(resolvePath(root, path, i.name), "utf-8"));
-      } catch (error) {
-        if (!isEnoent(error)) throw error;
-        continue;
-      }
-    }
-  }
-  return hash.digest("hex");
+/** Like parseMarkdown, but optimized to return only metadata. */
+export function parseMarkdownMetadata(input: string, options: ParseOptions): Pick<MarkdownPage, "data" | "title"> {
+  const {md, path} = options;
+  const {content, data} = readFrontMatter(input);
+  return {
+    data,
+    title:
+      data.title !== undefined
+        ? data.title
+        : findTitle(md.parse(content, {code: [], startLine: 0, currentLine: 0, path}))
+  };
 }
 
-// TODO Use gray-matter’s parts.isEmpty, but only when it’s accurate.
-function isEmpty(object) {
-  for (const key in object) return false;
-  return true;
+function getHead(title: string | null, data: FrontMatter, options: ParseOptions): string | null {
+  const {scripts, path} = options;
+  let head = getHtml("head", title, data, options);
+  if (scripts?.length) {
+    head ??= "";
+    for (const {type, async, src} of scripts) {
+      head += html`${head ? "\n" : ""}<script${type ? html` type="${type}"` : null}${
+        async ? html` async` : null
+      } src="${isAssetPath(src) ? relativePath(path, src) : src}"></script>`;
+    }
+  }
+  return head;
+}
+
+function getHeader(title: string | null, data: FrontMatter, options: ParseOptions): string | null {
+  return getHtml("header", title, data, options);
+}
+
+function getFooter(title: string | null, data: FrontMatter, options: ParseOptions): string | null {
+  return getHtml("footer", title, data, options);
+}
+
+function getHtml(
+  key: "head" | "header" | "footer",
+  title: string | null,
+  data: FrontMatter,
+  {path, [key]: defaultValue}: ParseOptions
+): string | null {
+  if (data[key] !== undefined) return data[key] != null ? String(data[key]) : null;
+  const value = typeof defaultValue === "function" ? defaultValue({title, data, path}) : defaultValue;
+  return value != null ? rewriteHtmlPaths(value, path) : null;
+}
+
+function getStyle(data: FrontMatter, {path, style = null}: ParseOptions): string | null {
+  try {
+    style = mergeStyle(path, data.style, data.theme, style);
+  } catch (error) {
+    if (!(error instanceof InvalidThemeError)) throw error;
+    console.error(red(String(error))); // TODO error during build
+    style = {theme: []};
+  }
+  return !style
+    ? null
+    : "path" in style
+    ? relativePath(path, style.path)
+    : `observablehq:theme-${style.theme.join(",")}.css`;
 }
 
 // TODO Make this smarter.
-function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined {
+function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | null {
   for (const [i, token] of tokens.entries()) {
     if (token.type === "heading_open" && token.tag === "h1") {
       const next = tokens[i + 1];
@@ -486,52 +342,5 @@ function findTitle(tokens: ReturnType<MarkdownIt["parse"]>): string | undefined 
       }
     }
   }
-}
-
-function diffReducer(patch: PatchItem<ParsePiece>) {
-  // Remove body from remove updates, we just need the ids.
-  if (patch.type === "remove") {
-    return {
-      ...patch,
-      type: "remove",
-      items: patch.items.map((item) => ({
-        type: item.type,
-        id: item.id,
-        ...("cellIds" in item ? {cellIds: item.cellIds} : null)
-      }))
-    } as const;
-  }
-  return patch;
-}
-
-// Cells are unordered
-function getCellsPatch(prevCells: CellPiece[], nextCells: CellPiece[]): Patch<ParsePiece> {
-  return prevCells
-    .filter((prev) => !nextCells.some((next) => equal(prev, next)))
-    .map(
-      (cell): PatchItem<ParsePiece> => ({
-        type: "remove",
-        oldPos: prevCells.indexOf(cell),
-        newPos: -1,
-        items: [cell]
-      })
-    )
-    .concat(
-      nextCells
-        .filter((next) => !prevCells.some((prev) => equal(next, prev)))
-        .map(
-          (cell): PatchItem<ParsePiece> => ({
-            type: "add",
-            oldPos: -1,
-            newPos: nextCells.indexOf(cell),
-            items: [cell]
-          })
-        )
-    );
-}
-
-export function diffMarkdown(oldParse: ParseResult, newParse: ParseResult) {
-  return getPatch<ParsePiece>(oldParse.pieces, newParse.pieces, equal)
-    .concat(getCellsPatch(oldParse.cells, newParse.cells))
-    .map(diffReducer);
+  return null;
 }

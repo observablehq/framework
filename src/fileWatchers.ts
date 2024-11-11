@@ -1,18 +1,18 @@
-import {type FSWatcher, existsSync, watch} from "node:fs";
-import {Loader} from "./dataloader.js";
+import type {FSWatcher} from "node:fs";
+import {watch} from "node:fs";
 import {isEnoent} from "./error.js";
 import {maybeStat} from "./files.js";
-import {resolvePath} from "./url.js";
+import type {LoaderResolver} from "./loader.js";
+import {resolvePath} from "./path.js";
 
 export class FileWatchers {
   private readonly watchers: FSWatcher[] = [];
 
-  static async of(root: string, path: string, names: string[], callback: (name: string) => void) {
+  static async of(loaders: LoaderResolver, path: string, names: Iterable<string>, callback: (name: string) => void) {
     const that = new FileWatchers();
     const {watchers} = that;
-    for (const name of new Set(names)) {
-      const exactPath = resolvePath(root, path, name);
-      const watchPath = existsSync(exactPath) ? exactPath : Loader.find(root, resolvePath(path, name))?.path;
+    for (const name of names) {
+      const watchPath = loaders.getWatchPath(resolvePath(path, name));
       if (!watchPath) continue;
       let currentStat = await maybeStat(watchPath);
       let watcher: FSWatcher;
@@ -26,7 +26,7 @@ export class FileWatchers {
               watcher = watchers[index] = watch(watchPath, watched);
             } catch (error) {
               if (!isEnoent(error)) throw error;
-              console.error(`file no longer exists: ${path}`);
+              console.error(`file no longer exists: ${watchPath}`);
               return;
             }
             setTimeout(() => watched("change"), 100); // delay to avoid a possibly-empty file

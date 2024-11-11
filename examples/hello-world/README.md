@@ -1,5 +1,7 @@
+[Framework examples →](../)
+
 # Hello, world!
 
-This is a minimal example Observable Framework project. It contains a single page in `docs/index.md`, with no configuration file.
+View live: <https://observablehq.observablehq.cloud/framework-example-hello-world/>
 
-View the [live project](https://observablehq.com/framework/examples/hello-world/).
+This is a minimal Observable Framework example. It contains a single page in [`src/index.md`](./src/index.md?plain=1) and almost no configuration.

@@ -1,22 +1,14 @@
 import chai, {assert, expect} from "chai";
 import chaiHttp from "chai-http";
-import {normalizeConfig} from "../../src/config.js";
 import {preview} from "../../src/preview.js";
 import type {PreviewOptions, PreviewServer} from "../../src/preview.js";
 import {mockJsDelivr} from "../mocks/jsdelivr.js";
 
 const testHostRoot = "test/preview/dashboard";
-const testHostName = process.env.TEST_HOSTNAME ?? "127.0.0.1";
-const testPort = +(process.env.TEST_PORT ?? 8080);
-
-const testServerOptions: PreviewOptions = {
-  config: await normalizeConfig({root: testHostRoot}),
-  hostname: testHostName,
-  port: testPort,
-  verbose: false
-};
-
+const testHostName = "127.0.0.1";
+const testPort = 3210; // avoid conflict with preview server
 const testServerUrl = `http://${testHostName}:${testPort}`;
+
 chai.use(chaiHttp);
 
 describe("preview server", () => {
@@ -25,6 +17,12 @@ describe("preview server", () => {
   mockJsDelivr();
 
   before(async () => {
+    const testServerOptions: PreviewOptions = {
+      root: testHostRoot,
+      hostname: testHostName,
+      port: testPort,
+      verbose: false
+    };
     testServer = (await preview(testServerOptions)).server;
   });
 
@@ -61,7 +59,7 @@ describe("preview server", () => {
   it("handles missing imports", async () => {
     const res = await chai.request(testServerUrl).get("/_import/idontexist.js");
     expect(res).to.have.status(404);
-    expect(res.text).to.have.string("404 page");
+    expect(res.text).to.have.string("File not found");
   });
 
   it("serves local files", async () => {
@@ -73,6 +71,6 @@ describe("preview server", () => {
   it("handles missing files", async () => {
     const res = await chai.request(testServerUrl).get("/_file/idontexist.csv");
     expect(res).to.have.status(404);
-    expect(res.text).to.have.string("404 page");
+    expect(res.text).to.have.string("File not found");
   });
 });

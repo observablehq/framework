@@ -1,3 +1,7 @@
+---
+keywords: geojson, maps
+---
+
 # Leaflet
 
 [Leaflet](https://leafletjs.com/) is an “open-source JavaScript library for mobile-friendly interactive maps.” Leaflet is available by default as `L` in Observable markdown. You can import it explicitly like so:
@@ -17,7 +21,9 @@ div.style = "height: 400px;";
 const map = L.map(div)
   .setView([51.505, -0.09], 13);
 
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png")
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+})
   .addTo(map);
 
 L.marker([51.5, -0.09])

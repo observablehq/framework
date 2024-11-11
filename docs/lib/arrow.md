@@ -2,13 +2,13 @@
 
 [Apache Arrow](https://arrow.apache.org/) “defines a language-independent columnar memory format for flat and hierarchical data, organized for efficient analytic operations.” You will probably not consume it directly, but it is used by [Arquero](./arquero), [DuckDB](./duckdb), and other libraries to handle data efficiently.
 
-To load an [Arrow IPC file](https://arrow.apache.org/docs/format/Columnar.html#format-ipc), use [`FileAttachment`](../javascript/files).
+To load an [Arrow IPC file](https://arrow.apache.org/docs/format/Columnar.html#format-ipc), use [`FileAttachment`](../files).
 
 ```js echo
 const flights = FileAttachment("flights-200k.arrow").arrow();
 ```
 
-This returns a [promise](../javascript/promises) to an [Arrow table](https://arrow.apache.org/docs/js/classes/Arrow_dom.Table.html).
+This returns a [promise](../reactivity#promises) to an [Arrow table](https://arrow.apache.org/docs/js/classes/Arrow_dom.Table.html).
 
 ```js echo
 flights
@@ -20,7 +20,7 @@ This table records ${flights.numRows.toLocaleString("en-US")} flights. It’s ea
 [...flights]
 ```
 
-Or using [`Inputs.table`](./inputs#table):
+Or using [`Inputs.table`](../inputs/table):
 
 ```js echo
 Inputs.table(flights)
@@ -60,6 +60,7 @@ Visualized with [Plot’s difference mark](https://observablehq.com/plot/marks/d
 
 ```js echo
 Plot.plot({
+  x: {type: "utc"},
   marks: [
     Plot.ruleY([0]),
     Plot.differenceY(table, {x: "date", y: "value"})
@@ -67,9 +68,15 @@ Plot.plot({
 })
 ```
 
+<div class="note">
+
+The chart above specifies _x_ as a UTC scale because Apache Arrow represents dates as numbers (milliseconds since [Unix epoch](<https://en.wikipedia.org/wiki/Epoch_(computing)>)) rather than Date objects; without this hint, Plot would assume that _date_ column is quantitative rather than temporal and produce a less legible axis.
+
+</div>
+
 ## Apache Parquet
 
-The [Apache Parquet](https://parquet.apache.org/) format is optimized for storage and transfer. To load a Parquet file — such as this sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) — use [`FileAttachment`](../javascript/files). This is implemented using Kyle Barron’s [parquet-wasm](https://kylebarron.dev/parquet-wasm/) library.
+The [Apache Parquet](https://parquet.apache.org/) format is optimized for storage and transfer. To load a Parquet file — such as this sample of 250,000 stars from the [Gaia Star Catalog](https://observablehq.com/@cmudig/peeking-into-the-gaia-star-catalog) — use [`FileAttachment`](../files). This is implemented using Kyle Barron’s [parquet-wasm](https://kylebarron.dev/parquet-wasm/) library.
 
 ```js echo
 const gaia = FileAttachment("gaia-sample.parquet").parquet();
@@ -85,7 +92,7 @@ gaia
 Inputs.table(gaia)
 ```
 
-We can [plot](../lib/plot) these stars binned by intervals of 2° to reveal the [Milky Way](https://en.wikipedia.org/wiki/Milky_Way).
+We can [plot](./plot) these stars binned by intervals of 2° to reveal the [Milky Way](https://en.wikipedia.org/wiki/Milky_Way).
 
 ```js echo
 Plot.plot({
@@ -97,4 +104,4 @@ Plot.plot({
 })
 ```
 
-Parquet files work especially well with [DuckDB](../lib/duckdb) for in-process SQL queries. The Parquet format is optimized for this use case: data is compressed in a columnar format, allowing DuckDB to load only the subset of data needed (via [range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)) to execute the current query. This can give a huge performance boost when working with larger datasets.
+Parquet files work especially well with [DuckDB](./duckdb) for in-process SQL queries. The Parquet format is optimized for this use case: data is compressed in a columnar format, allowing DuckDB to load only the subset of data needed (via [range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)) to execute the current query. This can give a huge performance boost when working with larger datasets.

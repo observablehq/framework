@@ -1,22 +1,29 @@
 <!DOCTYPE html>
+<html>
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="generator" content="Observable Framework v1.0.0-test">
 <title>Top</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.css">
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.css">
-<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" crossorigin>
-<link rel="modulepreload" href="./_import/foo/foo.js?sha=ddc538dfc10d83a59458d5893c89191ef3b2c9b1c02ef6da055423f37388ecf4">
-<link rel="modulepreload" href="./_observablehq/client.js">
-<link rel="modulepreload" href="./_observablehq/runtime.js">
-<link rel="modulepreload" href="./_observablehq/stdlib.js">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.00000004.css">
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.00000004.css">
+<link rel="modulepreload" href="./_observablehq/client.00000001.js">
+<link rel="modulepreload" href="./_observablehq/runtime.00000002.js">
+<link rel="modulepreload" href="./_observablehq/stdlib.00000003.js">
+<link rel="modulepreload" href="./_import/foo/foo.666599bc.js">
 <script type="module">
 
-import {define} from "./_observablehq/client.js";
+import {define} from "./_observablehq/client.00000001.js";
+import {registerFile} from "./_observablehq/stdlib.00000003.js";
 
-define({id: "47a695da", inputs: ["display"], outputs: ["fooJsonData","fooCsvData"], files: [{"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.json"},{"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.csv"}], body: async (display) => {
-const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.js?sha=ddc538dfc10d83a59458d5893c89191ef3b2c9b1c02ef6da055423f37388ecf4");
+registerFile("./foo/foo-data.csv", {"name":"./foo/foo-data.csv","mimeType":"text/csv","path":"./_file/foo/foo-data.24ef4634.csv","lastModified":/* ts */1706742000000,"size":72});
+registerFile("./foo/foo-data.json", {"name":"./foo/foo-data.json","mimeType":"application/json","path":"./_file/foo/foo-data.67358ed8.json","lastModified":/* ts */1706742000000,"size":10});
+
+define({id: "47a695da", inputs: ["display"], outputs: ["fooJsonData","fooCsvData"], body: async (display) => {
+const {fooJsonData, fooCsvData} = await import("./_import/foo/foo.666599bc.js");
 
 display(fooJsonData);
 display(fooCsvData);
@@ -24,6 +31,8 @@ return {fooJsonData,fooCsvData};
 }});
 
 </script>
+</head>
+<body>
 <input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -37,17 +46,19 @@ return {fooJsonData,fooCsvData};
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
-<aside id="observablehq-toc" data-selector="#observablehq-main h1:not(:first-of-type), #observablehq-main h2:not(h1 + h2):has(a.observablehq-header-anchor)">
+<div id="observablehq-center">
+<aside id="observablehq-toc" data-selector="h1:not(:first-of-type)[id], h2:first-child[id], :not(h1) + h2[id]">
 <nav>
 </nav>
 </aside>
-<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="top" tabindex="-1"><a class="observablehq-header-anchor" href="#top">Top</a></h1>
-<div id="cell-47a695da" class="observablehq observablehq--block"></div>
+<div class="observablehq observablehq--block"><!--:47a695da:--></div>
 </main>
 <footer id="observablehq-footer">
-<nav><a rel="prev" href="./"><span>Home</span></a><a rel="next" href="./top"><span>Top</span></a></nav>
-<div>Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
+<nav><a rel="next" href="./top"><span>Top</span></a></nav>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
 </footer>
 </div>
+</body>
+</html>

@@ -1,21 +1,22 @@
 import os from "node:os";
-import * as clack from "@clack/prompts";
 import type {ClackEffects} from "./clack.js";
 import {commandInstruction, commandRequiresAuthenticationMessage} from "./commandInstruction.js";
 import {CliError, isHttpError} from "./error.js";
 import type {GetCurrentUserResponse, PostAuthRequestPollResponse} from "./observableApiClient.js";
 import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
-import type {ConfigEffects} from "./observableApiConfig.js";
+import type {ApiKey, ConfigEffects} from "./observableApiConfig.js";
 import {
-  type ApiKey,
   defaultEffects as defaultConfigEffects,
   getObservableApiKey,
   setObservableApiKey
 } from "./observableApiConfig.js";
+import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
-import {bold, defaultEffects as defaultTtyEffects, inverse, link, yellow} from "./tty.js";
+import {bold, defaultEffects as defaultTtyEffects, faint, inverse, link, yellow} from "./tty.js";
 
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
+
+export const VALID_TIERS = new Set(["starter_2024", "pro_2024", "enterprise_2024"]);
 
 /** Actions this command needs to take wrt its environment that may need mocked out. */
 export interface AuthEffects extends ConfigEffects, TtyEffects {
@@ -28,19 +29,20 @@ export interface AuthEffects extends ConfigEffects, TtyEffects {
 export const defaultEffects: AuthEffects = {
   ...defaultConfigEffects,
   ...defaultTtyEffects,
-  clack,
   getObservableApiKey,
   setObservableApiKey,
   exitSuccess: () => process.exit(0)
 };
 
-export async function login(effects: AuthEffects = defaultEffects) {
-  effects.clack.intro(inverse(" observable login "));
+export async function login(effects: AuthEffects = defaultEffects, overrides = {}) {
+  const {clack} = effects;
+  Telemetry.record({event: "login", step: "start"});
+  clack.intro(`${inverse(" observable login ")} ${faint(`v${process.env.npm_package_version}`)}`);
 
-  const {currentUser} = await loginInner(effects);
+  const {currentUser} = await loginInner(effects, overrides);
 
   if (currentUser.workspaces.length === 0) {
-    effects.clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
+    clack.log.warn(`${yellow("Warning:")} You don't have any workspaces to deploy to.`);
   } else if (currentUser.workspaces.length > 1) {
     clack.note(
       [
@@ -50,12 +52,16 @@ export async function login(effects: AuthEffects = defaultEffects) {
       ].join("\n")
     );
   }
-
-  effects.clack.outro();
+  clack.outro("Logged in");
+  Telemetry.record({event: "login", step: "finish"});
 }
 
-export async function loginInner(effects: AuthEffects): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
-  const apiClient = new ObservableApiClient();
+export async function loginInner(
+  effects: AuthEffects,
+  {pollTime = 1000} = {}
+): Promise<{currentUser: GetCurrentUserResponse; apiKey: ApiKey}> {
+  const {clack} = effects;
+  const apiClient = new ObservableApiClient({clack});
   const requestInfo = await apiClient.postAuthRequest({
     scopes: ["projects:deploy", "projects:create"],
     deviceDescription: os.hostname()
@@ -63,15 +69,16 @@ export async function loginInner(effects: AuthEffects): Promise<{currentUser: Ge
   const confirmUrl = new URL("/auth-device", OBSERVABLE_UI_ORIGIN);
   confirmUrl.searchParams.set("code", requestInfo.confirmationCode);
 
-  effects.clack.log.step(
+  clack.log.step(
     `Your confirmation code is ${bold(yellow(requestInfo.confirmationCode))}\n` +
       `Open ${link(confirmUrl)}\nin your browser, and confirm the code matches.`
   );
-  const spinner = effects.clack.spinner();
+  const spinner = clack.spinner();
   spinner.start("Waiting for confirmation...");
 
   let apiKey: PostAuthRequestPollResponse["apiKey"] | null = null;
   while (apiKey === null) {
+    await new Promise((resolve) => setTimeout(resolve, pollTime));
     const requestPoll = await apiClient.postAuthRequestPoll(requestInfo.id);
     switch (requestPoll.status) {
       case "pending":
@@ -81,35 +88,43 @@ export async function loginInner(effects: AuthEffects): Promise<{currentUser: Ge
         break;
       case "expired":
         spinner.stop("Failed to confirm code.", 2);
+        Telemetry.record({event: "login", step: "error", code: "expired"});
         throw new CliError("That confirmation code expired.");
       case "consumed":
         spinner.stop("Failed to confirm code.", 2);
+        Telemetry.record({event: "login", step: "error", code: "consumed"});
         throw new CliError("That confirmation code has already been used.");
       default:
         spinner.stop("Failed to confirm code.", 2);
+        Telemetry.record({event: "login", step: "error", code: `unknown-${requestPoll.status}`});
         throw new CliError(`Received an unknown polling status ${requestPoll.status}.`);
     }
-    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
-  if (!apiKey) throw new CliError("No API key returned from server.");
+  if (!apiKey) {
+    Telemetry.record({event: "login", step: "error", code: "no-key"});
+    throw new CliError("No API key returned from server.");
+  }
   await effects.setObservableApiKey(apiKey);
 
   apiClient.setApiKey({source: "login", key: apiKey.key});
-  const currentUser = await apiClient.getCurrentUser();
+  let currentUser = await apiClient.getCurrentUser();
+  currentUser = {...currentUser, workspaces: validWorkspaces(currentUser.workspaces)};
   spinner.stop(`You are logged into ${OBSERVABLE_UI_ORIGIN.hostname} as ${formatUser(currentUser)}.`);
   return {currentUser, apiKey: {...apiKey, source: "login"}};
 }
 
 export async function logout(effects = defaultEffects) {
+  const {logger} = effects;
   await effects.setObservableApiKey(null);
+  logger.log(`You are now logged out of ${OBSERVABLE_UI_ORIGIN.hostname}.`);
 }
 
 export async function whoami(effects = defaultEffects) {
   const {logger} = effects;
   const apiKey = await effects.getObservableApiKey(effects);
   if (!apiKey) throw new CliError(commandRequiresAuthenticationMessage);
-  const apiClient = new ObservableApiClient({apiKey});
+  const apiClient = new ObservableApiClient({apiKey, clack: effects.clack});
 
   try {
     const user = await apiClient.getCurrentUser();
@@ -138,4 +153,17 @@ export async function whoami(effects = defaultEffects) {
 
 export function formatUser(user: {name?: string; login: string}): string {
   return user.name ? `${user.name} (@${user.login})` : `@${user.login}`;
+}
+
+export function validWorkspaces(
+  workspaces: GetCurrentUserResponse["workspaces"]
+): GetCurrentUserResponse["workspaces"] {
+  return workspaces.filter(
+    (w) =>
+      VALID_TIERS.has(w.tier) &&
+      (w.role === "owner" ||
+        w.role === "member" ||
+        (w.role === "guest_member" &&
+          w.projects_info.some((info) => info.project_role === "owner" || info.project_role === "editor")))
+  );
 }

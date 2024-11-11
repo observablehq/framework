@@ -1,4 +1,4 @@
-#observablehq-center {
+#observablehq-main {
   container-type: inline-size;
 }
 
@@ -30,9 +30,12 @@
   .grid-cols-4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .grid-colspan-2,
-  .grid-colspan-3,
-  .grid-colspan-4 {
+  .grid-cols-2 .grid-colspan-2,
+  .grid-cols-2 .grid-colspan-3,
+  .grid-cols-2 .grid-colspan-4,
+  .grid-cols-4 .grid-colspan-2,
+  .grid-cols-4 .grid-colspan-3,
+  .grid-cols-4 .grid-colspan-4 {
     grid-column: span 2;
   }
 }
@@ -40,6 +43,9 @@
 @container (min-width: 720px) {
   .grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .grid-cols-3 .grid-colspan-2 {
+    grid-column: span 2;
   }
   .grid-cols-3 .grid-colspan-3 {
     grid-column: span 3;

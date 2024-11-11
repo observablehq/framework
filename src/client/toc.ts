@@ -2,7 +2,8 @@ const toc = document.querySelector<HTMLElement>("#observablehq-toc");
 if (toc) {
   const highlight = toc.appendChild(document.createElement("div"));
   highlight.classList.add("observablehq-secondary-link-highlight");
-  const headings = Array.from(document.querySelectorAll<HTMLElement>(toc.dataset.selector!)).reverse();
+  const main = document.querySelector("#observablehq-main")!;
+  const headings = Array.from(main.querySelectorAll(toc.dataset.selector!)).reverse();
   const links = toc.querySelectorAll<HTMLElement>(".observablehq-secondary-link");
   const relink = (): HTMLElement | undefined => {
     for (const link of links) {
@@ -11,7 +12,7 @@ if (toc) {
     // If there’s a location.hash, highlight that if it’s at the top of the viewport.
     if (location.hash) {
       for (const heading of headings) {
-        const hash = heading.querySelector<HTMLAnchorElement>("a[href]")?.hash;
+        const hash = encodeURI(`#${heading.id}`);
         if (hash === location.hash) {
           const top = heading.getBoundingClientRect().top;
           if (0 < top && top < 40) {
