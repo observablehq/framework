@@ -1,4 +1,5 @@
-import {dirname, isAbsolute, join, normalize, relative, resolve} from "node:path/posix";
+import op from "node:path";
+import {dirname, join} from "node:path/posix";
 
 /**
  * Returns the normalized relative path from "/file/path/to/a" to
@@ -86,6 +87,7 @@ export function parseRelativeUrl(url: string): {pathname: string; search: string
 }
 
 export function within(root: string, path: string): boolean {
+  const {relative, normalize, resolve, isAbsolute} = op;
   path = relative(normalize(resolve(root)), normalize(resolve(path)));
   return !path.startsWith("..") && !isAbsolute(path);
 }

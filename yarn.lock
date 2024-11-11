@@ -402,10 +402,10 @@
   dependencies:
     isoformat "^0.2.0"
 
-"@observablehq/runtime@^6.0.0-rc.1":
-  version "6.0.0-rc.1"
-  resolved "https://registry.yarnpkg.com/@observablehq/runtime/-/runtime-6.0.0-rc.1.tgz#33d6d6f69d0d77198cef71bd8968cff649f92880"
-  integrity sha512-hTo+cKLtgfTdH6f7YlnUfZjaIoST7gLuCzPWxWOGpGxYLnld9645A/HyIAXAa0z4L19FmgHRFZW/5RZp/Eu+1g==
+"@observablehq/runtime@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@observablehq/runtime/-/runtime-6.0.0.tgz#0ae8d8fa202dba487c34d2ff09ed5f6bca6b189e"
+  integrity sha512-t3UXP69O0JK20HY/neF4/DDDSDorwo92As806Y1pNTgTmj1NtoPyVpesYzfH31gTFOFrXC2cArV+wLpebMk9eA==
 
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"

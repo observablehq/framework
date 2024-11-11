@@ -6,6 +6,14 @@
 import SQLite from "npm:@observablehq/sqlite";
 ```
 
+If you prefer to use sql.js directly, you can import and initialize it like so:
+
+```js run=false
+import initSqlJs from "npm:sql.js";
+
+const SQLite = await initSqlJs({locateFile: (name) => import.meta.resolve("npm:sql.js/dist/") + name});
+```
+
 We also provide `SQLiteDatabaseClient`, a [`DatabaseClient`](https://observablehq.com/@observablehq/database-client-specification) implementation.
 
 ```js run=false
