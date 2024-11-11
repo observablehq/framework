@@ -1,14 +1,18 @@
 {
   "type": "module",
   "scripts": {
+    "build": "observable build",
     "dev": "observable preview",
-    "build": "rm -rf dist && observable build",
-    "postinstall": "ln -sf ../../../../bin/observable-init.js node_modules/.bin/observable"
+    "deploy": "observable deploy",
+    "observable": "observable"
   },
   "dependencies": {
-    "@observablehq/cli": "link:../.."
+    "@observablehq/framework": "^1.7.1"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.5"
   },
   "engines": {
-    "node": "^18 <18.19.0 || >=20"
+    "node": ">=18"
   }
 }

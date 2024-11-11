@@ -53,8 +53,8 @@ function revive(object, pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}
       y: {grid: true},
       marks: [
         Plot.ruleY([0, 100]),
-        Plot.link(data.forecast.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.probabilityOfPrecipitation.value}),
-        Plot.link(data.forecastHourly.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.probabilityOfPrecipitation.value, stroke: "var(--theme-foreground-focus)"})
+        Plot.link(data.forecast.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.probabilityOfPrecipitation?.value}),
+        Plot.link(data.forecastHourly.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.probabilityOfPrecipitation?.value, stroke: "var(--theme-foreground-focus)"})
       ]
     }))
   }</div>
@@ -68,8 +68,8 @@ function revive(object, pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}
       y: {grid: true},
       marks: [
         Plot.ruleY([0]),
-        Plot.link(data.forecast.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.dewpoint.value}),
-        Plot.link(data.forecastHourly.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.dewpoint.value, stroke: "var(--theme-foreground-focus)"})
+        Plot.link(data.forecast.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.dewpoint?.value}),
+        Plot.link(data.forecastHourly.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.dewpoint?.value, stroke: "var(--theme-foreground-focus)"})
       ]
     }))
   }</div>
@@ -83,8 +83,8 @@ function revive(object, pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}
       y: {grid: true},
       marks: [
         Plot.ruleY([0]),
-        Plot.link(data.forecast.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.relativeHumidity.value}),
-        Plot.link(data.forecastHourly.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.relativeHumidity.value, stroke: "var(--theme-foreground-focus)"})
+        Plot.link(data.forecast.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.relativeHumidity?.value}),
+        Plot.link(data.forecastHourly.properties.periods, {x1: "startTime", x2: "endTime", y: (d) => d.relativeHumidity?.value, stroke: "var(--theme-foreground-focus)"})
       ]
     }))
   }</div>
