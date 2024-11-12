@@ -39,41 +39,21 @@ const BUILD_AGE_WARNING_MS = 1000 * 60 * 5;
 const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
 
 function settingsUrl(deployTarget: DeployTargetInfo) {
-  if (deployTarget.create) {
-    throw new Error("Incorrect deploy target state");
-  }
+  if (deployTarget.create) throw new Error("Incorrect deploy target state");
   return `${OBSERVABLE_UI_ORIGIN}projects/@${deployTarget.workspace.login}/${deployTarget.project.slug}`;
 }
 
 /**
  * Returns the ownerName and repoName of the first GitHub remote (HTTPS or SSH)
- * on the current repository, or null.
+ * on the current repository. Supports both https and ssh URLs:
+ * - https://github.com/observablehq/framework.git
+ * - git@github.com:observablehq/framework.git
  */
-async function getGitHubRemote() {
-  const remotes = (await promisify(exec)("git remote -v")).stdout
-    .split("\n")
-    .filter((d) => d)
-    .map((d) => {
-      const [, url] = d.split(/\s/g);
-      if (url.startsWith("https://github.com/")) {
-        // HTTPS: https://github.com/observablehq/framework.git
-        const [ownerName, repoName] = new URL(url).pathname
-          .slice(1)
-          .replace(/\.git$/, "")
-          .split("/");
-        return {ownerName, repoName};
-      } else if (url.startsWith("git@github.com:")) {
-        // SSH: git@github.com:observablehq/framework.git
-        const [ownerName, repoName] = url
-          .replace(/^git@github.com:/, "")
-          .replace(/\.git$/, "")
-          .split("/");
-        return {ownerName, repoName};
-      }
-    });
-  const remote = remotes.find((d) => d && d.ownerName && d.repoName);
-  if (!remote) throw new CliError("No GitHub remote found.");
-  return remote ?? null;
+async function getGitHubRemote(): Promise<{ownerName: string; repoName: string} | undefined> {
+  const firstRemote = (await promisify(exec)("git remote -v")).stdout.match(
+    /^\S+\s(https:\/\/github.com\/|git@github.com:)(?<ownerName>[^/]+)\/(?<repoName>[^/]*?)(\.git)?\s/m
+  );
+  return firstRemote?.groups as {ownerName: string; repoName: string} | undefined;
 }
 
 export interface DeployOptions {
@@ -223,20 +203,13 @@ class Deployer {
     const {deployId} = this.deployOptions;
     if (!deployId) throw new Error("invalid deploy options");
     await this.checkDeployCreated(deployId);
-
-    const buildFilePaths = await this.getBuildFilePaths();
-
-    await this.uploadFiles(deployId, buildFilePaths);
+    await this.uploadFiles(deployId, await this.getBuildFilePaths());
     await this.markDeployUploaded(deployId);
-    const deployInfo = await this.pollForProcessingCompletion(deployId);
-
-    return deployInfo;
+    return await this.pollForProcessingCompletion(deployId);
   }
 
   private async cloudBuild(deployTarget: DeployTargetInfo) {
-    if (deployTarget.create) {
-      throw new Error("Incorrect deploy target state");
-    }
+    if (deployTarget.create) throw new Error("Incorrect deploy target state");
     const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
     await this.apiClient.postProjectBuild(deployTarget.project.id);
     const spinner = this.effects.clack.spinner();
@@ -264,51 +237,46 @@ class Deployer {
     }
   }
 
-  // Throws error if local and remote GitHub repos don’t match or are invalid
+  // Throws error if local and remote GitHub repos don’t match or are invalid.
+  // Ignores this.deployOptions.config.root as we only support cloud builds from
+  // the root directory.
   private async validateGitHubLink(deployTarget: DeployTargetInfo): Promise<void> {
-    if (deployTarget.create) {
-      throw new Error("Incorrect deploy target state");
-    }
-    if (!deployTarget.project.build_environment_id) {
-      // TODO: allow setting build environment from CLI
-      throw new CliError("No build environment configured.");
-    }
-    // We only support cloud builds from the root directory so this ignores
-    // this.deployOptions.config.root
-    const isGit = existsSync(".git");
-    if (!isGit) throw new CliError("Not at root of a git repository.");
-
-    const {ownerName, repoName} = await getGitHubRemote();
+    if (deployTarget.create) throw new Error("Incorrect deploy target state");
+    if (!deployTarget.project.build_environment_id) throw new CliError("No build environment configured.");
+    if (!existsSync(".git")) throw new CliError("Not at root of a git repository.");
+    const remote = await getGitHubRemote();
+    if (!remote) throw new CliError("No GitHub remote found.");
     const branch = (await promisify(exec)("git rev-parse --abbrev-ref HEAD")).stdout.trim();
-    let localRepo = await this.apiClient.getGitHubRepository({ownerName, repoName});
+    if (!branch) throw new Error("Branch not found.");
 
     // If a source repository has already been configured, check that it’s
-    // accessible and matches the local repository and branch.
-    // TODO: validate local/remote refs match, "Your branch is up to date",
-    // and "nothing to commit, working tree clean".
+    // accessible and matches the linked repository and branch. TODO: validate
+    // local/remote refs match, "Your branch is up to date", and "nothing to
+    // commit, working tree clean".
     const {source} = deployTarget.project;
     if (source) {
-      if (localRepo && source.provider_id !== localRepo.provider_id) {
-        throw new CliError(
-          `Configured repository does not match local repository; check build settings on ${link(
-            `${settingsUrl(deployTarget)}/settings`
-          )}`
-        );
+      const linkedRepo = await this.apiClient.getGitHubRepository(remote);
+      if (linkedRepo) {
+        if (source.provider_id !== linkedRepo.provider_id) {
+          throw new CliError(
+            `Configured repository does not match local repository; check build settings on ${link(
+              `${settingsUrl(deployTarget)}/settings`
+            )}`
+          );
+        }
+        if (source.branch !== branch) {
+          // TODO: If source.branch is empty, it'll use the default repository
+          // branch (usually main or master), which we don't know from our current
+          // getGitHubRepository response, and thus can't check here.
+          throw new CliError(
+            `Configured branch ${source.branch} does not match local branch ${branch}; check build settings on ${link(
+              `${settingsUrl(deployTarget)}/settings`
+            )}`
+          );
+        }
       }
-      if (localRepo && source.branch && source.branch !== branch) {
-        // TODO: If source.branch is empty, it'll use the default repository
-        // branch (usually main or master), which we don't know from our current
-        // getGitHubRepository response, and thus can't check here.
-        throw new CliError(
-          `Configured branch does not match local branch; check build settings on ${link(
-            `${settingsUrl(deployTarget)}/settings`
-          )}`
-        );
-      }
-      const remoteAuthedRepo = await this.apiClient.getGitHubRepository({
-        providerId: source.provider_id
-      });
-      if (!remoteAuthedRepo) {
+
+      if (!(await this.apiClient.getGitHubRepository({providerId: source.provider_id}))) {
         // TODO: This could poll for auth too, but is a distinct case because it
         // means the repo was linked at one point and then something went wrong
         throw new CliError(
@@ -322,7 +290,10 @@ class Deployer {
       return;
     }
 
-    if (!localRepo) {
+    // If the source has not been configured, first check that the remote repo
+    // is linked in CD settings. If not, prompt the user to auth & link.
+    let linkedRepo = await this.apiClient.getGitHubRepository(remote);
+    if (!linkedRepo) {
       if (!this.effects.isTty)
         throw new CliError(
           "Cannot access repository for continuous deployment and cannot request access in non-interactive mode"
@@ -330,43 +301,38 @@ class Deployer {
 
       // Repo is not authorized; link to auth page and poll for auth
       const authUrl = new URL("/auth-github", OBSERVABLE_UI_ORIGIN);
-      authUrl.searchParams.set("owner", ownerName);
-      authUrl.searchParams.set("repo", repoName);
-      this.effects.clack.log.info(`Authorize Observable to access the ${bold(repoName)} repository: ${link(authUrl)}`);
+      authUrl.searchParams.set("owner", remote.ownerName);
+      authUrl.searchParams.set("repo", remote.repoName);
+      this.effects.clack.log.info(
+        `Authorize Observable to access the ${bold(remote.repoName)} repository: ${link(authUrl)}`
+      );
 
       const spinner = this.effects.clack.spinner();
-      spinner.start("Waiting for repository to be authorized");
+      spinner.start("Waiting for authorization");
       const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
       const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
-      while (!localRepo) {
+      do {
         await new Promise((resolve) => setTimeout(resolve, pollInterval));
         if (Date.now() > pollExpiration) {
-          spinner.stop("Waiting for repository to be authorized timed out.");
+          spinner.stop("Authorization timed out.");
           throw new CliError("Repository authorization failed");
         }
-        localRepo = await this.apiClient.getGitHubRepository({ownerName, repoName});
-        if (localRepo) spinner.stop("Repository authorized.");
-      }
+      } while (!(linkedRepo = await this.apiClient.getGitHubRepository(remote)));
+      spinner.stop("Repository authorized.");
     }
 
-    const response = await this.apiClient.postProjectEnvironment(deployTarget.project.id, {
-      source: {
-        provider: localRepo.provider,
-        provider_id: localRepo.provider_id,
-        url: localRepo.url,
-        branch
-      }
-    });
-
-    if (!response) throw new CliError("Setting source repository for continuous deployment failed");
-
-    // Configured repo is OK; proceed
-    return;
+    // Save the linked repo as the configured source.
+    const {provider, provider_id, url} = linkedRepo;
+    await this.apiClient
+      .postProjectEnvironment(deployTarget.project.id, {source: {provider, provider_id, url, branch}})
+      .catch((error) => {
+        throw new CliError("Setting source repository for continuous deployment failed", {cause: error});
+      });
   }
 
   private async startNewDeploy(): Promise<GetDeployResponse> {
     const {deployConfig, deployTarget} = await this.getDeployTarget(await this.getUpdatedDeployConfig());
-    let deployId: string | null;
+    let deployId: string;
     if (deployConfig.continuousDeployment) {
       await this.validateGitHubLink(deployTarget);
       deployId = await this.cloudBuild(deployTarget);
@@ -388,11 +354,7 @@ class Deployer {
       }
       return deployInfo;
     } catch (error) {
-      if (isHttpError(error)) {
-        throw new CliError(`Deploy ${deployId} not found.`, {
-          cause: error
-        });
-      }
+      if (isHttpError(error)) throw new CliError(`Deploy ${deployId} not found.`, {cause: error});
       throw error;
     }
   }
@@ -580,7 +542,7 @@ class Deployer {
       continuousDeployment = enable;
     }
 
-    const newDeployConfig = {
+    deployConfig = {
       projectId: deployTarget.project.id,
       projectSlug: deployTarget.project.slug,
       workspaceLogin: deployTarget.workspace.login,
@@ -590,11 +552,11 @@ class Deployer {
     await this.effects.setDeployConfig(
       this.deployOptions.config.root,
       this.deployOptions.deployConfigPath,
-      newDeployConfig,
+      deployConfig,
       this.effects
     );
 
-    return {deployConfig: newDeployConfig, deployTarget};
+    return {deployConfig, deployTarget};
   }
 
   // Create the new deploy on the server.

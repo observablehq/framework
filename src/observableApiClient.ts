@@ -130,22 +130,20 @@ export class ObservableApiClient {
   async getGitHubRepository(
     props: {ownerName: string; repoName: string} | {providerId: string}
   ): Promise<GetGitHubRepositoryResponse | null> {
-    let url: URL;
-    if ("providerId" in props) {
-      url = new URL(`/cli/github/repository?provider_id=${props.providerId}`, this._apiOrigin);
-    } else {
-      url = new URL(`/cli/github/repository?owner=${props.ownerName}&repo=${props.repoName}`, this._apiOrigin);
-    }
-    try {
-      return await this._fetch<GetGitHubRepositoryResponse>(url, {method: "GET"});
-    } catch (err) {
-      // TODO: err.details.errors may be [{code: "NO_GITHUB_TOKEN"}] or [{code: "NO_REPO_ACCESS"}],
-      // which could be handled separately
-      return null;
-    }
+    const params =
+      "providerId" in props ? `provider_id=${props.providerId}` : `owner=${props.ownerName}&repo=${props.repoName}`;
+    return await this._fetch<GetGitHubRepositoryResponse>(
+      new URL(`/cli/github/repository?${params}`, this._apiOrigin),
+      {method: "GET"}
+    ).catch(() => null);
+    // TODO: err.details.errors may be [{code: "NO_GITHUB_TOKEN"}] or [{code: "NO_REPO_ACCESS"}],
+    // which could be handled separately
   }
 
-  async postProjectEnvironment(id, body): Promise<PostProjectEnvironmentResponse> {
+  async postProjectEnvironment(
+    id: string,
+    body: {source: {provider: "github"; provider_id: string; url: string; branch: string}}
+  ): Promise<PostProjectEnvironmentResponse> {
     const url = new URL(`/cli/project/${id}/environment`, this._apiOrigin);
     return await this._fetch<PostProjectEnvironmentResponse>(url, {
       method: "POST",
@@ -155,9 +153,7 @@ export class ObservableApiClient {
   }
 
   async postProjectBuild(id): Promise<{id: string}> {
-    return await this._fetch<{id: string}>(new URL(`/cli/project/${id}/build`, this._apiOrigin), {
-      method: "POST"
-    });
+    return await this._fetch<{id: string}>(new URL(`/cli/project/${id}/build`, this._apiOrigin), {method: "POST"});
   }
 
   async postProject({
