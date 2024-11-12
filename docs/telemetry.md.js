@@ -1,6 +1,10 @@
 import {readFile} from "node:fs/promises";
 
-process.stdout.write(`# Telemetry
+process.stdout.write(`---
+index: true
+---
+
+# Telemetry
 
 Observable Framework collects anonymous usage data to help us improve the product. This data is sent to Observable and is not shared with third parties. Telemetry data is covered by [Observable’s privacy policy](https://observablehq.com/privacy-policy).
 
