@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<html>
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="generator" content="Observable Framework v1.0.0-test">
@@ -25,6 +27,8 @@ await FileAttachment("./static/file.txt").text()
 }});
 
 </script>
+</head>
+<body>
 <input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -38,11 +42,11 @@ await FileAttachment("./static/file.txt").text()
   </ol>
 </nav>
 <script>{/* redacted init script */}</script>
+<div id="observablehq-center">
 <aside id="observablehq-toc" data-selector="h1:not(:first-of-type)[id], h2:first-child[id], :not(h1) + h2[id]">
 <nav>
 </nav>
 </aside>
-<div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <h1 id="zip" tabindex="-1"><a class="observablehq-header-anchor" href="#zip">Zip</a></h1>
 <div class="observablehq observablehq--block"><observablehq-loading></observablehq-loading><!--:d3b9d0ee:--></div>
@@ -52,3 +56,5 @@ await FileAttachment("./static/file.txt").text()
 <div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.</div>
 </footer>
 </div>
+</body>
+</html>

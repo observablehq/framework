@@ -29,7 +29,7 @@ sql:
 
 <div class="tip">For performance and reliability, we recommend using local files rather than loading data from external servers at runtime. You can use a <a href="./data-loaders">data loader</a> to take a snapshot of a remote data during build if needed.</div>
 
-You can also register tables via code (say to have sources that are defined dynamically via user input) by defining the `sql` symbol with [DuckDBClient.sql](./lib/duckdb).
+You can also register tables via code (say to have sources that are defined dynamically via user input) by defining the `sql` symbol with [DuckDBClient.sql](./lib/duckdb). To register [DuckDB extensions](./lib/duckdb#extensions), use the [**duckdb** config option](./config#duckdb).
 
 ## SQL code blocks
 
@@ -174,11 +174,12 @@ Plot.plot({
   marks: [
     Plot.axisY({tickFormat: (d) => d / 1000, label: "count (thousands)"}),
     Plot.rectY(await sql`
-      SELECT
-        FLOOR(phot_g_mean_mag / 0.2) * 0.2 AS mag1
-      , mag1 + 0.2 AS mag2
-      , COUNT() AS count
-      FROM gaia GROUP BY 1
+      SELECT FLOOR(phot_g_mean_mag / 0.2) * 0.2 AS mag1
+           , mag1 + 0.2 AS mag2
+           , COUNT() AS count
+        FROM gaia
+       WHERE phot_g_mean_mag IS NOT NULL
+       GROUP BY 1
     `, {x1: "mag1", x2: "mag2", y: "count", tip: true})
   ]
 })

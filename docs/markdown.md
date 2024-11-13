@@ -18,7 +18,7 @@ The front matter supports the following options:
 - **title** - the page title; defaults to the (first) first-level heading of the page, if any
 - **index** - whether to index this page if [search](./search) is enabled; defaults to true for listed pages
 - **keywords** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - additional words to index for [search](./search); boosted at the same weight as the title
-- **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - whether to skip this page during build; drafts are also not listed in the default sidebar
+- **draft** <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a> - whether to skip this page during build; drafts are also not listed in the default sidebar nor searchable
 - **sql** <a href="https://github.com/observablehq/framework/releases/tag/v1.2.0" class="observablehq-version-badge" data-version="^1.2.0" title="Added in v1.2.0"></a> - table definitions for [SQL code blocks](./sql)
 
 The front matter can also override the following [app-level configuration](./config) options:
@@ -71,7 +71,7 @@ This is **Markdown** inside of _HTML_!
 
 ## Grids
 
-The `grid` class declares a [CSS grid](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout) container. The `grid` class is designed to pair with the [`card` class](#card) and the [`dashboard` theme](./themes) for dashboard layout.
+The `grid` class declares a [CSS grid](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout) container. The `grid` class is designed to pair with the [`card` class](#cards) and the [`dashboard` theme](./themes) for dashboard layout.
 
 ```html echo
 <div class="grid grid-cols-4">
@@ -166,7 +166,7 @@ The `card` class is used to group and delineate content. The `card` classes appl
 
 <div class="tip"><a href="./lib/plot">Observable Plot</a>’s <b>title</b> and <b>subtitle</b> options generate <code>h2</code> and <code>h3</code> elements, respectively, and so will inherit these card styles.</div>
 
-Cards can be used on their own, but they most often exist in a [grid](#grid). Cards can contain whatever you like, including text, images, charts, tables, inputs, and more.
+Cards can be used on their own, but they most often exist in a [grid](#grids). Cards can contain whatever you like, including text, images, charts, tables, inputs, and more.
 
 ```html echo
 <div class="grid grid-cols-2">
@@ -183,7 +183,7 @@ Cards can be used on their own, but they most often exist in a [grid](#grid). Ca
 
 <div class="tip">Remove the padding from a card if it contains only a table.</div>
 
-To place an input inside a card, first declare a detached input as a [top-level variable](./reactivity#top-level-variables) and use [`Generators.input`](./lib/generators#inputelement) to expose its reactive value:
+To place an input inside a card, first declare a detached input as a [top-level variable](./reactivity#top-level-variables) and use [`Generators.input`](./lib/generators#input-element) to expose its reactive value:
 
 ```js echo
 const industryInput = Inputs.select(industries.map((d) => d.industry), {unique: true, sort: true, label: "Industry:"});

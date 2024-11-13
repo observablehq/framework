@@ -15,6 +15,18 @@ ${histogram}
 
 The views above are coordinated: brushing a time window in the histogram, or a region in either map, will filter both maps. _What spatial patterns can you find?_
 
+Mosaic vgplot is available by default in Markdown as `vg` and is backed by the default DuckDB client that is configured using [SQL front matter](../sql). If you would prefer to initialize Mosaic yourself, you can do something like:
+
+```js run=false
+import {DuckDBClient} from "npm:@observablehq/duckdb";
+import * as vgplot from "npm:@uwdata/vgplot";
+
+const db = await DuckDBClient.of({trips: FileAttachment("nyc-taxi.parquet")});
+const coordinator = new vgplot.Coordinator();
+coordinator.databaseConnector(vgplot.wasmConnector({duckdb: db._db}));
+const vg = vgplot.createAPIContext({coordinator});
+```
+
 The code below creates three views, coordinated by Mosaic’s [crossfilter](https://uwdata.github.io/mosaic/api/core/selection.html#selection-crossfilter) helper.
 
 ```js echo

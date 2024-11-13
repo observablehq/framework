@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import type {BuildManifest} from "./build.js";
 import type {ClackEffects} from "./clack.js";
 import {CliError, HttpError, isApiError} from "./error.js";
 import {formatByteSize} from "./format.js";
@@ -144,14 +145,6 @@ export class ObservableApiClient {
     });
   }
 
-  async postEditProject(projectId: string, updates: PostEditProjectRequest): Promise<PostEditProjectResponse> {
-    return await this._fetch<PostEditProjectResponse>(new URL(`/cli/project/${projectId}/edit`, this._apiOrigin), {
-      method: "POST",
-      headers: {"content-type": "application/json"},
-      body: JSON.stringify({...updates})
-    });
-  }
-
   async getWorkspaceProjects(workspaceLogin: string): Promise<GetProjectResponse[]> {
     const pages = await this._fetch<PaginatedList<GetProjectResponse>>(
       new URL(`/cli/workspace/@${workspaceLogin}/projects`, this._apiOrigin),
@@ -204,7 +197,7 @@ export class ObservableApiClient {
     });
   }
 
-  async postDeployUploaded(deployId: string, buildManifest: PostDeployUploadedRequest | null): Promise<DeployInfo> {
+  async postDeployUploaded(deployId: string, buildManifest: BuildManifest | null): Promise<DeployInfo> {
     return await this._fetch<DeployInfo>(new URL(`/cli/deploy/${deployId}/uploaded`, this._apiOrigin), {
       method: "POST",
       headers: {"content-type": "application/json"},
@@ -227,10 +220,6 @@ export class ObservableApiClient {
       body: JSON.stringify({id})
     });
   }
-}
-
-export interface PostEditProjectRequest {
-  title?: string;
 }
 
 export interface PostEditProjectResponse {
@@ -327,12 +316,5 @@ export interface PostDeployManifestResponse {
     path: string;
     status: "upload" | "skip" | "error";
     detail: string | null;
-  }[];
-}
-
-export interface PostDeployUploadedRequest {
-  pages: {
-    path: string;
-    title: string | null;
   }[];
 }

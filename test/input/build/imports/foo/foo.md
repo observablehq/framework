@@ -14,3 +14,7 @@ FileAttachment("/top.js");
 import {foobar} from "./foo%20bar.js";
 display(foobar);
 ```
+
+```js
+import.meta.resolve("./hello.txt")
+```

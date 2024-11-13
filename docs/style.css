@@ -9,15 +9,6 @@
   --theme-foreground-focus: #148576;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  margin-top: revert;
-}
-
 h1 code,
 h2 code,
 h3 code,
@@ -55,22 +46,18 @@ code:not(pre code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code) {
   text-decoration: none;
 }
 
-#observablehq-header a[target="_blank"]:hover span,
-.observablehq-link a[target="_blank"]:hover span {
+#observablehq-header a[target="_blank"]:is(:hover, :focus) span,
+.observablehq-link a[target="_blank"]:is(:hover, :focus) span {
   text-decoration: underline;
-}
-
-#observablehq-header a[target="_blank"]::after,
-.observablehq-link a[target="_blank"]::after {
-  content: "\2197";
 }
 
 #observablehq-header a[target="_blank"][data-decoration]::after {
   content: attr(data-decoration);
 }
 
-#observablehq-header a[target="_blank"]:not(:hover, :focus)::after {
-  color: var(--theme-foreground-muted);
+#observablehq-header a[target="_blank"]:is(:hover, :focus),
+#observablehq-header a[target="_blank"]:is(:hover, :focus)::after {
+  color: var(--theme-foreground-focus);
 }
 
 .observablehq-link a[target="_blank"]:not(:hover, :focus)::after {
@@ -99,10 +86,31 @@ h1 {
   font-weight: 500;
 }
 
-@container not (min-width: 640px) {
-  .hide-if-small {
-    display: none;
+@media (min-width: 640px) {
+  .hide-if-large {
+    display: none !important;
   }
+}
+
+@media not (min-width: 640px) {
+  .hide-if-small {
+    display: none !important;
+  }
+}
+
+@media (min-width: calc(640px + 6rem + 272px)) {
+  #observablehq-sidebar-toggle:is(:checked, :indeterminate) ~ #observablehq-center .hide-if-sidebar {
+    display: none !important;
+  }
+}
+
+#observablehq-sidebar > ol:first-child > li::before {
+  display: none;
+}
+
+#observablehq-sidebar > ol:first-child > li > a {
+  background: none;
+  color: inherit;
 }
 
 a.observablehq-version-badge {

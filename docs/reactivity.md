@@ -126,7 +126,7 @@ Values that change over time — such as interactive inputs, animation parameter
 
 <div class="note">As with implicit await and promises, implicit iteration of generators only applies <i>across</i> code blocks, not <i>within</i> a code block.</div>
 
-As an example, here’s an HTML input element. By passing it to [`Generators.input`](<../lib/generators#input-element>), we can define a generator that yields the input’s value each time it changes.
+As an example, here’s an HTML input element. By passing it to [`Generators.input`](./lib/generators#input-element), we can define a generator that yields the input’s value each time it changes.
 
 <input id="nameInput">
 
@@ -162,22 +162,18 @@ const name = Generators.observe((notify) => {
 });
 ```
 
-As another example, here is using `Generators.observe` to expose the current pointer coordinates:
+As another example, here is using `Generators.observe` to expose the current pointer coordinates as `pointer` = <span style="font-variant-numeric: tabular-nums;">[${pointer.join(", ")}]</span>:
 
 ```js echo
-const pointer = Generators.observe((change) => {
-  const pointermoved = (event) => change([event.clientX, event.clientY]);
+const pointer = Generators.observe((notify) => {
+  const pointermoved = (event) => notify([event.clientX, event.clientY]);
   addEventListener("pointermove", pointermoved);
-  change([0, 0]);
+  notify([0, 0]);
   return () => removeEventListener("pointermove", pointermoved);
 });
 ```
 
-```js echo
-pointer.map(Math.round) // try moving your mouse
-```
-
-And here’s a generator `j` that increments once a second, defined directly by an immediately-invoked async generator function.
+And here’s a generator `j` = <span style="font-variant-numeric: tabular-nums;">${j}</div> that increments once a second, defined directly by an immediately-invoked async generator function.
 
 ```js echo
 const j = (async function* () {
@@ -188,11 +184,7 @@ const j = (async function* () {
 })();
 ```
 
-```js echo
-j
-```
-
-If a generator does not explicitly `await`, it will yield once every [animation frame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame), typically 60 times per second. Generators also automatically pause when the page is put in a background tab.
+If a generator does not explicitly `await`, as `i` = <span style="font-variant-numeric: tabular-nums;">${i}</div> below, it will yield once every [animation frame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame), typically 60 times per second. Generators also automatically pause when the page is put in a background tab.
 
 ```js echo
 const i = (function* () {
@@ -202,47 +194,53 @@ const i = (function* () {
 })();
 ```
 
-```js echo
-i
-```
-
 As you might imagine, you can use such a generator to drive an animation. A generator is typically easier than a `requestAnimationFrame` loop because the animation is declarative — the code runs automatically whenever `i` changes — and because you don’t have to handle [invalidation](#invalidation) to terminate the loop.
 
-```svg echo
-<svg width="640" height="32">
-  <rect fill="#4269d0" width="32" height="32" x=${(i % (640 + 32)) - 32}></rect>
-</svg>
+<canvas id="canvas0" width="640" height="30" style="max-width: 100%; height: 30px;"></canvas>
+
+```js
+const context0 = canvas0.getContext("2d");
 ```
 
-You can also use a generator to stream live data. Here is a WebSocket that listens for the current price of Bitcoin, keeping the last minute of data in memory.
+```js echo
+context0.clearRect(0, 0, canvas0.width, canvas0.height);
+context0.fillStyle = "#4269d0";
+context0.fillRect((i % (640 + 32)) - 32, 0, 32, 32);
+```
+
+You can also use a generator to stream live data. Here is a WebSocket that reports the current price of Bitcoin via Unicorn Data Services.
 
 ```js echo
 const socket = new WebSocket("wss://ws.eodhistoricaldata.com/ws/crypto?api_token=demo");
 invalidation.then(() => socket.close());
 socket.addEventListener("open", () => socket.send(JSON.stringify({action: "subscribe", symbols: "BTC-USD"})));
-const messages = Generators.observe((change) => {
-  const messages = [];
-  const duration = messages.duration = 60_000;
+const btc = Generators.observe((notify) => {
+  let currentValue;
   const messaged = (event) => {
     const m = JSON.parse(event.data);
-    const t = m.t;
-    if (t == null) return;
-    while ((t - messages[0]?.t) > duration) messages.shift();
-    messages.push(m);
-    change(messages);
+    const v = +m.p;
+    if (isNaN(v) || v === currentValue) return;
+    notify((currentValue = v));
   };
   socket.addEventListener("message", messaged);
   return () => socket.removeEventListener("message", messaged);
 });
 ```
 
-```js echo
-Plot.plot({
-  marginLeft: 50,
-  x: {type: "time", domain: [now - messages.duration, now]},
-  y: {type: "linear", label: "price", inset: 10},
-  marks: [Plot.lineY(messages, {x: "t", y: "p", curve: "step", clip: true})]
-})
+<div class="grid grid-cols-4">
+  <div class="card">
+    <h2>Bitcoin price (USD/BTC)</h2>
+    <div class="big">${btc.toLocaleString("en-US", {style: "currency", currency: "USD"})}</div>
+  </div>
+</div>
+
+```html run=false
+<div class="grid grid-cols-4">
+  <div class="card">
+    <h2>Bitcoin price (USD/BTC)</h2>
+    <div class="big">${btc.toLocaleString("en-US", {style: "currency", currency: "USD"})}</div>
+  </div>
+</div>
 ```
 
 ## Inputs
@@ -255,7 +253,7 @@ Inputs might prompt a viewer to:
 - Select a URL from a dropdown to view traffic to a specific page
 - Choose a date range to explore data within a period of interest
 
-Inputs are typically displayed using the built-in `view` function, which [displays](../javascript#explicit-display) the given element and returns a corresponding value generator (`Generators.input`) to expose the input’s value to the page. For example, the radio input below prompts for your favorite team:
+Inputs are typically displayed using the built-in `view` function, which [displays](./javascript#explicit-display) the given element and returns a corresponding value generator (`Generators.input`) to expose the input’s value to the page. For example, the radio input below prompts for your favorite team:
 
 ```js echo
 const team = view(Inputs.radio(["Metropolis Meteors", "Rockford Peaches", "Bears"], {label: "Favorite team:", value: "Metropolis Meteors"}));
@@ -269,7 +267,7 @@ My favorite baseball team is the ${team}!
 My favorite baseball team is the ${team}!
 ```
 
-The above example uses `Inputs.radio`, which is provided by [Observable Inputs](./lib/inputs). You can also implement custom inputs using arbitrary HTML. For example, here is a [range input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/range) that lets you choose an integer between 1 and 15 (inclusive):
+The above example uses `Inputs.radio`, which is provided by [Observable Inputs](./inputs/). You can also implement custom inputs using arbitrary HTML. For example, here is a [range input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/range) that lets you choose an integer between 1 and 15 (inclusive):
 
 ```js echo
 const n = view(html`<input type=range step=1 min=1 max=15>`);
@@ -279,7 +277,7 @@ const n = view(html`<input type=range step=1 min=1 max=15>`);
 n // Try dragging the slider above
 ```
 
-<div class="tip">To be compatible with <code>view</code>, custom inputs must emit <code>input</code> events when their value changes, and expose their current value as <i>element</i>.value. See <a href="./lib/generators#input(element)"><code>Generators.input</code></a> for more.</div>
+<div class="tip">To be compatible with <code>view</code>, custom inputs must emit <code>input</code> events when their value changes, and expose their current value as <i>element</i>.value. See <a href="./lib/generators#input-element"><code>Generators.input</code></a> for more.</div>
 
 To use a chart as an input, you can use Plot’s [pointer interaction](https://observablehq.com/plot/interactions/pointer), say by setting the **tip** option on a mark. In the scatterplot below, the penguin closest to the pointer is exposed as the reactive variable `penguin`.
 
@@ -288,17 +286,17 @@ const penguin = view(Plot.dot(penguins, {x: "culmen_length_mm", y: "flipper_leng
 ```
 
 ```js echo
-penguin
+penguin // try hovering the chart above
 ```
 
 In the future, Plot will support more interaction methods, including brushing. Please upvote [#5](https://github.com/observablehq/plot/issues/5) if you are interested in this feature.
 
 The `view` function does two things:
 
-1. it [displays](../javascript#explicit-display) the given DOM *element*, and then
+1. it [displays](./javascript#explicit-display) the given DOM *element*, and then
 2. returns a corresponding value generator.
 
-The `view` function uses [`Generators.input`](../lib/generators#input-element) under the hood. As shown above, you can call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it.
+The `view` function uses [`Generators.input`](./lib/generators#input-element) under the hood. As shown above, you can call `Generators.input` directly, say to declare the input as a top-level variable without immediately displaying it.
 
 ```js echo
 const subjectInput = html`<input type="text" placeholder="anonymous">`;
@@ -326,7 +324,7 @@ Normally, only the code block that declares a top-level variable can define it o
 `Mutable` is available by default in Markdown but you can import it explicitly like so:
 
 ```js echo
-import {Mutable} from "npm:@observablehq/stdlib";
+import {Mutable} from "observablehq:stdlib";
 ```
 
 Then to use it:

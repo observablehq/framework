@@ -21,7 +21,6 @@ import type {
   GetCurrentUserResponse,
   GetDeployResponse,
   GetProjectResponse,
-  PostEditProjectRequest,
   WorkspaceResponse
 } from "./observableApiClient.js";
 import type {ConfigEffects, DeployConfig} from "./observableApiConfig.js";
@@ -193,18 +192,13 @@ class Deployer {
 
   private async startNewDeploy(): Promise<GetDeployResponse> {
     const deployConfig = await this.getUpdatedDeployConfig();
-    const {deployTarget, projectUpdates} = await this.getDeployTarget(deployConfig);
-
+    const deployTarget = await this.getDeployTarget(deployConfig);
     const buildFilePaths = await this.getBuildFilePaths();
-
     const deployId = await this.createNewDeploy(deployTarget);
 
     await this.uploadFiles(deployId, buildFilePaths);
     await this.markDeployUploaded(deployId);
-    const deployInfo = await this.pollForProcessingCompletion(deployId);
-    await this.maybeUpdateProject(deployTarget, projectUpdates);
-
-    return deployInfo;
+    return await this.pollForProcessingCompletion(deployId);
   }
 
   // Make sure deploy exists and has an expected status.
@@ -280,11 +274,8 @@ class Deployer {
   }
 
   // Get the deploy target, prompting the user as needed.
-  private async getDeployTarget(
-    deployConfig: DeployConfig
-  ): Promise<{deployTarget: DeployTargetInfo; projectUpdates: PostEditProjectRequest}> {
+  private async getDeployTarget(deployConfig: DeployConfig): Promise<DeployTargetInfo> {
     let deployTarget: DeployTargetInfo;
-    const projectUpdates: PostEditProjectRequest = {};
     if (deployConfig.workspaceLogin && deployConfig.projectSlug) {
       try {
         const project = await this.apiClient.getProject({
@@ -292,7 +283,6 @@ class Deployer {
           projectSlug: deployConfig.projectSlug
         });
         deployTarget = {create: false, workspace: project.owner, project};
-        if (this.deployOptions.config.title !== project.title) projectUpdates.title = this.deployOptions.config.title;
       } catch (error) {
         if (!isHttpError(error) || error.statusCode !== 404) {
           throw error;
@@ -360,10 +350,6 @@ class Deployer {
           throw new CliError("Running non-interactively, cancelling due to conflict.");
         }
       }
-
-      if (deployTarget.project.title !== this.deployOptions.config.title) {
-        projectUpdates.title = this.deployOptions.config.title;
-      }
     }
 
     if (deployTarget.create) {
@@ -409,7 +395,7 @@ class Deployer {
       this.effects
     );
 
-    return {deployTarget, projectUpdates};
+    return deployTarget;
   }
 
   // Create the new deploy on the server.
@@ -688,9 +674,12 @@ class Deployer {
         case "uploaded":
           spinner.stop("Deploy complete");
           break pollLoop;
-        case "error":
+        case "failed":
           spinner.stop("Deploy failed");
           throw new CliError("Deploy failed to process on server");
+        case "canceled":
+          spinner.stop("Deploy canceled");
+          throw new CliError("Deploy canceled");
         default:
           spinner.stop("Unknown status");
           throw new CliError(`Unknown deploy status: ${deployInfo.status}`);
@@ -700,12 +689,6 @@ class Deployer {
 
     if (!deployInfo) throw new CliError("Deploy failed to process on server");
     return deployInfo;
-  }
-
-  private async maybeUpdateProject(deployTarget: DeployTargetInfo, projectUpdates: PostEditProjectRequest) {
-    if (!deployTarget.create && typeof projectUpdates?.title === "string") {
-      await this.apiClient.postEditProject(deployTarget.project.id, projectUpdates);
-    }
   }
 }
 
@@ -847,7 +830,7 @@ function formatAge(age: number): string {
     const hours = Math.round(age / 1000 / 60 / 60);
     return `${hours} hour${hours === 1 ? "" : "s"} ago`;
   }
-  return `at ${new Date(Date.now() - age).toLocaleString("en")}`;
+  return `at ${new Date(Date.now() - age).toLocaleString("sv")}`;
 }
 
 async function readCacheFile(sourceRoot: string, path: string): Promise<string> {

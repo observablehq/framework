@@ -25,7 +25,6 @@ Imported symbols can be referenced in any code block or inline expression — no
 Inputs.button("Throw confetti! 🎉", {reduce: () => confetti()})
 ```
 
-
 <div class="tip">While imports can live in code blocks anywhere on the page, by convention imports are placed at the top of pages for readability.</div>
 
 Framework provides a variety of ways to import. When you reference `d3`, `Inputs`, `Plot` or some other built-in, you’re [implicitly importing](#implicit-imports) from npm. In addition, you can import modules explicitly from:
@@ -99,6 +98,22 @@ Unlike `npm:` imports, Node imports do not support semver ranges: the imported v
 
 Imports from `node_modules` are cached in `.observablehq/cache/_node` within your [source root](./config#root) (typically `src`). You shouldn’t need to clear this cache as it is automatically managed, but feel free to clear it you like.
 
+## JSR imports <a href="https://github.com/observablehq/framework/releases/tag/v1.12.0" class="observablehq-version-badge" data-version="^1.12.0" title="Added in 1.12.0"></a>
+
+You can import a package from [JSR (the JavaScript Registry)](https://jsr.io/) using the `jsr:` protocol. As an example, to import a [pseudorandom number generator](https://jsr.io/@std/random) from the [Deno Standard Library](https://deno.com/blog/std-on-jsr):
+
+```js echo
+import {randomIntegerBetween, randomSeeded} from "jsr:@std/random";
+```
+
+And then to generate a random number:
+
+```js echo
+randomIntegerBetween(1, 10, {prng: randomSeeded(1n)})
+```
+
+JSR imports, like npm imports, are automatically [self-hosted](#self-hosting-of-npm-imports). Downloads from JSR are cached in `.observablehq/cache/_jsr` within your source root (typically `src`). An imported module is downloaded from JSR only if it is not already in the cache. You can clear the cache and restart the server to re-fetch the latest versions of libraries from JSR.  If specify the desired version of a package, add a [semver range](https://docs.npmjs.com/about-semantic-versioning) to the import specifier.
+
 ## Local imports
 
 You can import [JavaScript](./javascript) and [TypeScript](./javascript#type-script) modules from local files. This is useful for organizing your code into modules that can be imported across multiple pages. You can also unit test your code and share code with other web applications.
@@ -118,7 +133,7 @@ import {foo} from "./foo.js";
 Within a local module, you can import other local modules, as well as `npm:`, Node, and remote imports. You can also reference local files within a local module by importing [`FileAttachment`](./files) from the Observable standard library like so:
 
 ```js run=false
-import {FileAttachment} from "npm:@observablehq/stdlib";
+import {FileAttachment} from "observablehq:stdlib";
 
 export const sales = await FileAttachment("sales.csv").csv({typed: true});
 ```
@@ -194,20 +209,28 @@ Module preloading does not apply to [dynamic imports](#dynamic-imports) and [`im
 <link rel="modulepreload" href="npm:d3-array">
 ```
 
+## Observable imports
+
+Framework includes a few built-in libraries implemented by Framework itself that can be imported via the `observablehq:` protocol. This currently includes:
+
+* `observablehq:runtime` - the [Observable Runtime](https://github.com/observablehq/runtime)
+* `observablehq:stdlib` - [Framework’s standard library](https://github.com/observablehq/framework/blob/main/src/client/stdlib.js)
+
 ## Implicit imports
 
 For convenience, Framework provides recommended libraries by default in Markdown. These implicit imports are only evaluated if you reference the corresponding symbol and hence don’t add overhead if you don’t use them; for example, D3 won’t be loaded unless you reference `d3`.
 
 Click on any of the imported symbols below to learn more.
 
-<pre><code class="language-js">import {<a href="./files">FileAttachment</a>} from "npm:@observablehq/stdlib";</code></pre>
-<pre><code class="language-js">import {<a href="./reactivity#generators">Generators</a>} from "npm:@observablehq/stdlib";</code></pre>
-<pre><code class="language-js">import {<a href="./reactivity#mutables">Mutable</a>} from "npm:@observablehq/stdlib";</code></pre>
+<pre><code class="language-js">import {<a href="./files">FileAttachment</a>} from "observablehq:stdlib";</code></pre>
+<pre><code class="language-js">import {<a href="./reactivity#generators">Generators</a>} from "observablehq:stdlib";</code></pre>
+<pre><code class="language-js">import {<a href="./reactivity#mutables">Mutable</a>} from "observablehq:stdlib";</code></pre>
+<pre><code class="language-js">import {<a href="./javascript#resize-render">resize</a>} from "observablehq:stdlib";</code></pre>
 <pre><code class="language-js">import <a href="./lib/dot">dot</a> from "npm:@observablehq/dot";</code></pre>
 <pre><code class="language-js">import * as <a href="./lib/duckdb">duckdb</a> from "npm:@duckdb/duckdb-wasm";</code></pre>
 <pre><code class="language-js">import {<a href="./lib/duckdb">DuckDBClient</a>} from "npm:@observablehq/duckdb";</code></pre>
 <pre><code class="language-js">import {<a href="./sql">sql</a>} from "npm:@observablehq/duckdb";</code></pre>
-<pre><code class="language-js">import * as <a href="./lib/inputs">Inputs</a> from "npm:@observablehq/inputs";</code></pre>
+<pre><code class="language-js">import * as <a href="./inputs/">Inputs</a> from "npm:@observablehq/inputs";</code></pre>
 <pre><code class="language-js">import <a href="./lib/mapbox-gl">mapboxgl</a> from "npm:mapbox-gl";</code></pre>
 <pre><code class="language-js">import <a href="./lib/mermaid">mermaid</a> from "npm:@observablehq/mermaid";</code></pre>
 <pre><code class="language-js">import * as <a href="./lib/plot">Plot</a> from "npm:@observablehq/plot";</code></pre>
@@ -222,8 +245,12 @@ Click on any of the imported symbols below to learn more.
 <pre><code class="language-js">import {<a href="./lib/htl">html</a>} from "npm:htl";</code></pre>
 <pre><code class="language-js">import {<a href="./lib/htl">svg</a>} from "npm:htl";</code></pre>
 <pre><code class="language-js">import * as <a href="./lib/leaflet">L</a> from "npm:leaflet";</code></pre>
-<pre><code class="language-js">import <a href="../lib/lodash">_</a> from "npm:lodash";</code></pre>
-<pre><code class="language-js">import * as <a href="../lib/topojson">topojson</a> from "npm:topojson-client";</code></pre>
+<pre><code class="language-js">import <a href="./lib/lodash">_</a> from "npm:lodash";</code></pre>
+<pre><code class="language-js">import * as <a href="./jsx">React</a> from "npm:react";</code></pre>
+<pre><code class="language-js">import * as <a href="./jsx">ReactDOM</a> from "npm:react-dom";</code></pre>
+<pre><code class="language-js">import * as <a href="./lib/topojson">topojson</a> from "npm:topojson-client";</code></pre>
+
+In addition to the above, several implicit imports have slightly more involved definitions: [`now`](./lib/generators#now), [`width`](./lib/generators#width-element), [`dark`](./lib/generators#dark), [`vg`](./lib/mosaic), and [`vl`](./lib/vega-lite).
 
 ## Require
 

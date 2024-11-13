@@ -1,8 +1,12 @@
 import {createHash} from "node:crypto";
 import {extname, join} from "node:path/posix";
+import type {DuckDBConfig} from "./config.js";
+import {cacheDuckDBExtension} from "./duckdb.js";
 import {findAssets} from "./html.js";
 import {defaultGlobals} from "./javascript/globals.js";
+import {isJavaScript} from "./javascript/imports.js";
 import {getFileHash, getModuleHash, getModuleInfo} from "./javascript/module.js";
+import {extractJsrSpecifier, resolveJsrImport, resolveJsrImports} from "./jsr.js";
 import {getImplicitDependencies, getImplicitDownloads} from "./libraries.js";
 import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
@@ -10,13 +14,16 @@ import type {LoaderResolver} from "./loader.js";
 import type {MarkdownPage} from "./markdown.js";
 import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
 import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
-import {isAssetPath, isPathImport, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
+import {isAssetPath, isPathImport, parseRelativeUrl} from "./path.js";
+import {relativePath, resolveLocalPath, resolvePath, resolveRelativePath} from "./path.js";
 
 export interface Resolvers {
   path: string;
   hash: string;
   assets: Set<string>; // like files, but not registered for FileAttachment
   files: Set<string>;
+  anchors: Set<string>;
+  localLinks: Set<string>;
   localImports: Set<string>;
   globalImports: Set<string>;
   staticImports: Set<string>;
@@ -34,12 +41,13 @@ export interface ResolversConfig {
   normalizePath: (path: string) => string;
   globalStylesheets?: string[];
   loaders: LoaderResolver;
+  duckdb: DuckDBConfig;
 }
 
 const defaultImports = [
   "observablehq:client", // Framework client
-  "npm:@observablehq/runtime", // Runtime
-  "npm:@observablehq/stdlib" // Standard library
+  "observablehq:runtime", // Runtime
+  "observablehq:stdlib" // Standard library
 ];
 
 export const builtins = new Map<string, string>([
@@ -52,9 +60,7 @@ export const builtins = new Map<string, string>([
   ["npm:@observablehq/inputs", "/_observablehq/stdlib/inputs.js"], // TODO publish to npm
   ["npm:@observablehq/mermaid", "/_observablehq/stdlib/mermaid.js"], // TODO publish to npm
   ["npm:@observablehq/tex", "/_observablehq/stdlib/tex.js"], // TODO publish to npm
-  ["npm:@observablehq/sqlite", "/_observablehq/stdlib/sqlite.js"], // TODO publish to npm
-  ["npm:@observablehq/xlsx", "/_observablehq/stdlib/xlsx.js"], // TODO publish to npm
-  ["npm:@observablehq/zip", "/_observablehq/stdlib/zip.js"] // TODO publish to npm
+  ["npm:@observablehq/sqlite", "/_observablehq/stdlib/sqlite.js"] // TODO publish to npm
 ]);
 
 /**
@@ -88,6 +94,8 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
   const assets = new Set<string>();
   const files = new Set<string>();
   const fileMethods = new Set<string>();
+  const anchors = new Set<string>();
+  const localLinks = new Set<string>();
   const localImports = new Set<string>();
   const globalImports = new Set<string>(defaultImports);
   const staticImports = new Set<string>(defaultImports);
@@ -98,6 +106,8 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     if (!html) continue;
     const info = findAssets(html, path);
     for (const f of info.files) assets.add(f);
+    for (const a of info.anchors) anchors.add(a);
+    for (const l of info.localLinks) localLinks.add(l);
     for (const i of info.localImports) localImports.add(i);
     for (const i of info.globalImports) globalImports.add(i);
     for (const i of info.staticImports) staticImports.add(i);
@@ -115,6 +125,7 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     for (const i of node.imports) {
       (i.type === "local" ? localImports : globalImports).add(i.name);
       if (i.method === "static") staticImports.add(i.name);
+      if (i.type === "local" && i.method === "resolve" && !isJavaScript(i.name)) files.add(i.name);
     }
   }
 
@@ -123,7 +134,7 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     for (const value of Object.values(page.data.sql)) {
       const source = String(value);
       if (isAssetPath(source)) {
-        files.add(source);
+        files.add(resolveRelativePath(path, source));
       }
     }
   }
@@ -150,6 +161,8 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
     path,
     hash: hash.digest("hex"),
     assets,
+    anchors,
+    localLinks,
     ...(await resolveResolvers(
       {
         files,
@@ -171,6 +184,8 @@ export async function getModuleResolvers(path: string, config: Omit<ResolversCon
     path,
     hash: getModuleHash(root, path),
     assets: new Set(),
+    anchors: new Set(),
+    localLinks: new Set(),
     ...(await resolveResolvers({localImports: [path], staticImports: [path]}, {path, ...config}))
   };
 }
@@ -191,8 +206,8 @@ async function resolveResolvers(
     staticImports?: Iterable<string> | null;
     stylesheets?: Iterable<string> | null;
   },
-  {root, path, normalizePath, loaders}: ResolversConfig
-): Promise<Omit<Resolvers, "path" | "hash" | "assets">> {
+  {root, path, normalizePath, loaders, duckdb}: ResolversConfig
+): Promise<Omit<Resolvers, "path" | "hash" | "assets" | "anchors" | "localLinks">> {
   const files = new Set<string>(initialFiles);
   const fileMethods = new Set<string>(initialFileMethods);
   const localImports = new Set<string>(initialLocalImports);
@@ -240,12 +255,15 @@ async function resolveResolvers(
     globalImports.add(i);
   }
 
-  // Resolve npm: and bare imports. This has the side-effect of populating the
-  // npm import cache with direct dependencies, and the node import cache with
-  // all transitive dependencies.
+  // Resolve npm:, jsr:, and bare imports. This has the side-effect of
+  // populating the npm import cache with direct dependencies, and the node
+  // and jsr import caches with all transitive dependencies.
   for (const i of globalImports) {
-    if (i.startsWith("npm:") && !builtins.has(i)) {
+    if (builtins.has(i)) continue;
+    if (i.startsWith("npm:")) {
       resolutions.set(i, await resolveNpmImport(root, i.slice("npm:".length)));
+    } else if (i.startsWith("jsr:")) {
+      resolutions.set(i, await resolveJsrImport(root, i.slice("jsr:".length)));
     } else if (!/^\w+:/.test(i)) {
       try {
         resolutions.set(i, await resolveNodeImport(root, i));
@@ -255,14 +273,26 @@ async function resolveResolvers(
     }
   }
 
-  // Follow transitive imports of npm and bare imports. This populates the
-  // remainder of the npm import cache.
+  // Follow transitive imports of npm:, jsr:, and bare imports. This populates
+  // the remainder of the import caches.
   for (const [key, value] of resolutions) {
     if (key.startsWith("npm:")) {
       for (const i of await resolveNpmImports(root, value)) {
         if (i.type === "local") {
           const path = resolvePath(value, i.name);
           const specifier = `npm:${extractNpmSpecifier(path)}`;
+          globalImports.add(specifier);
+          resolutions.set(specifier, path);
+        }
+      }
+    } else if (key.startsWith("jsr:")) {
+      for (const i of await resolveJsrImports(root, value)) {
+        if (i.type === "local") {
+          const path = resolvePath(value, i.name);
+          let specifier: string;
+          if (path.startsWith("/_npm/")) specifier = `npm:${extractNpmSpecifier(path)}`;
+          else if (path.startsWith("/_jsr/")) specifier = `jsr:${extractJsrSpecifier(path)}`;
+          else continue;
           globalImports.add(specifier);
           resolutions.set(specifier, path);
         }
@@ -282,7 +312,7 @@ async function resolveResolvers(
   // Resolve transitive static npm: and bare imports.
   const staticResolutions = new Map<string, string>();
   for (const i of staticImports) {
-    if (i.startsWith("npm:") || !/^\w+:/.test(i)) {
+    if (i.startsWith("npm:") || i.startsWith("jsr:") || !/^\w+:/.test(i)) {
       const r = resolutions.get(i);
       if (r) staticResolutions.set(i, r);
     }
@@ -293,6 +323,18 @@ async function resolveResolvers(
         if (i.type === "local" && i.method === "static") {
           const path = resolvePath(value, i.name);
           const specifier = `npm:${extractNpmSpecifier(path)}`;
+          staticImports.add(specifier);
+          staticResolutions.set(specifier, path);
+        }
+      }
+    } else if (key.startsWith("jsr:")) {
+      for (const i of await resolveJsrImports(root, value)) {
+        if (i.type === "local" && i.method === "static") {
+          const path = resolvePath(value, i.name);
+          let specifier: string;
+          if (path.startsWith("/_npm/")) specifier = `npm:${extractNpmSpecifier(path)}`;
+          else if (path.startsWith("/_jsr/")) specifier = `jsr:${extractJsrSpecifier(path)}`;
+          else continue;
           staticImports.add(specifier);
           staticResolutions.set(specifier, path);
         }
@@ -316,17 +358,24 @@ async function resolveResolvers(
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
+    } else if (!specifier.startsWith("observablehq:")) {
+      throw new Error(`unhandled implicit stylesheet: ${specifier}`);
     }
   }
 
   // Add implicit downloads. (This should be maybe be stored separately rather
   // than being tossed into global imports, but it works for now.)
-  for (const specifier of getImplicitDownloads(globalImports)) {
+  for (const specifier of getImplicitDownloads(globalImports, duckdb)) {
     globalImports.add(specifier);
     if (specifier.startsWith("npm:")) {
       const path = await resolveNpmImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
       await populateNpmCache(root, path);
+    } else if (specifier.startsWith("duckdb:")) {
+      const path = await cacheDuckDBExtension(root, specifier.slice("duckdb:".length));
+      resolutions.set(specifier, path);
+    } else if (!specifier.startsWith("observablehq:")) {
+      throw new Error(`unhandled implicit download: ${specifier}`);
     }
   }
 
@@ -410,10 +459,16 @@ export async function getModuleStaticImports(root: string, path: string): Promis
 
   // Collect transitive global imports.
   for (const i of globalImports) {
-    if (i.startsWith("npm:") && !builtins.has(i)) {
+    if (builtins.has(i)) continue;
+    if (i.startsWith("npm:")) {
       const p = await resolveNpmImport(root, i.slice("npm:".length));
       for (const o of await resolveNpmImports(root, p)) {
         if (o.type === "local") globalImports.add(`npm:${extractNpmSpecifier(resolvePath(p, o.name))}`);
+      }
+    } else if (i.startsWith("jsr:")) {
+      const p = await resolveJsrImport(root, i.slice("jsr:".length));
+      for (const o of await resolveJsrImports(root, p)) {
+        if (o.type === "local") globalImports.add(`jsr:${extractJsrSpecifier(resolvePath(p, o.name))}`);
       }
     } else if (!/^\w+:/.test(i)) {
       const p = await resolveNodeImport(root, i);
@@ -441,16 +496,22 @@ export function getModuleResolver(
   return async (specifier) => {
     return isPathImport(specifier)
       ? relativePath(servePath, resolveImportPath(root, resolvePath(path, specifier), getHash))
-      : builtins.has(specifier)
-      ? relativePath(servePath, builtins.get(specifier)!)
-      : specifier.startsWith("observablehq:")
-      ? relativePath(servePath, `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`) // prettier-ignore
+      : builtins.has(specifier) || specifier.startsWith("observablehq:")
+      ? relativePath(servePath, resolveBuiltin(specifier))
       : specifier.startsWith("npm:")
       ? relativePath(servePath, await resolveNpmImport(root, specifier.slice("npm:".length)))
+      : specifier.startsWith("jsr:")
+      ? relativePath(servePath, await resolveJsrImport(root, specifier.slice("jsr:".length)))
       : !/^\w+:/.test(specifier)
       ? relativePath(servePath, await resolveNodeImport(root, specifier))
       : specifier;
   };
+}
+
+export function resolveBuiltin(specifier: string): string {
+  if (builtins.has(specifier)) return builtins.get(specifier)!;
+  if (!specifier.startsWith("observablehq:")) throw new Error(`not built-in: ${specifier}`);
+  return `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`;
 }
 
 export function resolveStylesheetPath(root: string, path: string): string {

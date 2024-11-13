@@ -11,8 +11,8 @@ describe("getImplicitFileImports(files)", () => {
     assert.deepStrictEqual(getImplicitFileImports(["arquero-parquet"]), new Set(["npm:apache-arrow", "npm:arquero", "npm:parquet-wasm"])); // prettier-ignore
     assert.deepStrictEqual(getImplicitFileImports(["parquet"]), new Set(["npm:apache-arrow", "npm:parquet-wasm"]));
     assert.deepStrictEqual(getImplicitFileImports(["sqlite"]), new Set(["npm:@observablehq/sqlite"]));
-    assert.deepStrictEqual(getImplicitFileImports(["xlsx"]), new Set(["npm:@observablehq/xlsx"]));
-    assert.deepStrictEqual(getImplicitFileImports(["zip"]), new Set(["npm:@observablehq/zip"]));
+    assert.deepStrictEqual(getImplicitFileImports(["xlsx"]), new Set(["observablehq:stdlib/xlsx"]));
+    assert.deepStrictEqual(getImplicitFileImports(["zip"]), new Set(["observablehq:stdlib/zip"]));
   });
 });
 
@@ -53,7 +53,7 @@ describe("getImplicitStylesheets(imports)", () => {
 describe("getImplicitDownloads(imports)", () => {
   it("supports known imports", () => {
     assert.deepStrictEqual(
-      getImplicitDownloads(["npm:@observablehq/duckdb"]),
+      getImplicitDownloads(["npm:@observablehq/duckdb"], {extensions: {}, platforms: {mvp: true, eh: true}}),
       new Set([
         "npm:@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm",
         "npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js",
@@ -75,8 +75,8 @@ describe("getImplicitDependencies(imports)", () => {
     assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/inputs"]), new Set(["npm:htl", "npm:isoformat"])); // prettier-ignore
     assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/mermaid"]), new Set(["npm:mermaid"]));
     assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/tex"]), new Set(["npm:katex"]));
-    assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/xlsx"]), new Set(["npm:exceljs"]));
-    assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/zip"]), new Set(["npm:jszip"]));
+    assert.deepStrictEqual(getImplicitDependencies(["observablehq:stdlib/xlsx"]), new Set(["npm:exceljs"]));
+    assert.deepStrictEqual(getImplicitDependencies(["observablehq:stdlib/zip"]), new Set(["npm:jszip"]));
     assert.deepStrictEqual(getImplicitDependencies(["observablehq:stdlib/vega-lite"]), new Set(["npm:vega-lite-api", "npm:vega-lite", "npm:vega"])); // prettier-ignore
   });
 });

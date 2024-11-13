@@ -7,7 +7,7 @@ keywords: [dark, width]
 The Observable standard library includes several generator utilities. These are available by default in Markdown as `Generators`, but you can import them explicitly:
 
 ```js echo
-import {Generators} from "npm:@observablehq/stdlib";
+import {Generators} from "observablehq:stdlib";
 ```
 
 ## input(*element*)
@@ -84,6 +84,10 @@ width
 ## dark() <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
 
 [Source](https://github.com/observablehq/framework/blob/main/src/client/stdlib/generators/dark.ts) · Returns an async generator that yields a boolean indicating whether the page is currently displayed with a dark [color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme).
+
+```js run=false
+const dark = Generators.dark();
+```
 
 If the page supports both light and dark mode (as with the [default theme](../themes)), the value reflects the user’s [preferred color scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme). The generator will yield a new value if the preferred color changes — as when the user changes their system settings, or if the user’s system adapts automatically to the diurnal cycle — allowing you to update the display as needed without requiring a page reload.
 

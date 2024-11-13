@@ -2,19 +2,51 @@
   --theme-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M5 7L8.125 9.5L11.25 7' stroke='black' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
   --theme-toggle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m10.5,11 2.5-3-2.5-3 M6,8h7' fill='none' stroke='black' stroke-width='2'/%3E%3Crect x='2' y='2' fill='currentColor' height='12' rx='0.5' width='2'/%3E%3C/svg%3E");
   --theme-magnifier: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath stroke='currentColor' stroke-width='2' fill='none' d='M15,15L10.5,10.5a3,3 0 1,0 -6 -6a3,3 0 1,0 6 6'%3E%3C/path%3E%3C/svg%3E");
+  --observablehq-max-width: 1440px;
+  --observablehq-header-height: 2.2rem;
+  scroll-padding-top: 2.5rem;
+}
+
+:root:has(#observablehq-header) {
+  scroll-padding-top: calc(var(--observablehq-header-height) + 2.5rem);
+}
+
+body {
+  max-width: var(--observablehq-max-width);
+  margin: auto;
 }
 
 #observablehq-main,
 #observablehq-header,
 #observablehq-footer {
   margin: 1rem auto;
-  max-width: 1152px;
+}
+
+#observablehq-header {
+  position: fixed;
+  top: 0;
+  left: calc(max(0rem, (100vw - var(--observablehq-max-width)) / 2) + var(--observablehq-inset-left) + 2rem);
+  right: calc(max(0rem, (100vw - var(--observablehq-max-width)) / 2) + var(--observablehq-inset-right) + 2rem);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: var(--observablehq-header-height);
+  margin: 0 -2rem 2rem -2rem;
+  padding: 1rem 2rem 0.5rem 2rem;
+  background: var(--theme-background);
+  border-bottom: solid 1px var(--theme-foreground-faintest);
+  font: 500 16px var(--sans-serif);
 }
 
 #observablehq-main {
   min-height: calc(100vh - 20rem);
   position: relative;
   z-index: 0;
+}
+
+#observablehq-header ~ #observablehq-main {
+  margin-top: calc(var(--observablehq-header-height) + 1.5rem + 2rem);
 }
 
 #observablehq-footer {
@@ -77,23 +109,26 @@
 }
 
 #observablehq-center {
-  margin: 1rem 2rem;
+  margin: 2rem;
+  --observablehq-inset-left: 0rem;
+  --observablehq-inset-right: 0rem;
 }
 
 #observablehq-sidebar {
+  --observablehq-sidebar-padding-left: calc(max(0rem, (100vw - var(--observablehq-max-width)) / 2));
   position: fixed;
   background: var(--theme-background-alt);
   color: var(--theme-foreground-muted);
   font: 14px var(--sans-serif);
   visibility: hidden;
   font-weight: 500;
-  width: 272px;
-  z-index: 2;
+  width: calc(272px + var(--observablehq-sidebar-padding-left));
+  z-index: 3;
   top: 0;
   bottom: 0;
   left: -272px;
   box-sizing: border-box;
-  padding: 0 0.5rem 1rem 0.5rem;
+  padding: 0 0.5rem 1rem calc(var(--observablehq-sidebar-padding-left) + 0.5rem);
   overflow-y: auto;
 }
 
@@ -117,14 +152,26 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--theme-background-alt);
   font-size: 16px;
   font-weight: 700;
   padding-top: 1rem;
-  padding-left: 0.5rem;
   margin: 0;
-  margin-left: -0.5rem;
   color: var(--theme-foreground);
+}
+
+#observablehq-sidebar > ol:first-child::before {
+  content: "";
+  position: absolute;
+  inset: 0 -0.5rem;
+  background: var(--theme-background-alt);
+}
+
+#observablehq-sidebar > ol:first-child > li {
+  position: relative;
+}
+
+#observablehq-sidebar > ol:first-child > li > a {
+  height: calc(var(--observablehq-header-height) - 1rem);
 }
 
 #observablehq-sidebar > ol:last-child,
@@ -193,7 +240,7 @@
   top: 1rem;
   right: 0;
   width: 2rem;
-  height: 2.2rem;
+  height: var(--observablehq-header-height);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -251,9 +298,13 @@
   font: 400 14px var(--sans-serif);
   z-index: 1;
   top: 0;
-  right: 0;
+  right: calc(max(0rem, (100% - var(--observablehq-max-width)) / 2) + 1rem);
   bottom: 0;
   overflow-y: auto;
+}
+
+#observablehq-header ~ #observablehq-toc {
+  top: calc(var(--observablehq-header-height) + 1.5rem);
 }
 
 #observablehq-toc nav {
@@ -358,17 +409,18 @@
     left: 0;
     visibility: initial;
     box-shadow: none;
-    border-right: solid 1px var(--theme-foreground-faintest);
   }
   #observablehq-sidebar-toggle:checked ~ #observablehq-center,
   #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center {
-    padding-left: calc(272px + 1rem);
+    --observablehq-inset-left: calc(272px + 1rem);
+    --observablehq-inset-right: 1rem;
+    padding-left: var(--observablehq-inset-left);
     padding-right: 1rem;
   }
 }
 
-@media (min-width: calc(640px + 6rem + 192px)) {
-  #observablehq-toc ~ #observablehq-center {
+@media (min-width: calc(640px + 5rem + 192px)) {
+  #observablehq-toc ~ #observablehq-main {
     padding-right: calc(192px + 1rem);
   }
   #observablehq-toc {
@@ -377,21 +429,24 @@
 }
 
 @media (min-width: calc(640px + 6rem + 272px)) {
-  #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
-  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center #observablehq-toc,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-toc {
     display: none;
+  }
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center #observablehq-toc ~ #observablehq-main,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-toc ~ #observablehq-main {
+    padding-right: 0;
   }
 }
 
-@media (min-width: calc(640px + 6rem + 272px + 192px)) {
-  #observablehq-sidebar-toggle:checked ~ #observablehq-toc,
-  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc,
+@media (min-width: calc(640px + 7rem + 272px + 192px)) {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center #observablehq-toc,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-toc,
   #observablehq-toc {
     display: block;
   }
-  #observablehq-sidebar-toggle:checked ~ #observablehq-toc ~ #observablehq-center,
-  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-toc ~ #observablehq-center,
-  #observablehq-toc ~ #observablehq-center {
+  #observablehq-sidebar-toggle:checked ~ #observablehq-center #observablehq-toc ~ #observablehq-main,
+  #observablehq-sidebar-toggle:indeterminate ~ #observablehq-center #observablehq-toc ~ #observablehq-main {
     padding-right: calc(192px + 1rem);
   }
 }
@@ -539,7 +594,7 @@
   position: absolute;
   overflow-y: auto;
   top: 6.5rem;
-  left: 0;
+  left: var(--observablehq-sidebar-padding-left);
   right: 0.5rem;
   bottom: 0;
 }

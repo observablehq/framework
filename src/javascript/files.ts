@@ -51,7 +51,7 @@ export function findFiles(
   // Support namespace imports? Error if stdlib is expressed with a version?
   simple(body, {
     ImportDeclaration(node) {
-      if (node.source.value === "npm:@observablehq/stdlib") {
+      if (node.source.value === "observablehq:stdlib" || node.source.value === "npm:@observablehq/stdlib") {
         for (const specifier of node.specifiers) {
           if (
             specifier.type === "ImportSpecifier" &&

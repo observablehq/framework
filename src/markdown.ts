@@ -3,10 +3,10 @@ import {createHash} from "node:crypto";
 import slugify from "@sindresorhus/slugify";
 import he from "he";
 import MarkdownIt from "markdown-it";
-import type {Token} from "markdown-it";
-import type {RuleCore} from "markdown-it/lib/parser_core.js";
-import type {RuleInline} from "markdown-it/lib/parser_inline.js";
-import type {RenderRule} from "markdown-it/lib/renderer.js";
+import type {RuleCore} from "markdown-it/lib/parser_core.mjs";
+import type {RuleInline} from "markdown-it/lib/parser_inline.mjs";
+import type {RenderRule} from "markdown-it/lib/renderer.mjs";
+import type Token from "markdown-it/lib/token.mjs";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
@@ -40,6 +40,7 @@ export interface MarkdownPage {
   data: FrontMatter;
   style: string | null;
   code: MarkdownCode[];
+  path: string;
   params?: Params;
 }
 
@@ -216,6 +217,7 @@ export interface ParseOptions {
   head?: Config["head"];
   header?: Config["header"];
   footer?: Config["footer"];
+  source?: string;
   params?: Params;
 }
 
@@ -242,7 +244,7 @@ export function createMarkdownIt({
 }
 
 export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
-  const {md, path, params} = options;
+  const {md, path, source = path, params} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
   const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params};
@@ -258,6 +260,7 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
     title,
     style: getStyle(data, options),
     code,
+    path: source,
     params
   };
 }

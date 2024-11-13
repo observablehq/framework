@@ -7,13 +7,8 @@ import {cwd} from "node:process";
 import {fileURLToPath} from "node:url";
 import {isEnoent} from "./error.js";
 
-export function toOsPath(path: string): string {
-  return path.split(sep).join(op.sep);
-}
-
-export function fromOsPath(path: string): string {
-  return path.split(op.sep).join(sep);
-}
+export const toOsPath = sep === op.sep ? (path: string) => path : (path: string) => path.split(sep).join(op.sep);
+export const fromOsPath = sep === op.sep ? (path: string) => path : (path: string) => path.split(op.sep).join(sep);
 
 /**
  * Returns the relative path from the current working directory to the given
@@ -50,17 +45,21 @@ export function* visitFiles(root: string, test?: (name: string) => boolean): Gen
   const visited = new Set<number>();
   const queue: string[] = [(root = normalize(root))];
   for (const path of queue) {
-    const status = statSync(path);
-    if (status.isDirectory()) {
-      if (visited.has(status.ino)) continue; // circular symlink
-      visited.add(status.ino);
-      for (const entry of readdirSync(path)) {
-        if (entry === ".observablehq") continue; // ignore the .observablehq directory
-        if (test !== undefined && !test(entry)) continue;
-        queue.push(join(path, entry));
+    try {
+      const status = statSync(path);
+      if (status.isDirectory()) {
+        if (visited.has(status.ino)) continue; // circular symlink
+        visited.add(status.ino);
+        for (const entry of readdirSync(path)) {
+          if (entry === ".observablehq") continue; // ignore the .observablehq directory
+          if (test !== undefined && !test(entry)) continue;
+          queue.push(join(path, entry));
+        }
+      } else {
+        yield relative(root, path);
       }
-    } else {
-      yield relative(root, path);
+    } catch (error) {
+      if (!isEnoent(error)) throw error;
     }
   }
 }

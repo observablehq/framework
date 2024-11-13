@@ -16,7 +16,7 @@ Data loaders are polyglot: they can be written in any programming language. They
 A data loader can be as simple as a shell script that invokes [curl](https://curl.se/) to fetch recent earthquakes from the [USGS](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php):
 
 ```sh
-curl https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson
+curl -f https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson
 ```
 
 Data loaders use [file-based routing](#routing), so assuming this shell script is named `quakes.json.sh`, a `quakes.json` file is then generated at build time. You can access this file from the client using [`FileAttachment`](./files):
@@ -230,7 +230,7 @@ If multiple requests are made concurrently for the same data loader, the data lo
 
 ## Output
 
-Data loaders must output to [standard output](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) does not affect the generated snapshot; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to standard error, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn) or `process.stderr`; otherwise the logs will be included in the output file and sent to the client.
+Data loaders must output to [standard output](<https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)>). The first extension (such as `.csv`) does not affect the generated snapshot; the data loader is solely responsible for producing the expected output (such as CSV). If you wish to log additional information from within a data loader, be sure to log to standard error, say by using [`console.warn`](https://developer.mozilla.org/en-US/docs/Web/API/console/warn) or `process.stderr`; otherwise the logs will be included in the output file and sent to the client. If you use `curl` as above, we recommend the `-f` flag (equivalently, the `--fail` option) to make the data loader return an error when the download fails.
 
 ## Building
 
@@ -247,7 +247,7 @@ Data loaders generate files at build time that live alongside other [static file
 Where `quakes.json.sh` is:
 
 ```sh
-curl https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson
+curl -f https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson
 ```
 
 This will produce the following output root:

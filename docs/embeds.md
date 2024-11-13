@@ -1,37 +1,41 @@
-# Embedded analytics <a href="https://github.com/observablehq/framework/pull/1637" class="observablehq-version-badge" data-version="prerelease" title="Added in #1637"></a>
+---
+keywords: embedded analytics, embeds, iframe, exporting, exports
+---
 
-In addition to generating full-page apps, Framework can generate modules to embed analytics — such as individual charts or tables, or coordinated interactive views — in external applications. Embedded modules take full advantage of Framework’s polyglot, baked data architecture for instant page loads.
+# Embedding <a href="https://github.com/observablehq/framework/releases/tag/v1.12.0" class="observablehq-version-badge" data-version="^1.12.0" title="Added in 1.12.0"></a>
 
-Embedded modules are vanilla JavaScript, and behave identically when embedded in an external application as on a Framework page. As always, you can load data from a [data loader](./data-loaders) using [`FileAttachment`](./files), and you can [import](./imports) [self-hosted](./imports#self-hosting-of-npm-imports) local modules and libraries from npm; file and import resolutions are baked into the generated code at build time so that imported modules “just work”.
+In addition to standalone apps, you can use Framework to embed interactive views within other applications. Framework supports multiple approaches to embedding:
 
-Embedded modules are often written as component functions that return DOM elements. These functions can take options (or “props”), and typically load their own data. For example, below is a simple `chart.js` module that exports a `Chart` function that renders a scatterplot of global surface temperature data.
+- [exported modules](#exported-modules) for seamless integration and performance,
+- [exported files](#exported-files) for hotlinking images, data, and other assets, or
+- [iframe embeds](#iframe-embeds) for compatibility.
+
+## Exported modules
+
+Framework allows [JavaScript modules](./imports#local-imports) to be exported for use in another application. Exported modules are vanilla JavaScript and behave identically in an external web application as on a Framework page. As with local modules, exported modules can load data from a [static file](./files) or a [data loader](./data-loaders), [import](./imports) other local modules, and import libraries from [npm](./imports#npm-imports) or [JSR](./imports#jsr-imports).
+
+Exported modules typically define **data components**: functions that render dynamic content, such as a chart or table, by returning a DOM element. Data components can take options (or “props”), and load any needed data using [`FileAttachment`](./files). For example, the `chart.js` module below exports a `Chart` data component that loads a CSV file and renders a responsive scatterplot of global surface temperature.
 
 ```js run=false
-import {FileAttachment} from "npm:@observablehq/stdlib";
 import * as Plot from "npm:@observablehq/plot";
+import {FileAttachment, resize} from "observablehq:stdlib";
 
 export async function Chart() {
   const gistemp = await FileAttachment("./lib/gistemp.csv").csv({typed: true});
-  return Plot.plot({
-    y: {grid: true},
-    color: {scheme: "burd"},
-    marks: [
-      Plot.dot(gistemp, {x: "Date", y: "Anomaly", stroke: "Anomaly"}),
-      Plot.ruleY([0])
-    ]
-  });
+  return resize((width) =>
+    Plot.plot({
+      width,
+      y: {grid: true},
+      color: {scheme: "burd"},
+      marks: [Plot.dot(gistemp, {x: "Date", y: "Anomaly", stroke: "Anomaly"}), Plot.ruleY([0])]
+    })
+  );
 }
 ```
 
-<div class="note">
+Data components benefit from Framework’s baked data architecture for instant loads. File and import resolutions are baked into exported modules at build time. Libraries from npm are [self-hosted](./imports#self-hosting-of-npm-imports) for stability, security, and performance. And transitive static imports are preloaded to avoid long request chains.
 
-When Framework builds your app, any transitive static imports are preloaded automatically when the embedded module is imported. This ensures optimal performance by avoiding long request chains.
-
-</div>
-
-## Embedding modules
-
-To allow a module to be embedded in an external application, declare the module’s path in your [config file](./config) using the [**dynamicPaths** option](./config#dynamic-paths). For example, to embed a single component named `chart.js`:
+To export a module, declare the module’s path in your [config file](./config) using the [**dynamicPaths** option](./config#dynamic-paths). For example, to export the module named `chart.js`:
 
 ```js run=false
 export default {
@@ -41,7 +45,7 @@ export default {
 };
 ```
 
-Or for [parameterized routes](./params), name the component `product-[id]/chart.js`, then load a list of product identifiers from a database with a SQL query:
+Or for [parameterized routes](./params), name the module `product-[id]/chart.js`, then load a list of product identifiers from a database with a SQL query:
 
 ```js run=false
 import postgres from "postgres";
@@ -57,7 +61,9 @@ export default {
 };
 ```
 
-An embedded component can be imported into a vanilla web application like so:
+### Importing exported modules
+
+An exported module can then be imported into a vanilla web application like so:
 
 ```html run=false
 <script type="module">
@@ -69,15 +75,9 @@ document.body.append(await Chart());
 </script>
 ```
 
-<div class="note">
+<div class="warning" label="Coming soon">
 
-The code above assumes the Framework app is called “my-app” and that it’s deployed to Observable Cloud in the workspace named “my-workspace”.
-
-</div>
-
-<div class="note">
-
-If the external (host) application is on a different origin than the Framework app — for example, if the host application is on example.com and the Framework app is on app.example.com — then you will need to [enable CORS](https://enable-cors.org/) on app.example.com or use a proxy to forward requests from example.com to app.example.com for same-origin serving.
+Observable Cloud support for cross-origin resource sharing (CORS) is not yet generally available and is needed for exported modules. If you are interested in beta-testing this feature, please [email us](mailto:support@observablehq.com). For public apps, you can use a third-party host supporting CORS such as GitHub Pages.
 
 </div>
 
@@ -103,28 +103,60 @@ export function EmbedChart() {
 
 <div class="tip">
 
-Since both dynamic import and the imported component are async, the code above is careful to clean up the effect and avoid race conditions.
+Some web tooling such as Vite and Webpack erroneously rewrite external dynamic imports. You may need to include a comment such as `import(/* @vite-ignore */ …)` or `import(/* webpackIgnore: true */ …)` to disable this behavior.
 
 </div>
 
-<div class="tip">
+## Exported files
 
-You can alternatively embed Framework pages using [iframe embeds](https://observablehq.observablehq.cloud/framework-example-responsive-iframe/).
+You can declare specific files to export using the [**dynamicPaths** config option](./config#dynamic-paths). Exported files are published under a stable URL that can be linked to and loaded from an external application. Exported files can be either [static](./files) or generated dynamically by [data loaders](./data-loaders). And you can use [parameterized routes](./params).
 
-</div>
+For example, say you want to chart downloads of open-source libraries you maintain. You could use a data loader to server-side render SVG with Observable Plot. (See Plot’s [Getting Started](https://observablehq.com/plot/getting-started#plot-in-node-js) guide.) In your config file, list the charts you want to build:
 
-## Developing modules
-
-To develop your component, you can import it into a Framework page like normal, giving you instant reactivity as you make changes to the component or its data.
-
-```js echo
-import {Chart} from "./chart.js";
+```js run=false
+export default {
+  dynamicPaths: [
+    "/@observablehq/framework/downloads-dark.svg",
+    "/@observablehq/framework/downloads.svg",
+    "/@observablehq/plot/downloads-dark.svg",
+    "/@observablehq/plot/downloads.svg",
+    "/@observablehq/runtime/downloads-dark.svg",
+    "/@observablehq/runtime/downloads.svg"
+  ]
+};
 ```
 
-To instantiate the imported component, simply call the function:
+Once your app is deployed, you can then load the generated SVG into another app — or READMEs on GitHub — using the `img` tag. For example, below is a chart of daily downloads of Observable Framework powered by our [open-source analytics](https://github.com/observablehq/oss-analytics/).
 
-```js echo
-Chart()
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads-dark.svg">
+  <img style="margin-top: 1rem;" alt="Daily downloads of Observable Framework" src="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads.svg">
+</picture>
+
+```html run=false
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads-dark.svg">
+  <img alt="Daily downloads of Observable Framework" src="https://observablehq.observablehq.cloud/oss-analytics/@observablehq/framework/downloads.svg">
+</picture>
 ```
 
-A Framework page can serve as live documentation for your component: you can describe and demonstrate all the states and options for your component, and review the behavior visually.
+## Iframe embeds
+
+You can alternatively embed Framework pages using iframes. Pages that are intended to be embedded via iframe typically disable Framework’s built-in user interface using [Markdown front matter](./markdown#front-matter):
+
+```yaml
+---
+sidebar: false
+header: false
+footer: false
+pager: false
+---
+```
+
+For the page `/chart`, you can declare an iframe like so:
+
+```html run=false
+<iframe scrolling="no" src="https://my-workspace.observablehq.cloud/my-app/chart"></iframe>
+```
+
+With a little bit of additional JavaScript, you can also implement [responsive iframe embeds](https://observablehq.observablehq.cloud/framework-example-responsive-iframe/) which resize automatically to fit the content of the page.

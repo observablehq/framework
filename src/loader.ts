@@ -78,24 +78,14 @@ export class LoaderResolver {
   }
 
   /**
-   * Loads the file at the specified path, returning a promise to the path to
-   * the (possibly generated) file relative to the source root.
-   */
-  async loadFile(path: string, options?: LoadOptions, effects?: LoadEffects): Promise<string> {
-    const loader = this.find(path);
-    if (!loader) throw enoent(path);
-    return await loader.load(options, effects);
-  }
-
-  /**
    * Loads the page at the specified path, returning a promise to the parsed
    * page object.
    */
   async loadPage(path: string, options: LoadOptions & ParseOptions, effects?: LoadEffects): Promise<MarkdownPage> {
     const loader = this.findPage(path);
     if (!loader) throw enoent(path);
-    const source = await readFile(join(this.root, await loader.load(options, effects)), "utf8");
-    return parseMarkdown(source, {params: loader.params, ...options});
+    const input = await readFile(join(this.root, await loader.load(options, effects)), "utf8");
+    return parseMarkdown(input, {source: loader.path, params: loader.params, ...options});
   }
 
   /**

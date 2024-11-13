@@ -74,7 +74,7 @@ const digraph = dot`digraph {
   ${digraph}
 </figure>
 
-First you’ll setup your local development environment by [**creating**](#1.-create) a new project. A project contains all the source code needed to build an app. Next you’ll [**develop**](#2.-develop): an iterative process where you save changes to source files in your editor while previewing the result in your browser. When you’re ready to share, it’s time to [**publish**](#3.-publish): you can either build a static site for self-hosting or deploy directly to Observable. Lastly, you can invite people to view your app!
+First you’ll setup your local development environment by [**creating**](#1-create) a new project. A project contains all the source code needed to build an app. Next you’ll [**develop**](#2-develop): an iterative process where you save changes to source files in your editor while previewing the result in your browser. When you’re ready to share, it’s time to [**publish**](#3-publish): you can either build a static site for self-hosting or deploy directly to Observable. Lastly, you can invite people to view your app!
 
 These are just first steps. You can continue to develop apps after publishing, and republish as needed. You can also setup continuous deployment to publish your app automatically on commit or on schedule. We’ll cover these [next steps](#next-steps) briefly below.
 
@@ -84,7 +84,7 @@ Framework includes a helper script (`observable create`) for creating new apps. 
 
 <div class="tip">
   <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 18 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) that runs in the terminal.</p>
-  <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit the <a href="https://talk.observablehq.com">Observable forum</a> or our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
+  <p>If you run into difficulty following this tutorial, we’re happy to help! Please visit our <a href="https://github.com/observablehq/framework/discussions">GitHub discussions</a>.</p>
 </div>
 
 To create a new app with npm, run:
@@ -148,7 +148,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.11.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.12.0
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="note">
@@ -535,6 +535,12 @@ The <code>build</code> command generates the `dist` directory; you can then copy
 
 <pre data-copy>npx http-server dist</pre>
 
+<div class="tip">By default, Framework generates “clean” URLs by dropping the `.html` extension from page links. Not all webhosts support this; some need the <a href="./config#preserve-extension"><b>preserveExtension</b> config option</a> set to true.</div>
+
+<div class="tip">When deploying to GitHub Pages without using GitHub’s related actions (<a href="https://github.com/actions/configure-pages">configure-pages</a>,
+<a href="https://github.com/actions/deploy-pages">deploy-pages</a>, and
+<a href="https://github.com/actions/upload-pages-artifact">upload-pages-artifact</a>), you may need to create a <code>.nojekyll</code> file in your <code>dist</code> folder after building. See GitHub’s documentation on <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#static-site-generators">static site generators</a> for more.</div>
+
 ## Next steps
 
 Here are a few more tips.
@@ -577,4 +583,4 @@ or
 
 ### Ask for help, or share your feedback
 
-Please reach out if you have questions or thoughts! You can post on the <a href="https://talk.observablehq.com/">Observable forum</a>, start a <a href="https://github.com/observablehq/framework/discussions">GitHub discussion</a>, or file a <a href="https://github.com/observablehq/framework/issues">GitHub issue</a>. And if you like Framework, please give us a star ⭐️ on <a href="https://github.com/observablehq/framework">GitHub</a> — we appreciate your support. 🙏
+Please reach out if you have questions or thoughts! You can start a <a href="https://github.com/observablehq/framework/discussions">GitHub discussion</a> to ask for help or share your work, or file a <a href="https://github.com/observablehq/framework/issues">GitHub issue</a> to report a bug or request a feature. If you like Framework, please give us a star ⭐️ on <a href="https://github.com/observablehq/framework">GitHub</a> — we appreciate your support. 🙏

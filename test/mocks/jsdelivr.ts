@@ -1,7 +1,8 @@
 import {getCurrentAgent, mockAgent} from "./undici.js";
 
-const packages: [name: string, {version: string; dependencies?: Record<string, string>}][] = [
-  ["@duckdb/duckdb-wasm", {version: "1.28.0"}],
+const packages: [name: string, {version: string; contents?: string; dependencies?: Record<string, string>}][] = [
+  ["@duckdb/duckdb-wasm", {version: "1.29.0"}],
+  ["@example/url-import", {version: "1.0.0", contents: "import('https://example.com');"}],
   ["@observablehq/inputs", {version: "0.10.6"}],
   ["@observablehq/plot", {version: "0.6.11"}],
   ["@observablehq/sample-datasets", {version: "1.0.1"}],
@@ -15,6 +16,7 @@ const packages: [name: string, {version: string; dependencies?: Record<string, s
   ["echarts", {version: "5.5.0"}],
   ["exceljs", {version: "4.4.0"}],
   ["htl", {version: "0.3.1"}],
+  ["isoformat", {version: "0.2.1"}],
   ["jszip", {version: "3.10.1"}],
   ["katex", {version: "0.16.9"}],
   ["leaflet", {version: "1.9.4"}],
@@ -32,12 +34,16 @@ export function mockJsDelivr() {
   mockAgent();
   before(async () => {
     const agent = getCurrentAgent();
-    const dataClient = agent.get("https://data.jsdelivr.com");
+    const registryClient = agent.get("https://registry.npmjs.org");
     const cdnClient = agent.get("https://cdn.jsdelivr.net");
     for (const [name, pkg] of packages) {
-      dataClient
-        .intercept({path: new RegExp(`^/v1/packages/npm/${name}/resolved(\\?specifier=|$)`), method: "GET"})
+      registryClient
+        .intercept({path: `/${name}/latest`, method: "GET"})
         .reply(200, {version: pkg.version}, {headers: {"content-type": "application/json; charset=utf-8"}})
+        .persist();
+      registryClient
+        .intercept({path: `/${name}`, method: "GET"})
+        .reply(200, {versions: {[pkg.version]: {}}}, {headers: {"content-type": "application/json; charset=utf-8"}})
         .persist();
       cdnClient
         .intercept({path: `/npm/${name}@${pkg.version}/package.json`, method: "GET"})
@@ -45,7 +51,7 @@ export function mockJsDelivr() {
         .persist(); // prettier-ignore
       cdnClient
         .intercept({path: new RegExp(`^/npm/${name}@${pkg.version}/`), method: "GET"})
-        .reply(200, "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}})
+        .reply(200, pkg.contents ?? "", {headers: {"cache-control": "public, immutable", "content-type": "text/javascript; charset=utf-8"}})
         .persist(); // prettier-ignore
     }
   });

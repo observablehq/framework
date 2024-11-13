@@ -15,7 +15,7 @@ import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
 import {isAssetPath, resolvePath, resolveRelativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
-import {getModuleStaticImports, getResolvers} from "./resolvers.js";
+import {getModuleResolver, getModuleStaticImports, getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
 
 export interface RenderOptions extends Config {
@@ -36,6 +36,8 @@ export async function renderPage(page: MarkdownPage, options: RenderOptions & Re
   const toc = mergeToc(data.toc, options.toc);
   const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
+<html>
+<head>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="generator" content="Observable Framework v${process.env.npm_package_version}">
@@ -79,15 +81,19 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
       : ""
   }${data?.sql ? `\n${registerTables(data.sql, options)}` : ""}
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
-    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, params, mode, resolveImport})}`)
+    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, params, mode, resolveImport, resolveFile})}`)
     .join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}${
+</script>
+</head>
+<body>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}
+<div id="observablehq-center">${renderHeader(page.header, resolvers)}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(page.header, resolvers)}
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
 ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
 </div>
+</body>
+</html>
 `);
 }
 
@@ -132,7 +138,7 @@ function registerFile(
 }
 
 async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink}: Resolvers): Promise<Html> {
-  const {title = "Home", pages, root, path, search} = options;
+  const {home, pages, root, path, search} = options;
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -140,7 +146,7 @@ async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
-    }"><a href="${encodeURI(resolveLink("/"))}">${title}</a></li>
+    }"><a href="${encodeURI(resolveLink("/"))}">${html.unsafe(home)}</a></li>
   </ol>${
     search
       ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
@@ -281,16 +287,26 @@ function hasGoogleFonts(stylesheets: Set<string>): boolean {
   return false;
 }
 
+export type RenderModuleOptions = Omit<TranspileModuleOptions, "root" | "path" | "servePath" | "params">;
+
 export async function renderModule(
   root: string,
   path: string,
-  options?: Omit<TranspileModuleOptions, "root" | "path" | "servePath" | "params">
+  {resolveImport = getModuleResolver(root, path), ...options}: RenderModuleOptions = {}
 ): Promise<string> {
   const module = findModule(root, path);
   if (!module) throw enoent(path);
-  const input = `${(await getModuleStaticImports(root, path))
-    .map((i) => `import ${JSON.stringify(i)};\n`)
-    .join("")}export * from ${JSON.stringify(path)};
-`;
-  return await transpileModule(input, {root, path, servePath: path, params: module.params, ...options});
+  const imports = new Set<string>();
+  const resolutions = new Set<string>();
+  for (const i of await getModuleStaticImports(root, path)) {
+    const r = await resolveImport(i);
+    if (!resolutions.has(r)) {
+      resolutions.add(r);
+      imports.add(i);
+    }
+  }
+  const input = Array.from(imports, (i) => `import ${JSON.stringify(i)};\n`)
+    .concat(`export * from ${JSON.stringify(path)};\n`)
+    .join("");
+  return await transpileModule(input, {root, path, servePath: path, params: module.params, resolveImport, ...options});
 }

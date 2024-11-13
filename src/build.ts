@@ -1,8 +1,10 @@
 import {createHash} from "node:crypto";
+import {existsSync} from "node:fs";
 import {copyFile, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
-import {CliError} from "./error.js";
+import {getDuckDBManifest} from "./duckdb.js";
+import {CliError, enoent} from "./error.js";
 import {getClientPath, prepareOutput} from "./files.js";
 import {findModule, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
@@ -52,7 +54,7 @@ export async function build(
   {config}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
-  const {root, loaders} = config;
+  const {root, loaders, title, duckdb} = config;
   Telemetry.record({event: "build", step: "start"});
 
   // Prepare for build (such as by emptying the existing output root).
@@ -70,6 +72,28 @@ export async function build(
   const addStylesheet = (path: string, s: string) => stylesheets.add(/^\w+:/.test(s) ? s : resolvePath(path, s));
 
   // Load pages, building a list of additional assets as we go.
+  let assetCount = 0;
+  let pageCount = 0;
+  const pagePaths = new Set<string>();
+
+  const buildManifest: BuildManifest = {
+    ...(title && {title}),
+    config: {root},
+    pages: [],
+    modules: [],
+    files: []
+  };
+
+  // file is the serving path relative to the base (e.g., /foo)
+  // path is the source file relative to the source root (e.g., /foo.md)
+  const addToManifest = (type: string, file: string, {title, path}: {title?: string | null; path: string}) => {
+    buildManifest[type].push({
+      path: config.normalizePath(file),
+      source: join("/", path), // TODO have route return path with leading slash?
+      ...(title != null && {title})
+    });
+  };
+
   for await (const path of config.paths()) {
     effects.output.write(`${faint("load")} ${path} `);
     const start = performance.now();
@@ -85,8 +109,19 @@ export async function build(
         for (const s of resolvers.stylesheets) addStylesheet(path, s);
         effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
         outputs.set(path, {type: "module", resolvers});
+        ++assetCount;
+        addToManifest("modules", path, module);
         continue;
       }
+    }
+    const file = loaders.find(path);
+    if (file) {
+      effects.output.write(`${faint("copy")} ${join(root, path)} ${faint("→")} `);
+      const sourcePath = join(root, await file.load({useStale: true}, effects));
+      await effects.copyFile(sourcePath, path);
+      addToManifest("files", path, file);
+      ++assetCount;
+      continue;
     }
     const page = await loaders.loadPage(path, options, effects);
     if (page.data.draft) {
@@ -101,13 +136,16 @@ export async function build(
     for (const i of resolvers.globalImports) addGlobalImport(path, resolvers.resolveImport(i));
     for (const s of resolvers.stylesheets) addStylesheet(path, s);
     effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
+    pagePaths.add(path);
     outputs.set(path, {type: "page", page, resolvers});
+    ++pageCount;
   }
 
   // Check that there’s at least one output.
-  const outputCount = outputs.size;
+  const outputCount = pageCount + assetCount;
   if (!outputCount) throw new CliError(`Nothing to build: no pages found in your ${root} directory.`);
-  effects.logger.log(`${faint("built")} ${outputCount} ${faint(`page${outputCount === 1 ? "" : "s"} in`)} ${root}`);
+  if (pageCount) effects.logger.log(`${faint("built")} ${pageCount} ${faint(`page${pageCount === 1 ? "" : "s"} in`)} ${root}`); // prettier-ignore
+  if (assetCount) effects.logger.log(`${faint("built")} ${assetCount} ${faint(`asset${assetCount === 1 ? "" : "s"} in`)} ${root}`); // prettier-ignore
 
   // For cache-breaking we rename most assets to include content hashes.
   const aliases = new Map<string, string>();
@@ -116,12 +154,27 @@ export async function build(
   // Add the search bundle and data, if needed.
   if (config.search) {
     globalImports.add("/_observablehq/search.js").add("/_observablehq/minisearch.json");
-    const contents = await searchIndex(config, effects);
+    const contents = await searchIndex(config, pagePaths, effects);
     effects.output.write(`${faint("index →")} `);
     const cachePath = join(cacheRoot, "_observablehq", "minisearch.json");
     await prepareOutput(cachePath);
     await writeFile(cachePath, contents);
     effects.logger.log(cachePath);
+  }
+
+  // Copy over the DuckDB extensions, initializing aliases that are needed to
+  // construct the DuckDB manifest.
+  for (const path of globalImports) {
+    if (path.startsWith("/_duckdb/")) {
+      const sourcePath = join(cacheRoot, path);
+      effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
+      const contents = await readFile(sourcePath);
+      const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+      const [, , , version, bundle, name] = path.split("/");
+      const alias = join("/_duckdb/", `${basename(name, ".duckdb_extension.wasm")}-${hash}`, version, bundle, name);
+      aliases.set(path, alias);
+      await effects.writeFile(alias, contents);
+    }
   }
 
   // Generate the client bundles. These are initially generated into the cache
@@ -133,6 +186,7 @@ export async function build(
       effects.output.write(`${faint("bundle")} ${path} ${faint("→")} `);
       const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
       const define: {[key: string]: string} = {};
+      if (path === "/_observablehq/stdlib/duckdb.js") define["DUCKDB_MANIFEST"] = JSON.stringify(await getDuckDBManifest(duckdb, {root, aliases})); // prettier-ignore
       const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
       await prepareOutput(cachePath);
       await writeFile(cachePath, contents);
@@ -176,7 +230,10 @@ export async function build(
   // Copy over referenced files, accumulating hashed aliases.
   for (const file of files) {
     effects.output.write(`${faint("copy")} ${join(root, file)} ${faint("→")} `);
-    const sourcePath = join(root, await loaders.loadFile(join("/", file), {useStale: true}, effects));
+    const path = join("/", file);
+    const loader = loaders.find(path);
+    if (!loader) throw enoent(path);
+    const sourcePath = join(root, await loader.load({useStale: true}, effects));
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const alias = applyHash(join("/_file", file), hash);
@@ -186,9 +243,10 @@ export async function build(
 
   // Copy over global assets (e.g., minisearch.json, DuckDB’s WebAssembly).
   // Anything in _observablehq also needs a content hash, but anything in _npm
-  // or _node does not (because they are already necessarily immutable).
+  // or _node does not (because they are already necessarily immutable). We’re
+  // skipping DuckDB’s extensions because they were previously copied above.
   for (const path of globalImports) {
-    if (path.endsWith(".js")) continue;
+    if (path.endsWith(".js") || path.startsWith("/_duckdb/")) continue;
     const sourcePath = join(cacheRoot, path);
     effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
     if (path.startsWith("/_observablehq/")) {
@@ -221,7 +279,7 @@ export async function build(
     if (!path.endsWith(".js")) continue;
     const sourcePath = join(cacheRoot, path);
     effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
-    const resolveImport = (i: string) => relativePath(path, aliases.get((i = resolvePath(path, i))) ?? i);
+    const resolveImport = (i: string) => isPathImport(i) ? relativePath(path, aliases.get((i = resolvePath(path, i))) ?? i) : i; // prettier-ignore
     await effects.writeFile(aliases.get(path)!, rewriteNpmImports(await readFile(sourcePath, "utf-8"), resolveImport));
   }
 
@@ -234,6 +292,7 @@ export async function build(
     return applyHash(join("/_import", path), hash);
   };
   for (const path of localImports) {
+    if (!path.endsWith(".js")) continue;
     const module = findModule(root, path);
     if (!module) throw new Error(`import not found: ${path}`);
     const sourcePath = join(root, module.path);
@@ -303,14 +362,13 @@ export async function build(
   }
 
   // Render pages!
-  const buildManifest: BuildManifest = {pages: []};
   for (const [path, output] of outputs) {
     effects.output.write(`${faint("render")} ${path} ${faint("→")} `);
     if (output.type === "page") {
       const {page, resolvers} = output;
       const html = await renderPage(page, {...config, path, resolvers});
       await effects.writeFile(`${path}.html`, html);
-      buildManifest.pages.push({path: config.normalizePath(path), title: page.title});
+      addToManifest("pages", path, page);
     } else {
       const {resolvers} = output;
       const source = await renderModule(root, path, resolvers);
@@ -348,7 +406,35 @@ export async function build(
   }
   effects.logger.log("");
 
-  Telemetry.record({event: "build", step: "finish", pageCount: outputCount});
+  // Check links. TODO Have this break the build, and move this check earlier?
+  const [validLinks, brokenLinks] = validateLinks(outputs);
+  if (brokenLinks.length) {
+    effects.logger.warn(`${yellow("Warning: ")}${brokenLinks.length} broken link${brokenLinks.length === 1 ? "" : "s"} (${validLinks.length + brokenLinks.length} validated)`); // prettier-ignore
+    for (const [path, link] of brokenLinks) effects.logger.log(`${faint("↳")} ${path} ${faint("→")} ${red(link)}`);
+  } else if (validLinks.length) {
+    effects.logger.log(`${green(`${validLinks.length}`)} link${validLinks.length === 1 ? "" : "s"} validated`);
+  }
+
+  Telemetry.record({event: "build", step: "finish", pageCount});
+}
+
+type Link = [path: string, target: string];
+
+function validateLinks(outputs: Map<string, {resolvers: Resolvers}>): [valid: Link[], broken: Link[]] {
+  const validTargets = new Set<string>(outputs.keys()); // e.g., "/this/page#hash";
+  for (const [path, {resolvers}] of outputs) {
+    for (const anchor of resolvers.anchors) {
+      validTargets.add(`${path}#${encodeURIComponent(anchor)}`);
+    }
+  }
+  const valid: Link[] = [];
+  const broken: Link[] = [];
+  for (const [path, {resolvers}] of outputs) {
+    for (const target of resolvers.localLinks) {
+      (validTargets.has(target) ? valid : broken).push([path, target]);
+    }
+  }
+  return [valid, broken];
 }
 
 function applyHash(path: string, hash: string): string {
@@ -424,12 +510,14 @@ export class FileBuildEffects implements BuildEffects {
     const destination = join(this.outputRoot, outputPath);
     this.logger.log(destination);
     await prepareOutput(destination);
+    if (existsSync(destination)) throw new Error(`file conflict: ${outputPath}`);
     await copyFile(sourcePath, destination);
   }
   async writeFile(outputPath: string, contents: string | Buffer): Promise<void> {
     const destination = join(this.outputRoot, outputPath);
     this.logger.log(destination);
     await prepareOutput(destination);
+    if (existsSync(destination)) throw new Error(`file conflict: ${outputPath}`);
     await writeFile(destination, contents);
   }
   async writeBuildManifest(buildManifest: BuildManifest): Promise<void> {
@@ -440,5 +528,9 @@ export class FileBuildEffects implements BuildEffects {
 }
 
 export interface BuildManifest {
-  pages: {path: string; title: string | null}[];
+  title?: string;
+  config: {root: string};
+  pages: {path: string; title?: string | null; source?: string}[];
+  modules: {path: string; source?: string}[];
+  files: {path: string; source?: string}[];
 }

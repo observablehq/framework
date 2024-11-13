@@ -7,7 +7,7 @@ keywords: file, fileattachment, attachment
 Load files — whether static or generated dynamically by a [data loader](./data-loaders) — using the built-in `FileAttachment` function. This is available by default in Markdown, but you can import it explicitly like so:
 
 ```js echo
-import {FileAttachment} from "npm:@observablehq/stdlib";
+import {FileAttachment} from "observablehq:stdlib";
 ```
 
 The `FileAttachment` function takes a path and returns a file handle. This handle exposes:
@@ -154,7 +154,7 @@ A common gotcha with JSON is that it has no built-in date type; dates are theref
 
 ### Media
 
-To display an image, you can use a static image in [Markdown](../markdown) such as `<img src="horse.jpg">` or `![horse](horse.jpg)`. Likewise, you can use a `video` or `audio` element. Per [file-based routing](#routing), static references to these files are automatically detected and therefore these files will be included in the built output.
+To display an image, you can use a static image in [Markdown](./markdown) such as `<img src="horse.jpg">` or `![horse](horse.jpg)`. Likewise, you can use a `video` or `audio` element. Per [file-based routing](#routing), static references to these files are automatically detected and therefore these files will be included in the built output.
 
 <video src="horse.mp4" autoplay muted loop controls></video>
 
