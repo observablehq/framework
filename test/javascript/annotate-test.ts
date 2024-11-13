@@ -1,13 +1,24 @@
 // This file is not suffixed with '-test'; it expects to run with an extra
-// OBSERVABLE_ANNOTATE_FILES=true environment variable.
 import assert from "node:assert";
 import type {TranspileModuleOptions} from "../../src/javascript/transpile.js";
 import {transpileModule} from "../../src/javascript/transpile.js";
 import {fromJsDelivrPath, rewriteNpmImports} from "../../src/npm.js";
 import {relativePath} from "../../src/path.js";
 
+export function mockAnnotateFileEnv(value = true) {
+  let annotateFileEnvBefore: string | undefined;
+  before(() => {
+    annotateFileEnvBefore = process.env["OBSERVABLE_ANNOTATE_FILES"];
+    process.env["OBSERVABLE_ANNOTATE_FILES"] = JSON.stringify(value);
+  });
+  after(() => {
+    process.env["OBSERVABLE_ANNOTATE_FILES"] = annotateFileEnvBefore;
+  });
+}
+
 // prettier-ignore
 describe("annotates", () => {
+  mockAnnotateFileEnv(true);
   const options: TranspileModuleOptions = {root: "src", path: "test.js"};
   it("npm imports", async () => {
     const input = 'import "npm:d3-array";';

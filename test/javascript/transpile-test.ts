@@ -8,6 +8,7 @@ import type {TranspileModuleOptions} from "../../src/javascript/transpile.js";
 import {transpileJavaScript, transpileModule} from "../../src/javascript/transpile.js";
 import {isPathImport} from "../../src/path.js";
 import {mockJsDelivr} from "../mocks/jsdelivr.js";
+import {mockAnnotateFileEnv} from "./annotate-test.js";
 
 function isJsFile(inputRoot: string, fileName: string) {
   if (!fileName.endsWith(".js")) return false;
@@ -86,6 +87,7 @@ function runTests(inputRoot: string, outputRoot: string, filter: (name: string) 
 }
 
 describe("transpileJavaScript(input, options)", () => {
+  mockAnnotateFileEnv(false);
   runTests("test/input", "test/output");
   runTests("test/input/imports", "test/output/imports", (name) => name.endsWith("-import.js"));
   it("trims leading and trailing newlines", async () => {
@@ -102,6 +104,7 @@ async function testFile(target: string, path: string): Promise<string> {
 }
 
 describe("transpileModule(input, root, path, sourcePath)", () => {
+  mockAnnotateFileEnv(false);
   it("rewrites relative files with import.meta.resolve", async () => {
     assert.strictEqual(await testFile("./test.txt", "test.js"), 'FileAttachment("../test.txt", import.meta.url)'); // prettier-ignore
     assert.strictEqual(await testFile("./sub/test.txt", "test.js"), 'FileAttachment("../sub/test.txt", import.meta.url)'); // prettier-ignore
@@ -122,6 +125,7 @@ describe("transpileModule(input, root, path, sourcePath)", () => {
 
 describe("transpileModule(input, root, path)", () => {
   mockJsDelivr();
+  mockAnnotateFileEnv(false);
   const options: TranspileModuleOptions = {root: "src", path: "test.js"};
   it("rewrites relative files with import.meta.resolve", async () => {
     assert.strictEqual(await testFile("./test.txt", "test.js"), 'FileAttachment("../test.txt", import.meta.url)'); // prettier-ignore

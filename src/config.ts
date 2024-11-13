@@ -191,9 +191,21 @@ async function importConfig(path: string): Promise<ConfigSpec> {
   return (await import(`${pathToFileURL(path).href}?${mtimeMs}`)).default;
 }
 
-export async function readConfig(configPath?: string, root?: string): Promise<Config> {
+export async function readConfig(configPath?: string, root?: string, normalize?: never | true): Promise<Config>;
+export async function readConfig(
+  configPath: string | undefined,
+  root: string | undefined,
+  normalize: false
+): Promise<ConfigSpec>;
+export async function readConfig(
+  configPath?: string,
+  root?: string,
+  normalize: boolean = true
+): Promise<Config | ConfigSpec> {
   if (configPath === undefined) configPath = await resolveDefaultConfig(root);
   if (configPath === undefined) return normalizeConfig(undefined, root);
+  const unnormalized = await importConfig(configPath);
+  if (!normalize) return unnormalized;
   return normalizeConfig(await importConfig(configPath), root, configPath);
 }
 

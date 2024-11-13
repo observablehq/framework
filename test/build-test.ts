@@ -8,6 +8,7 @@ import {ascending, difference} from "d3-array";
 import type {BuildManifest} from "../src/build.js";
 import {FileBuildEffects, build} from "../src/build.js";
 import {normalizeConfig, readConfig, setCurrentDate} from "../src/config.js";
+import {mockAnnotateFileEnv} from "./javascript/annotate-test.js";
 import {mockDuckDB} from "./mocks/duckdb.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 import {mockJsr} from "./mocks/jsr.js";
@@ -35,6 +36,7 @@ describe("build", () => {
   mockJsDelivr();
   mockJsr();
   mockDuckDB();
+  mockAnnotateFileEnv(false);
 
   // Each sub-directory of test/input/build is a test case.
   const inputRoot = "test/input/build";

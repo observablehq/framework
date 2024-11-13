@@ -4,10 +4,12 @@ import {join} from "node:path/posix";
 import {extractNpmSpecifier, initializeNpmVersionCache, parseNpmSpecifier} from "../src/npm.js";
 import {fromJsDelivrPath, getDependencyResolver, resolveNpmImport, rewriteNpmImports} from "../src/npm.js";
 import {relativePath} from "../src/path.js";
+import {mockAnnotateFileEnv} from "./javascript/annotate-test.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 
 describe("getDependencyResolver(root, path, input)", () => {
   mockJsDelivr();
+  mockAnnotateFileEnv(false);
   it("finds /npm/ imports and re-resolves their versions", async () => {
     const root = "test/input/build/simple-public";
     const specifier = "/npm/d3-array@3.2.3/dist/d3-array.js";
@@ -23,6 +25,7 @@ describe("getDependencyResolver(root, path, input)", () => {
 });
 
 describe("parseNpmSpecifier(specifier)", () => {
+  mockAnnotateFileEnv(false);
   it("parses the name", () => {
     assert.deepStrictEqual(parseNpmSpecifier("d3-array"), {name: "d3-array", range: undefined, path: undefined});
   });
@@ -50,6 +53,7 @@ describe("parseNpmSpecifier(specifier)", () => {
 
 describe("resolveNpmImport(root, specifier)", () => {
   mockJsDelivr();
+  mockAnnotateFileEnv(false);
   const root = "test/input/build/simple";
   it("implicitly adds ._esm.js for specifiers without an extension", async () => {
     assert.strictEqual(await resolveNpmImport(root, "d3-array"), "/_npm/d3-array@3.2.4/_esm.js");
@@ -75,6 +79,7 @@ describe("resolveNpmImport(root, specifier)", () => {
 });
 
 describe("extractNpmSpecifier(path)", () => {
+  mockAnnotateFileEnv(false);
   it("returns the npm specifier for the given local npm path", () => {
     assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/_esm.js"), "d3@7.8.5/+esm");
     assert.strictEqual(extractNpmSpecifier("/_npm/d3@7.8.5/dist/d3.js"), "d3@7.8.5/dist/d3.js");
@@ -89,6 +94,7 @@ describe("extractNpmSpecifier(path)", () => {
 });
 
 describe("fromJsDelivrPath(path)", () => {
+  mockAnnotateFileEnv(false);
   it("returns the local npm path for the given jsDelivr path", () => {
     assert.strictEqual(fromJsDelivrPath("/npm/d3@7.8.5/+esm"), "/_npm/d3@7.8.5/_esm.js");
     assert.strictEqual(fromJsDelivrPath("/npm/d3@7.8.5/dist/d3.js"), "/_npm/d3@7.8.5/dist/d3.js");
@@ -102,6 +108,7 @@ describe("fromJsDelivrPath(path)", () => {
 
 // prettier-ignore
 describe("rewriteNpmImports(input, resolve)", () => {
+  mockAnnotateFileEnv(false);
   it("rewrites /npm/ imports to /_npm/", () => {
     assert.strictEqual(rewriteNpmImports('export * from "/npm/d3-array@3.2.4/dist/d3-array.js";\n', (v) => resolve("/_npm/d3@7.8.5/dist/d3.js", v)), 'export * from "../../d3-array@3.2.4/dist/d3-array.js";\n');
   });
@@ -148,6 +155,7 @@ describe("rewriteNpmImports(input, resolve)", () => {
 });
 
 describe("initializeNpmVersionCache(root, dir)", () => {
+  mockAnnotateFileEnv(false);
   const root = join("test", "input", "npm");
   const dir = join(root, ".observablehq", "cache", "_npm");
   before(async () => {
