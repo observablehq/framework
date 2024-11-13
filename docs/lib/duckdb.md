@@ -195,7 +195,7 @@ In the future, we’d like to allow DuckDB to be configured globally (beyond jus
 
 ## Versioning
 
-Framework currently uses [DuckDB-Wasm 1.29.0](https://github.com/duckdb/duckdb-wasm/releases/tag/v1.29.0), which aligns with [DuckDB 1.1.1](https://github.com/duckdb/duckdb/releases/tag/v1.1.1). You can load a different version of DuckDB-Wasm by importing `npm:@duckdb/duckdb-wasm` directly, for example:
+Framework currently uses [DuckDB-Wasm 1.29.0](https://github.com/duckdb/duckdb-wasm/releases/tag/v1.29.0) <a href="https://github.com/observablehq/framework/pull/1734" class="observablehq-version-badge" data-version="prerelease" title="Added in #1734"></a>, which aligns with [DuckDB 1.1.1](https://github.com/duckdb/duckdb/releases/tag/v1.1.1). You can load a different version of DuckDB-Wasm by importing `npm:@duckdb/duckdb-wasm` directly, for example:
 
 ```js run=false
 import * as duckdb from "npm:@duckdb/duckdb-wasm@1.28.0";
