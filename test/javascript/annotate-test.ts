@@ -5,14 +5,24 @@ import {transpileModule} from "../../src/javascript/transpile.js";
 import {fromJsDelivrPath, rewriteNpmImports} from "../../src/npm.js";
 import {relativePath} from "../../src/path.js";
 
-export function mockAnnotateFileEnv(value = true) {
+const ANNOTATE_FILES_ENV = "OBSERVABLE_ANNOTATE_FILES";
+
+export function mockAnnotateFileEnv(value: boolean) {
   let annotateFileEnvBefore: string | undefined;
   before(() => {
-    annotateFileEnvBefore = process.env["OBSERVABLE_ANNOTATE_FILES"];
-    process.env["OBSERVABLE_ANNOTATE_FILES"] = JSON.stringify(value);
+    annotateFileEnvBefore = process.env[ANNOTATE_FILES_ENV];
+    if (value === undefined) {
+      delete process.env[ANNOTATE_FILES_ENV];
+    } else {
+      process.env[ANNOTATE_FILES_ENV] = JSON.stringify(value);
+    }
   });
   after(() => {
-    process.env["OBSERVABLE_ANNOTATE_FILES"] = annotateFileEnvBefore;
+    if (annotateFileEnvBefore === undefined) {
+      delete process.env[ANNOTATE_FILES_ENV];
+    } else {
+      process.env[ANNOTATE_FILES_ENV] = annotateFileEnvBefore;
+    }
   });
 }
 
