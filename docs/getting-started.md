@@ -112,7 +112,7 @@ This command will ask you a series of questions in order to initialize your new 
 <span class="muted">│</span>  <span class="muted">Yes, include sample files</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Install dependencies?
-<span class="muted">│</span>  <span class="muted">Yes, via yarn</span>
+<span class="muted">│</span>  <span class="muted">Yes, via npm</span>
 <span class="muted">│</span>
 <span class="green">◇</span>  Initialize a git repository?
 <span class="muted">│</span>  <span class="muted">Yes</span>
@@ -122,7 +122,7 @@ This command will ask you a series of questions in order to initialize your new 
 <span class="green">◇</span>  Next steps… <span class="muted">──────────╮</span>
 <span class="muted">│</span>                        <span class="muted">│</span>
 <span class="muted">│</span>  <span class="focus">cd hello-framework</span>    <span class="muted">│</span>
-<span class="muted">│</span>  <span class="focus">yarn dev</span>              <span class="muted">│</span>
+<span class="muted">│</span>  <span class="focus">npm run dev</span>           <span class="muted">│</span>
 <span class="muted">│</span>                        <span class="muted">│</span>
 <span class="muted">├────────────────────────╯</span>
 <span class="muted">│</span>
@@ -148,7 +148,7 @@ Or with Yarn:
 
 You should see something like this:
 
-<pre data-copy="none"><b class="green">Observable Framework</b> v1.12.0
+<pre data-copy="none"><b class="green">Observable Framework</b> v1.13.0
 ↳ <u><a href="http://127.0.0.1:3000/" style="color: inherit;">http://127.0.0.1:3000/</a></u></pre>
 
 <div class="note">

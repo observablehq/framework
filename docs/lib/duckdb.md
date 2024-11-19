@@ -106,7 +106,7 @@ const sql = DuckDBClient.sql({quakes: `https://earthquake.usgs.gov/earthquakes/f
 SELECT * FROM quakes ORDER BY updated DESC;
 ```
 
-## Extensions <a href="https://github.com/observablehq/framework/pull/1734" class="observablehq-version-badge" data-version="prerelease" title="Added in #1734"></a>
+## Extensions <a href="https://github.com/observablehq/framework/releases/tag/v1.13.0" class="observablehq-version-badge" data-version="^1.13.0" title="Added in 1.13.0"></a>
 
 [DuckDB extensions](https://duckdb.org/docs/extensions/overview.html) extend DuckDB’s functionality, adding support for additional file formats, new types, and domain-specific functions. For example, the [`json` extension](https://duckdb.org/docs/data/json/overview.html) provides a `read_json` method for reading JSON files:
 
@@ -195,7 +195,7 @@ In the future, we’d like to allow DuckDB to be configured globally (beyond jus
 
 ## Versioning
 
-Framework currently uses [DuckDB-Wasm 1.29.0](https://github.com/duckdb/duckdb-wasm/releases/tag/v1.29.0), which aligns with [DuckDB 1.1.1](https://github.com/duckdb/duckdb/releases/tag/v1.1.1). You can load a different version of DuckDB-Wasm by importing `npm:@duckdb/duckdb-wasm` directly, for example:
+Framework currently uses [DuckDB-Wasm 1.29.0](https://github.com/duckdb/duckdb-wasm/releases/tag/v1.29.0) <a href="https://github.com/observablehq/framework/releases/tag/v1.13.0" class="observablehq-version-badge" data-version="^1.13.0" title="Added in 1.13.0"></a>, which aligns with [DuckDB 1.1.1](https://github.com/duckdb/duckdb/releases/tag/v1.1.1). You can load a different version of DuckDB-Wasm by importing `npm:@duckdb/duckdb-wasm` directly, for example:
 
 ```js run=false
 import * as duckdb from "npm:@duckdb/duckdb-wasm@1.28.0";
