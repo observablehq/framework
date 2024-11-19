@@ -10,7 +10,7 @@ In addition to standalone apps, you can use Framework to embed interactive views
 - [exported files](#exported-files) for hotlinking images, data, and other assets, or
 - [iframe embeds](#iframe-embeds) for compatibility.
 
-You can deploy to Observable Cloud for [additional features](https://observablehq.com/documentation/data-apps/embeds)<a href="https://github.com/observablehq/framework/releases/tag/v1.13.0" class="observablehq-version-badge" data-version="^1.13.0" title="Added in v1.13.0"></a> like secure private embedding on approved domains and analytics to see which exports are used.
+You can deploy to Observable Cloud for [additional features](https://observablehq.com/documentation/data-apps/embeds)<a href="https://github.com/observablehq/framework/releases/tag/v1.13.0" class="observablehq-version-badge" data-version="^1.13.0" title="Added in v1.13.0"></a> including secure private embedding on approved domains and analytics to see which exports are used.
 
 ## Exported modules
 
@@ -79,7 +79,7 @@ document.body.append(await Chart());
 
 <div class="tip">
 
-Observable Cloud supports cross-origin resource sharing (CORS), which is needed for exported modules. [Learn more…](https://observablehq.com/documentation/data-apps/embeds#cors)
+Observable Cloud supports [cross-origin resource sharing](https://observablehq.com/documentation/data-apps/embeds#cors) (CORS), which is needed for exported modules.
 
 </div>
 
