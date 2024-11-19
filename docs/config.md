@@ -197,9 +197,13 @@ footer: ({path}) => `<a href="https://github.com/example/test/blob/main/src${pat
 
 The base path when serving the site. Currently this only affects the custom 404 page, if any.
 
-## cleanUrls <a href="https://github.com/observablehq/framework/releases/tag/v1.3.0" class="observablehq-version-badge" data-version="^1.3.0" title="Added in 1.3.0"></a>
+## preserveIndex <a href="https://github.com/observablehq/framework/releases/tag/v1.13.0" class="observablehq-version-badge" data-version="^1.13.0" title="Added in 1.13.0"></a>
 
-Whether page links should be “clean”, _i.e._, formatted without a `.html` extension. Defaults to true. If true, a link to `config.html` will be formatted as `config`. Regardless of this setting, a link to an index page will drop the implied `index.html`; for example `foo/index.html` will be formatted as `foo/`.
+Whether page links should preserve `/index` for directories. Defaults to false. If true, a link to `/` will be formatted as `/index` if the **preserveExtension** option is false or `/index.html` if the **preserveExtension** option is true.
+
+## preserveExtension <a href="https://github.com/observablehq/framework/releases/tag/v1.13.0" class="observablehq-version-badge" data-version="^1.13.0" title="Added in 1.13.0"></a>
+
+Whether page links should preserve the `.html` extension. Defaults to false. If true, a link to `/foo` will be formatted as `/foo.html`.
 
 ## toc
 
@@ -296,6 +300,45 @@ export default {
   }
 };
 ```
+
+## duckdb <a href="https://github.com/observablehq/framework/releases/tag/v1.13.0" class="observablehq-version-badge" data-version="^1.13.0" title="Added in 1.13.0"></a>
+
+The **duckdb** option configures [self-hosting](./lib/duckdb#self-hosting-of-extensions) and loading of [DuckDB extensions](./lib/duckdb#extensions) for use in [SQL code blocks](./sql) and the `sql` and `DuckDBClient` built-ins. For example, a geospatial data app might enable the [`spatial`](https://duckdb.org/docs/extensions/spatial/overview.html) and [`h3`](https://duckdb.org/community_extensions/extensions/h3.html) extensions like so:
+
+```js run=false
+export default {
+  duckdb: {
+    extensions: ["spatial", "h3"]
+  }
+};
+```
+
+The **extensions** option can either be an array of extension names, or an object whose keys are extension names and whose values are configuration options for the given extension, including its **source** repository (defaulting to the keyword _core_ for core extensions, and otherwise _community_; can also be a custom repository URL), whether to **load** it immediately (defaulting to true, except for known extensions that support autoloading), and whether to **install** it (_i.e._ to self-host, defaulting to true). As additional shorthand, you can specify `[name]: true` to install and load the named extension from the default (_core_ or _community_) source repository, or `[name]: string` to install and load the named extension from the given source repository.
+
+The configuration above is equivalent to:
+
+```js run=false
+export default {
+  duckdb: {
+    extensions: {
+      spatial: {
+        source: "https://extensions.duckdb.org/",
+        install: true,
+        load: true
+      },
+      h3: {
+        source: "https://community-extensions.duckdb.org/",
+        install: true,
+        load: true
+      }
+    }
+  }
+};
+```
+
+The `json` and `parquet` are configured (and therefore self-hosted) by default. To expressly disable self-hosting of extension, you can set its **install** property to false, or equivalently pass null as the extension configuration object.
+
+For more, see [DuckDB extensions](./lib/duckdb#extensions).
 
 ## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
 

@@ -8,6 +8,7 @@ import {ascending, difference} from "d3-array";
 import type {BuildManifest} from "../src/build.js";
 import {FileBuildEffects, build} from "../src/build.js";
 import {normalizeConfig, readConfig, setCurrentDate} from "../src/config.js";
+import {mockDuckDB} from "./mocks/duckdb.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 import {mockJsr} from "./mocks/jsr.js";
 
@@ -33,6 +34,7 @@ describe("build", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   mockJsDelivr();
   mockJsr();
+  mockDuckDB();
 
   // Each sub-directory of test/input/build is a test case.
   const inputRoot = "test/input/build";
@@ -122,28 +124,67 @@ describe("build", () => {
       join(inputDir, "weather.md"),
       "# It's going to be ${weather}!" +
         "\n\n" +
-        "```js\nconst weather = await FileAttachment('weather.txt').text(); display(weather);\n```"
+        "```js\nconst weather = await FileAttachment('weather.txt').text(); display(weather);\n```" +
+        "\n\n" +
+        "```js\nconst generated = await FileAttachment('generated.txt').text(); display(generated);\n```" +
+        "\n\n" +
+        "```js\nconst internal = await FileAttachment('internal.txt').text(); display(internal);\n```" +
+        "\n\n" +
+        "```js\nconst thing = await FileAttachment('parameterized-thing.txt').text(); display(thing);\n```" +
+        "\n\n" +
+        "```js\nimport * from '/module-internal.js';\n```"
     );
     await mkdir(join(inputDir, "cities"));
     await writeFile(join(inputDir, "cities", "index.md"), "# Cities");
     await writeFile(join(inputDir, "cities", "portland.md"), "# Portland");
-    // A non-page file that should not be included
+    // exported files
     await writeFile(join(inputDir, "weather.txt"), "sunny");
+    await writeFile(join(inputDir, "generated.txt.ts"), "process.stdout.write('hello');");
+    await writeFile(join(inputDir, "parameterized-[page].txt.ts"), "process.stdout.write('hello');");
+    // /module-exported.js, /module-internal.js
+    await writeFile(join(inputDir, "module-[type].js"), "console.log(observable.params.type);");
+    // not exported
+    await writeFile(join(inputDir, "internal.txt.ts"), "process.stdout.write('hello');");
 
     const outputDir = await mkdtemp(tmpPrefix + "output-");
     const cacheDir = await mkdtemp(tmpPrefix + "output-");
 
-    const config = normalizeConfig({root: inputDir, output: outputDir}, inputDir);
+    const config = normalizeConfig(
+      {
+        root: inputDir,
+        output: outputDir,
+        dynamicPaths: [
+          "/module-exported.js",
+          "/weather.txt",
+          "/generated.txt",
+          "/parameterized-thing.txt",
+          "/parameterized-[page].txt"
+        ]
+      },
+      inputDir
+    );
     const effects = new LoggingBuildEffects(outputDir, cacheDir);
     await build({config}, effects);
     effects.buildManifest!.pages.sort((a, b) => ascending(a.path, b.path));
-    assert.deepEqual(effects.buildManifest, {
+    const {
+      config: {root},
+      ...manifest
+    } = effects.buildManifest!;
+    assert.equal(typeof root, "string");
+    assert.deepEqual(manifest, {
       pages: [
-        {path: "/", title: "Hello, world!"},
-        {path: "/cities/", title: "Cities"},
-        {path: "/cities/portland", title: "Portland"},
-        {path: "/weather", title: "It's going to be !"}
-      ]
+        {path: "/", title: "Hello, world!", source: "/index.md"},
+        {path: "/cities/", title: "Cities", source: "/cities/index.md"},
+        {path: "/cities/portland", title: "Portland", source: "/cities/portland.md"},
+        {path: "/weather", title: "It's going to be !", source: "/weather.md"}
+      ],
+      files: [
+        {path: "/weather.txt", source: "/weather.txt"},
+        {path: "/generated.txt", source: "/generated.txt.ts"},
+        {path: "/parameterized-thing.txt", source: "/parameterized-[page].txt.ts"},
+        {path: "/parameterized-[page].txt", source: "/parameterized-[page].txt.ts"}
+      ],
+      modules: [{path: "/module-exported.js", source: "/module-[type].js"}]
     });
 
     await Promise.all([inputDir, cacheDir, outputDir].map((dir) => rm(dir, {recursive: true}))).catch(() => {});

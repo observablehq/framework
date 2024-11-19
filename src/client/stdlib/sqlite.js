@@ -1,10 +1,6 @@
-// https://github.com/sql-js/sql.js/issues/284
-const SQLite = await (async () => {
-  const exports = {};
-  const response = await fetch(import.meta.resolve("npm:sql.js/dist/sql-wasm.js"));
-  new Function("exports", await response.text())(exports);
-  return exports.Module({locateFile: (name) => import.meta.resolve("npm:sql.js/dist/") + name});
-})();
+import initSqlJs from "npm:sql.js";
+
+const SQLite = initSqlJs({locateFile: (name) => import.meta.resolve("npm:sql.js/dist/") + name});
 
 export default SQLite;
 
@@ -15,7 +11,8 @@ export class SQLiteDatabaseClient {
     });
   }
   static async open(source) {
-    return new SQLiteDatabaseClient(new SQLite.Database(await load(await source)));
+    const [sqlite, data] = await Promise.all([SQLite, Promise.resolve(source).then(load)]);
+    return new SQLiteDatabaseClient(new sqlite.Database(data));
   }
   async query(query, params) {
     return await exec(this._db, query, params);

@@ -3,7 +3,8 @@ import {existsSync} from "node:fs";
 import {copyFile, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join} from "node:path/posix";
 import type {Config} from "./config.js";
-import {CliError} from "./error.js";
+import {getDuckDBManifest} from "./duckdb.js";
+import {CliError, enoent} from "./error.js";
 import {getClientPath, prepareOutput} from "./files.js";
 import {findModule, getModuleHash, readJavaScript} from "./javascript/module.js";
 import {transpileModule} from "./javascript/transpile.js";
@@ -53,7 +54,7 @@ export async function build(
   {config}: BuildOptions,
   effects: BuildEffects = new FileBuildEffects(config.output, join(config.root, ".observablehq", "cache"))
 ): Promise<void> {
-  const {root, loaders} = config;
+  const {root, loaders, title, duckdb} = config;
   Telemetry.record({event: "build", step: "start"});
 
   // Prepare for build (such as by emptying the existing output root).
@@ -74,6 +75,25 @@ export async function build(
   let assetCount = 0;
   let pageCount = 0;
   const pagePaths = new Set<string>();
+
+  const buildManifest: BuildManifest = {
+    ...(title && {title}),
+    config: {root},
+    pages: [],
+    modules: [],
+    files: []
+  };
+
+  // file is the serving path relative to the base (e.g., /foo)
+  // path is the source file relative to the source root (e.g., /foo.md)
+  const addToManifest = (type: string, file: string, {title, path}: {title?: string | null; path: string}) => {
+    buildManifest[type].push({
+      path: config.normalizePath(file),
+      source: join("/", path), // TODO have route return path with leading slash?
+      ...(title != null && {title})
+    });
+  };
+
   for await (const path of config.paths()) {
     effects.output.write(`${faint("load")} ${path} `);
     const start = performance.now();
@@ -90,6 +110,7 @@ export async function build(
         effects.output.write(`${faint("in")} ${(elapsed >= 100 ? yellow : faint)(`${elapsed}ms`)}\n`);
         outputs.set(path, {type: "module", resolvers});
         ++assetCount;
+        addToManifest("modules", path, module);
         continue;
       }
     }
@@ -98,6 +119,7 @@ export async function build(
       effects.output.write(`${faint("copy")} ${join(root, path)} ${faint("→")} `);
       const sourcePath = join(root, await file.load({useStale: true}, effects));
       await effects.copyFile(sourcePath, path);
+      addToManifest("files", path, file);
       ++assetCount;
       continue;
     }
@@ -140,6 +162,21 @@ export async function build(
     effects.logger.log(cachePath);
   }
 
+  // Copy over the DuckDB extensions, initializing aliases that are needed to
+  // construct the DuckDB manifest.
+  for (const path of globalImports) {
+    if (path.startsWith("/_duckdb/")) {
+      const sourcePath = join(cacheRoot, path);
+      effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
+      const contents = await readFile(sourcePath);
+      const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
+      const [, , , version, bundle, name] = path.split("/");
+      const alias = join("/_duckdb/", `${basename(name, ".duckdb_extension.wasm")}-${hash}`, version, bundle, name);
+      aliases.set(path, alias);
+      await effects.writeFile(alias, contents);
+    }
+  }
+
   // Generate the client bundles. These are initially generated into the cache
   // because we need to rewrite any npm and node imports to be hashed; this is
   // handled generally for all global imports below.
@@ -149,6 +186,7 @@ export async function build(
       effects.output.write(`${faint("bundle")} ${path} ${faint("→")} `);
       const clientPath = getClientPath(path === "/_observablehq/client.js" ? "index.js" : path.slice("/_observablehq/".length)); // prettier-ignore
       const define: {[key: string]: string} = {};
+      if (path === "/_observablehq/stdlib/duckdb.js") define["DUCKDB_MANIFEST"] = JSON.stringify(await getDuckDBManifest(duckdb, {root, aliases})); // prettier-ignore
       const contents = await rollupClient(clientPath, root, path, {minify: true, keepNames: true, define});
       await prepareOutput(cachePath);
       await writeFile(cachePath, contents);
@@ -192,7 +230,10 @@ export async function build(
   // Copy over referenced files, accumulating hashed aliases.
   for (const file of files) {
     effects.output.write(`${faint("copy")} ${join(root, file)} ${faint("→")} `);
-    const sourcePath = join(root, await loaders.loadFile(join("/", file), {useStale: true}, effects));
+    const path = join("/", file);
+    const loader = loaders.find(path);
+    if (!loader) throw enoent(path);
+    const sourcePath = join(root, await loader.load({useStale: true}, effects));
     const contents = await readFile(sourcePath);
     const hash = createHash("sha256").update(contents).digest("hex").slice(0, 8);
     const alias = applyHash(join("/_file", file), hash);
@@ -202,9 +243,10 @@ export async function build(
 
   // Copy over global assets (e.g., minisearch.json, DuckDB’s WebAssembly).
   // Anything in _observablehq also needs a content hash, but anything in _npm
-  // or _node does not (because they are already necessarily immutable).
+  // or _node does not (because they are already necessarily immutable). We’re
+  // skipping DuckDB’s extensions because they were previously copied above.
   for (const path of globalImports) {
-    if (path.endsWith(".js")) continue;
+    if (path.endsWith(".js") || path.startsWith("/_duckdb/")) continue;
     const sourcePath = join(cacheRoot, path);
     effects.output.write(`${faint("build")} ${path} ${faint("→")} `);
     if (path.startsWith("/_observablehq/")) {
@@ -320,15 +362,13 @@ export async function build(
   }
 
   // Render pages!
-  const buildManifest: BuildManifest = {pages: []};
-  if (config.title) buildManifest.title = config.title;
   for (const [path, output] of outputs) {
     effects.output.write(`${faint("render")} ${path} ${faint("→")} `);
     if (output.type === "page") {
       const {page, resolvers} = output;
       const html = await renderPage(page, {...config, path, resolvers});
       await effects.writeFile(`${path}.html`, html);
-      buildManifest.pages.push({path: config.normalizePath(path), title: page.title});
+      addToManifest("pages", path, page);
     } else {
       const {resolvers} = output;
       const source = await renderModule(root, path, resolvers);
@@ -489,5 +529,8 @@ export class FileBuildEffects implements BuildEffects {
 
 export interface BuildManifest {
   title?: string;
-  pages: {path: string; title: string | null}[];
+  config: {root: string};
+  pages: {path: string; title?: string | null; source?: string}[];
+  modules: {path: string; source?: string}[];
+  files: {path: string; source?: string}[];
 }
