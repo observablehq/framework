@@ -10,6 +10,8 @@ In addition to standalone apps, you can use Framework to embed interactive views
 - [exported files](#exported-files) for hotlinking images, data, and other assets, or
 - [iframe embeds](#iframe-embeds) for compatibility.
 
+You can deploy to Observable Cloud for [additional features](https://observablehq.com/documentation/data-apps/embeds) like secure private embedding on approved domains and analytics to see which exports are used.
+
 ## Exported modules
 
 Framework allows [JavaScript modules](./imports#local-imports) to be exported for use in another application. Exported modules are vanilla JavaScript and behave identically in an external web application as on a Framework page. As with local modules, exported modules can load data from a [static file](./files) or a [data loader](./data-loaders), [import](./imports) other local modules, and import libraries from [npm](./imports#npm-imports) or [JSR](./imports#jsr-imports).
@@ -75,9 +77,9 @@ document.body.append(await Chart());
 </script>
 ```
 
-<div class="warning" label="Coming soon">
+<div class="tip">
 
-Observable Cloud support for cross-origin resource sharing (CORS) is not yet generally available and is needed for exported modules. If you are interested in beta-testing this feature, please [email us](mailto:support@observablehq.com). For public apps, you can use a third-party host supporting CORS such as GitHub Pages.
+Observable Cloud supports cross-origin resource sharing (CORS), which is needed for exported modules. [Learn more…](https://observablehq.com/documentation/data-apps/embeds#cors)
 
 </div>
 
