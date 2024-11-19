@@ -51,7 +51,7 @@ describe("preview server", () => {
   it("serves scripts from _observablehq/", async () => {
     const res = await chai.request(testServerUrl).get("/_observablehq/stdlib.js");
     expect(res).to.have.status(200);
-    expect(res.text).to.have.string("class Library");
+    expect(res.text).to.have.string("function FileAttachment");
   });
 
   it("serves local imports", async () => {
