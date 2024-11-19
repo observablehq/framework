@@ -9,5 +9,6 @@
   },
   "title": "YAML",
   "style": "./custom.css",
-  "code": []
+  "code": [],
+  "path": "yaml-frontmatter.md"
 }

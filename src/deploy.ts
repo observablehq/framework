@@ -2,6 +2,7 @@ import {createHash} from "node:crypto";
 import type {Stats} from "node:fs";
 import {readFile, stat} from "node:fs/promises";
 import {join} from "node:path/posix";
+import slugify from "@sindresorhus/slugify";
 import wrapAnsi from "wrap-ansi";
 import type {BuildEffects, BuildManifest, BuildOptions} from "./build.js";
 import {FileBuildEffects, build} from "./build.js";
@@ -20,12 +21,10 @@ import type {
   GetCurrentUserResponse,
   GetDeployResponse,
   GetProjectResponse,
-  PostEditProjectRequest,
   WorkspaceResponse
 } from "./observableApiClient.js";
 import type {ConfigEffects, DeployConfig} from "./observableApiConfig.js";
 import {defaultEffects as defaultConfigEffects, getDeployConfig, setDeployConfig} from "./observableApiConfig.js";
-import {slugify} from "./slugify.js";
 import {Telemetry} from "./telemetry.js";
 import type {TtyEffects} from "./tty.js";
 import {bold, defaultEffects as defaultTtyEffects, faint, inverse, link, underline, yellow} from "./tty.js";
@@ -62,7 +61,7 @@ export interface DeployEffects extends ConfigEffects, TtyEffects, AuthEffects {
   output: NodeJS.WritableStream;
   visitFiles: (root: string) => Generator<string>;
   stat: (path: string) => Promise<Stats>;
-  build: ({config, addPublic}: BuildOptions, effects?: BuildEffects) => Promise<void>;
+  build: ({config}: BuildOptions, effects?: BuildEffects) => Promise<void>;
   readCacheFile: (sourceRoot: string, path: string) => Promise<string>;
 }
 
@@ -92,7 +91,7 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
 
   const deployInfo = await new Deployer(deployOptions, effects).deploy();
 
-  effects.clack.outro(`Deployed project now visible at ${link(deployInfo.url)}`);
+  effects.clack.outro(`Deployed app now visible at ${link(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
 }
 
@@ -193,18 +192,13 @@ class Deployer {
 
   private async startNewDeploy(): Promise<GetDeployResponse> {
     const deployConfig = await this.getUpdatedDeployConfig();
-    const {deployTarget, projectUpdates} = await this.getDeployTarget(deployConfig);
-
+    const deployTarget = await this.getDeployTarget(deployConfig);
     const buildFilePaths = await this.getBuildFilePaths();
-
     const deployId = await this.createNewDeploy(deployTarget);
 
     await this.uploadFiles(deployId, buildFilePaths);
     await this.markDeployUploaded(deployId);
-    const deployInfo = await this.pollForProcessingCompletion(deployId);
-    await this.maybeUpdateProject(deployTarget, projectUpdates);
-
-    return deployInfo;
+    return await this.pollForProcessingCompletion(deployId);
   }
 
   // Make sure deploy exists and has an expected status.
@@ -242,7 +236,7 @@ class Deployer {
     }
     if (deployConfig.projectSlug && !deployConfig.projectSlug.match(/^[a-z0-9-]+$/)) {
       throw new CliError(
-        `Found invalid project slug in ${join(this.deployOptions.config.root, ".observablehq", "deploy.json")}: ${
+        `Found invalid \`projectSlug\` in ${join(this.deployOptions.config.root, ".observablehq", "deploy.json")}: ${
           deployConfig.projectSlug
         }.`
       );
@@ -251,7 +245,7 @@ class Deployer {
     if (deployConfig.projectId && (!deployConfig.projectSlug || !deployConfig.workspaceLogin)) {
       const spinner = this.effects.clack.spinner();
       this.effects.clack.log.warn("The `projectSlug` or `workspaceLogin` is missing from your deploy.json.");
-      spinner.start(`Searching for project ${deployConfig.projectId}`);
+      spinner.start(`Searching for app ${deployConfig.projectId}`);
       let found = false;
       for (const workspace of this.currentUser.workspaces) {
         const projects = await this.apiClient.getWorkspaceProjects(workspace.login);
@@ -270,9 +264,9 @@ class Deployer {
         }
       }
       if (found) {
-        spinner.stop(`Project @${deployConfig.workspaceLogin}/${deployConfig.projectSlug} found.`);
+        spinner.stop(`App ${deployConfig.projectSlug} found in workspace @${deployConfig.workspaceLogin}.`);
       } else {
-        spinner.stop(`Project ${deployConfig.projectId} not found. Ignoring…`);
+        spinner.stop(`App ${deployConfig.projectId} not found. Ignoring…`);
       }
     }
 
@@ -280,11 +274,8 @@ class Deployer {
   }
 
   // Get the deploy target, prompting the user as needed.
-  private async getDeployTarget(
-    deployConfig: DeployConfig
-  ): Promise<{deployTarget: DeployTargetInfo; projectUpdates: PostEditProjectRequest}> {
+  private async getDeployTarget(deployConfig: DeployConfig): Promise<DeployTargetInfo> {
     let deployTarget: DeployTargetInfo;
-    const projectUpdates: PostEditProjectRequest = {};
     if (deployConfig.workspaceLogin && deployConfig.projectSlug) {
       try {
         const project = await this.apiClient.getProject({
@@ -292,7 +283,6 @@ class Deployer {
           projectSlug: deployConfig.projectSlug
         });
         deployTarget = {create: false, workspace: project.owner, project};
-        if (this.deployOptions.config.title !== project.title) projectUpdates.title = this.deployOptions.config.title;
       } catch (error) {
         if (!isHttpError(error) || error.statusCode !== 404) {
           throw error;
@@ -360,10 +350,6 @@ class Deployer {
           throw new CliError("Running non-interactively, cancelling due to conflict.");
         }
       }
-
-      if (deployTarget.project.title !== this.deployOptions.config.title) {
-        projectUpdates.title = this.deployOptions.config.title;
-      }
     }
 
     if (deployTarget.create) {
@@ -379,7 +365,7 @@ class Deployer {
         if (isApiError(error) && error.details.errors.some((e) => e.code === "TOO_MANY_PROJECTS")) {
           this.effects.clack.log.error(
             wrapAnsi(
-              `The Starter tier can only deploy one project. Upgrade to unlimited projects at ${link(
+              `The Starter tier can only deploy one app. Upgrade to unlimited apps at ${link(
                 `https://observablehq.com/team/@${deployTarget.workspace.login}/settings`
               )}`,
               this.effects.outputColumns - 4
@@ -388,7 +374,7 @@ class Deployer {
         } else {
           this.effects.clack.log.error(
             wrapAnsi(
-              `Could not create project: ${error instanceof Error ? error.message : error}`,
+              `Could not create app: ${error instanceof Error ? error.message : error}`,
               this.effects.outputColumns
             )
           );
@@ -409,7 +395,7 @@ class Deployer {
       this.effects
     );
 
-    return {deployTarget, projectUpdates};
+    return deployTarget;
   }
 
   // Create the new deploy on the server.
@@ -438,12 +424,15 @@ class Deployer {
     } catch (error) {
       if (isHttpError(error)) {
         if (error.statusCode === 404) {
-          throw new CliError(`Project @${deployTarget.workspace.login}/${deployTarget.project.slug} not found.`, {
-            cause: error
-          });
+          throw new CliError(
+            `App ${deployTarget.project.slug} in workspace @${deployTarget.workspace.login} not found.`,
+            {
+              cause: error
+            }
+          );
         } else if (error.statusCode === 403) {
           throw new CliError(
-            `You don't have permission to deploy to @${deployTarget.workspace.login}/${deployTarget.project.slug}.`,
+            `You don't have permission to deploy to ${deployTarget.project.slug} in workspace @${deployTarget.workspace.login}.`,
             {cause: error}
           );
         }
@@ -471,7 +460,7 @@ class Deployer {
         } else if (!this.deployOptions.force) {
           if (this.effects.isTty) {
             const choice = await this.effects.clack.confirm({
-              message: "No build files found. Do you want to build the project now?",
+              message: "No build files found. Do you want to build the app now?",
               active: "Yes, build and then deploy",
               inactive: "No, cancel deploy"
             });
@@ -501,9 +490,7 @@ class Deployer {
         );
         initialValue = true;
       } else {
-        this.effects.clack.log.info(
-          wrapAnsi(`You built this project ${formatAge(buildAge)}.`, this.effects.outputColumns)
-        );
+        this.effects.clack.log.info(wrapAnsi(`You built this app ${formatAge(buildAge)}.`, this.effects.outputColumns));
       }
       const choice = await this.effects.clack.confirm({
         message: "Would you like to build again before deploying?",
@@ -516,7 +503,7 @@ class Deployer {
     }
 
     if (doBuild) {
-      this.effects.clack.log.step("Building project");
+      this.effects.clack.log.step("Building app");
       await this.effects.build(
         {config: this.deployOptions.config},
         new FileBuildEffects(
@@ -687,9 +674,12 @@ class Deployer {
         case "uploaded":
           spinner.stop("Deploy complete");
           break pollLoop;
-        case "error":
+        case "failed":
           spinner.stop("Deploy failed");
           throw new CliError("Deploy failed to process on server");
+        case "canceled":
+          spinner.stop("Deploy canceled");
+          throw new CliError("Deploy canceled");
         default:
           spinner.stop("Unknown status");
           throw new CliError(`Unknown deploy status: ${deployInfo.status}`);
@@ -699,12 +689,6 @@ class Deployer {
 
     if (!deployInfo) throw new CliError("Deploy failed to process on server");
     return deployInfo;
-  }
-
-  private async maybeUpdateProject(deployTarget: DeployTargetInfo, projectUpdates: PostEditProjectRequest) {
-    if (!deployTarget.create && typeof projectUpdates?.title === "string") {
-      await this.apiClient.postEditProject(deployTarget.project.id, projectUpdates);
-    }
   }
 }
 
@@ -732,6 +716,7 @@ export async function promptDeployTarget(
   } else {
     const chosenWorkspace = await effects.clack.select<{value: WorkspaceResponse; label: string}[], WorkspaceResponse>({
       message: "Which Observable workspace do you want to use?",
+      maxItems: Math.max(process.stdout.rows - 4, 0),
       options: currentUser.workspaces
         .map((w) => ({value: w, label: formatUser(w)}))
         .sort((a, b) => b.value.role.localeCompare(a.value.role) || a.label.localeCompare(b.label)),
@@ -756,9 +741,10 @@ export async function promptDeployTarget(
 
   if (existingProjects.length > 0) {
     const chosenProject = await effects.clack.select<{value: string | null; label: string}[], string | null>({
-      message: "Which project do you want to use?",
+      message: "Which app do you want to use?",
+      maxItems: Math.max(process.stdout.rows - 4, 0),
       options: [
-        {value: null, label: "Create a new project"},
+        {value: null, label: "Create a new app"},
         ...existingProjects
           .map((p) => ({
             value: p.slug,
@@ -774,7 +760,7 @@ export async function promptDeployTarget(
     }
   } else {
     const confirmChoice = await effects.clack.confirm({
-      message: "No projects found. Do you want to create a new project?",
+      message: "No apps found. Do you want to create a new app?",
       active: "Yes, continue",
       inactive: "No, cancel"
     });
@@ -788,10 +774,10 @@ export async function promptDeployTarget(
 
   let title = config.title;
   if (title === undefined) {
-    effects.clack.log.warn("You haven’t configured a title for your project.");
+    effects.clack.log.warn("You haven’t configured a title for your app.");
     const titleChoice = await effects.clack.text({
       message: "What title do you want to use?",
-      placeholder: "Enter a project title",
+      placeholder: "Enter an app title",
       validate: (title) => (title ? undefined : "A title is required.")
     });
     if (effects.clack.isCancel(titleChoice)) {
@@ -818,7 +804,7 @@ export async function promptDeployTarget(
   projectSlug = projectSlugChoice;
 
   const accessLevel: string | symbol = await effects.clack.select({
-    message: "Who is allowed to access your project?",
+    message: "Who is allowed to access your app?",
     options: [
       {value: "private", label: "Private", hint: "only allow workspace members"},
       {value: "public", label: "Public", hint: "allow anyone"}
@@ -844,7 +830,7 @@ function formatAge(age: number): string {
     const hours = Math.round(age / 1000 / 60 / 60);
     return `${hours} hour${hours === 1 ? "" : "s"} ago`;
   }
-  return `at ${new Date(Date.now() - age).toLocaleString("en")}`;
+  return `at ${new Date(Date.now() - age).toLocaleString("sv")}`;
 }
 
 async function readCacheFile(sourceRoot: string, path: string): Promise<string> {

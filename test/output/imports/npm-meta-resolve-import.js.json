@@ -85,7 +85,7 @@
     {
       "name": "npm:d3",
       "type": "global",
-      "method": "dynamic"
+      "method": "resolve"
     }
   ],
   "expression": false,

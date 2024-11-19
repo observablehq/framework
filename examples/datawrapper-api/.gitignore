@@ -1,0 +1,6 @@
+*.pyc
+.DS_Store
+.venv
+/dist/
+node_modules/
+yarn-error.log

@@ -1,4 +1,4 @@
-import {FileAttachment, registerFile} from "npm:@observablehq/stdlib";
+import {FileAttachment, registerFile} from "observablehq:stdlib";
 import {main, runtime, undefine} from "./main.js";
 import {findLoading, findRoots, registerRoot} from "./main.js";
 import {enableCopyButtons} from "./pre.js";
@@ -8,7 +8,7 @@ export * from "./index.js";
 let minReopenDelay = 1000;
 let maxReopenDelay = 30000;
 let reopenDelay = minReopenDelay;
-let reopenDecay = 1.1; // exponential backoff factor
+let reopenDecay = 1.5; // exponential backoff factor
 
 export function open({hash, eval: compile} = {}) {
   let opened = false;
@@ -21,7 +21,6 @@ export function open({hash, eval: compile} = {}) {
   socket.onopen = () => {
     console.info("socket open");
     opened = true;
-    reopenDelay = minReopenDelay;
     send({type: "hello", path: location.pathname, hash});
   };
 
@@ -29,6 +28,10 @@ export function open({hash, eval: compile} = {}) {
     const message = JSON.parse(event.data);
     console.info("↓", message);
     switch (message.type) {
+      case "welcome": {
+        reopenDelay = minReopenDelay; // reset on successful connection
+        break;
+      }
       case "reload": {
         location.reload();
         break;

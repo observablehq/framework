@@ -2,6 +2,38 @@
 @import url("observablehq:theme-air.css") (prefers-color-scheme: light);
 @import url("observablehq:theme-near-midnight.css") (prefers-color-scheme: dark);
 
+:root {
+  --sans-serif: Inter, -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto,
+    noto, "segoe ui", arial, sans-serif;
+  --monospace: "Spline Sans Mono", Menlo, Consolas, monospace;
+  --theme-foreground-focus: #148576;
+}
+
+h1 code,
+h2 code,
+h3 code,
+h4 code,
+h5 code,
+h6 code,
+code,
+tt {
+  font-size: revert;
+}
+
+code:not(pre code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code) {
+  color: var(--theme-foreground-alt);
+  background-color: var(--theme-background-alt);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --theme-foreground: #f5f5f5;
+    --theme-foreground-focus: #37d5be;
+  }
+}
+
 #observablehq-header a[href] {
   color: inherit;
 }
@@ -14,40 +46,71 @@
   text-decoration: none;
 }
 
-#observablehq-header a[target="_blank"]:hover span,
-.observablehq-link a[target="_blank"]:hover span {
+#observablehq-header a[target="_blank"]:is(:hover, :focus) span,
+.observablehq-link a[target="_blank"]:is(:hover, :focus) span {
   text-decoration: underline;
-}
-
-#observablehq-header a[target="_blank"]::after,
-.observablehq-link a[target="_blank"]::after {
-  content: "\2197";
 }
 
 #observablehq-header a[target="_blank"][data-decoration]::after {
   content: attr(data-decoration);
 }
 
-#observablehq-header a[target="_blank"]:not(:hover, :focus)::after {
-  color: var(--theme-foreground-muted);
+#observablehq-header a[target="_blank"]:is(:hover, :focus),
+#observablehq-header a[target="_blank"]:is(:hover, :focus)::after {
+  color: var(--theme-foreground-focus);
 }
 
 .observablehq-link a[target="_blank"]:not(:hover, :focus)::after {
   color: var(--theme-foreground-faint);
 }
 
-.observablehq-link-active a[target=_blank]:not(:hover, :focus)::after {
+.observablehq-link-active a[target="_blank"]:not(:hover, :focus)::after {
   color: var(--theme-foreground-focus);
+}
+
+body {
+  font: 16px/1.5 var(--sans-serif);
 }
 
 #observablehq-main {
   min-height: calc(100vh - 23.8rem);
 }
 
-@container not (min-width: 640px) {
-  .hide-if-small {
-    display: none;
+#observablehq-main a[href]:not(.observablehq-header-anchor) {
+  color: inherit;
+  text-decoration: underline;
+}
+
+h1 {
+  font-family: var(--monospace);
+  font-weight: 500;
+}
+
+@media (min-width: 640px) {
+  .hide-if-large {
+    display: none !important;
   }
+}
+
+@media not (min-width: 640px) {
+  .hide-if-small {
+    display: none !important;
+  }
+}
+
+@media (min-width: calc(640px + 6rem + 272px)) {
+  #observablehq-sidebar-toggle:is(:checked, :indeterminate) ~ #observablehq-center .hide-if-sidebar {
+    display: none !important;
+  }
+}
+
+#observablehq-sidebar > ol:first-child > li::before {
+  display: none;
+}
+
+#observablehq-sidebar > ol:first-child > li > a {
+  background: none;
+  color: inherit;
 }
 
 a.observablehq-version-badge {

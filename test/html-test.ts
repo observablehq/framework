@@ -100,6 +100,26 @@ describe("findAssets(html, path)", () => {
     const html = '<script src="test.js" type="other">';
     assert.deepStrictEqual(findAssets(html, "foo").files, new Set(["./test.js"]));
   });
+  it("finds anchors by [id] or [name]", () => {
+    const html = '<a id="id1">foo</a> <a name="id2">bar</a>';
+    assert.deepStrictEqual(findAssets(html, "foo").anchors, new Set(["id1", "id2"]));
+  });
+  it("finds local links by a[href]", () => {
+    const html = '<a href="#anchor">a</a> <a href="other#baz">b</a> <a href="?test">self</a>';
+    assert.deepStrictEqual(findAssets(html, "foo").localLinks, new Set(["/foo#anchor", "/other#baz", "/foo?test"]));
+  });
+  it("finds relative links", () => {
+    const html = '<a href="./test">a</a>';
+    assert.deepStrictEqual(findAssets(html, "foo/bar").localLinks, new Set(["/foo/test"]));
+  });
+  it("finds links that go up", () => {
+    const html = '<a href="../test">a</a>';
+    assert.deepStrictEqual(findAssets(html, "foo/bar").localLinks, new Set(["/test"]));
+  });
+  it("finds links that go above the root", () => {
+    const html = '<a href="../test">a</a>';
+    assert.deepStrictEqual(findAssets(html, "foo").localLinks, new Set(["../test"]));
+  });
 });
 
 describe("rewriteHtml(html, resolve)", () => {

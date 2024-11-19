@@ -1,21 +1,25 @@
 const files = new Map();
 
-export function registerFile(name, info) {
-  const href = new URL(name, location).href;
+export function registerFile(name, info, base = location) {
+  const href = new URL(name, base).href;
   if (info == null) {
     files.delete(href);
   } else {
-    const {path, mimeType, lastModified} = info;
-    const file = new FileAttachmentImpl(new URL(path, location).href, name.split("/").pop(), mimeType, lastModified);
+    const {path, mimeType, lastModified, size} = info;
+    const file = new FileAttachmentImpl(new URL(path, base).href, name.split("/").pop(), mimeType, lastModified, size);
     files.set(href, file);
+    return file;
   }
 }
 
 export function FileAttachment(name, base = location) {
   if (new.target !== undefined) throw new TypeError("FileAttachment is not a constructor");
+  let info;
+  if (typeof name === "object" && name && "name" in name) (info = name), (name = name.name);
   const file = files.get(new URL(name, base).href);
-  if (!file) throw new Error(`File not found: ${name}`);
-  return file;
+  if (file) return file;
+  if (info) return registerFile(name, info, base);
+  throw new Error(`File not found: ${name}`);
 }
 
 async function remote_fetch(file) {
@@ -25,11 +29,12 @@ async function remote_fetch(file) {
 }
 
 export class AbstractFile {
-  constructor(name, mimeType = "application/octet-stream", lastModified) {
+  constructor(name, mimeType = "application/octet-stream", lastModified, size) {
     Object.defineProperties(this, {
       name: {value: `${name}`, enumerable: true},
       mimeType: {value: `${mimeType}`, enumerable: true},
-      lastModified: {value: +lastModified, enumerable: true}
+      lastModified: {value: +lastModified, enumerable: true},
+      size: {value: +size, enumerable: true}
     });
   }
   async blob() {
@@ -76,6 +81,36 @@ export class AbstractFile {
     const [Arrow, response] = await Promise.all([import("npm:apache-arrow"), remote_fetch(this)]);
     return Arrow.tableFromIPC(response);
   }
+  async arquero(options) {
+    let request;
+    let from;
+    switch (this.mimeType) {
+      case "application/json":
+        request = this.text();
+        from = "fromJSON";
+        break;
+      case "text/tab-separated-values":
+        if (options?.delimiter === undefined) options = {...options, delimiter: "\t"};
+      // fall through
+      case "text/csv":
+        request = this.text();
+        from = "fromCSV";
+        break;
+      default:
+        if (/\.arrow$/i.test(this.name)) {
+          request = this.arrow();
+          from = "fromArrow";
+        } else if (/\.parquet$/i.test(this.name)) {
+          request = this.parquet();
+          from = "fromArrow";
+        } else {
+          throw new Error(`unable to determine Arquero loader: ${this.name}`);
+        }
+        break;
+    }
+    const [aq, body] = await Promise.all([import("npm:arquero"), request]);
+    return aq[from](body, options);
+  }
   async parquet() {
     const [Arrow, Parquet, buffer] = await Promise.all([import("npm:apache-arrow"), import("npm:parquet-wasm").then(async (Parquet) => (await Parquet.default(import.meta.resolve("npm:parquet-wasm/esm/parquet_wasm_bg.wasm")), Parquet)), this.arrayBuffer()]); // prettier-ignore
     return Arrow.tableFromIPC(Parquet.readParquet(new Uint8Array(buffer)).intoIPCStream());
@@ -101,8 +136,8 @@ export class AbstractFile {
 }
 
 class FileAttachmentImpl extends AbstractFile {
-  constructor(href, name, mimeType, lastModified) {
-    super(name, mimeType, lastModified);
+  constructor(href, name, mimeType, lastModified, size) {
+    super(name, mimeType, lastModified, size);
     Object.defineProperty(this, "href", {value: href});
   }
   async url() {

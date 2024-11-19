@@ -89,5 +89,6 @@
       },
       "mode": "block"
     }
-  ]
+  ],
+  "path": "fenced-code.md"
 }

@@ -1,12 +1,17 @@
+import type {DuckDBConfig} from "./config.js";
+import {resolveDuckDBExtension} from "./duckdb.js";
+
 export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
   const set = setof(methods);
   const implicits = new Set<string>();
   if (set.has("arrow")) implicits.add("npm:apache-arrow");
+  if (set.has("arquero")) implicits.add("npm:apache-arrow").add("npm:arquero");
+  if (set.has("arquero-parquet")) implicits.add("npm:apache-arrow").add("npm:arquero").add("npm:parquet-wasm");
   if (set.has("csv") || set.has("tsv")) implicits.add("npm:d3-dsv");
   if (set.has("parquet")) implicits.add("npm:apache-arrow").add("npm:parquet-wasm");
   if (set.has("sqlite")) implicits.add("npm:@observablehq/sqlite");
-  if (set.has("xlsx")) implicits.add("npm:@observablehq/xlsx");
-  if (set.has("zip")) implicits.add("npm:@observablehq/zip");
+  if (set.has("xlsx")) implicits.add("observablehq:stdlib/xlsx");
+  if (set.has("zip")) implicits.add("observablehq:stdlib/zip");
   return implicits;
 }
 
@@ -70,7 +75,7 @@ export function getImplicitStylesheets(imports: Iterable<string>): Set<string> {
  * library used by FileAttachment) we manually enumerate the needed additional
  * downloads here. TODO Support versioned imports, too, such as "npm:leaflet@1".
  */
-export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
+export function getImplicitDownloads(imports: Iterable<string>, duckdb?: DuckDBConfig): Set<string> {
   const set = setof(imports);
   const implicits = new Set<string>();
   if (set.has("npm:@observablehq/duckdb")) {
@@ -78,6 +83,12 @@ export function getImplicitDownloads(imports: Iterable<string>): Set<string> {
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js");
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-eh.wasm");
     implicits.add("npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js");
+    if (!duckdb) throw new Error("Implementation error: missing duckdb configuration");
+    for (const [name, {source}] of Object.entries(duckdb.extensions)) {
+      for (const platform in duckdb.platforms) {
+        implicits.add(`duckdb:${resolveDuckDBExtension(source, platform, name)}`);
+      }
+    }
   }
   if (set.has("npm:@observablehq/sqlite")) {
     implicits.add("npm:sql.js/dist/sql-wasm.js");
@@ -166,8 +177,8 @@ export function getImplicitDependencies(imports: Iterable<string>): Set<string> 
   if (set.has("npm:@observablehq/inputs")) implicits.add("npm:htl").add("npm:isoformat");
   if (set.has("npm:@observablehq/mermaid")) implicits.add("npm:mermaid");
   if (set.has("npm:@observablehq/tex")) implicits.add("npm:katex");
-  if (set.has("npm:@observablehq/xlsx")) implicits.add("npm:exceljs");
-  if (set.has("npm:@observablehq/zip")) implicits.add("npm:jszip");
+  if (set.has("observablehq:stdlib/xlsx")) implicits.add("npm:exceljs");
+  if (set.has("observablehq:stdlib/zip")) implicits.add("npm:jszip");
   if (set.has("observablehq:stdlib/vega-lite")) implicits.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
   if (set.has("observablehq:stdlib/vgplot")) implicits.add("npm:@uwdata/vgplot").add("npm:@observablehq/duckdb").add("npm:@duckdb/duckdb-wasm"); // prettier-ignore
   return implicits;

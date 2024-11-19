@@ -1,12 +1,12 @@
 /* eslint-disable import/no-named-as-default-member */
 import {createHash} from "node:crypto";
-import {transformSync} from "esbuild";
+import slugify from "@sindresorhus/slugify";
 import he from "he";
 import MarkdownIt from "markdown-it";
-import type {Token} from "markdown-it";
-import type {RuleCore} from "markdown-it/lib/parser_core.js";
-import type {RuleInline} from "markdown-it/lib/parser_inline.js";
-import type {RenderRule} from "markdown-it/lib/renderer.js";
+import type {RuleCore} from "markdown-it/lib/parser_core.mjs";
+import type {RuleInline} from "markdown-it/lib/parser_inline.mjs";
+import type {RenderRule} from "markdown-it/lib/renderer.mjs";
+import type Token from "markdown-it/lib/token.mjs";
 import MarkdownItAnchor from "markdown-it-anchor";
 import type {Config} from "./config.js";
 import {mergeStyle} from "./config.js";
@@ -14,10 +14,12 @@ import type {FrontMatter} from "./frontMatter.js";
 import {readFrontMatter} from "./frontMatter.js";
 import {html, rewriteHtmlPaths} from "./html.js";
 import {parseInfo} from "./info.js";
+import {transformJavaScriptSync} from "./javascript/module.js";
 import type {JavaScriptNode} from "./javascript/parse.js";
 import {parseJavaScript} from "./javascript/parse.js";
 import {isAssetPath, relativePath} from "./path.js";
 import {parsePlaceholder} from "./placeholder.js";
+import type {Params} from "./route.js";
 import {transpileSql} from "./sql.js";
 import {transpileTag} from "./tag.js";
 import {InvalidThemeError} from "./theme.js";
@@ -38,6 +40,8 @@ export interface MarkdownPage {
   data: FrontMatter;
   style: string | null;
   code: MarkdownCode[];
+  path: string;
+  params?: Params;
 }
 
 interface ParseContext {
@@ -45,6 +49,7 @@ interface ParseContext {
   startLine: number;
   currentLine: number;
   path: string;
+  params?: Params;
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
@@ -59,9 +64,9 @@ function isFalse(attribute: string | undefined): boolean {
   return attribute?.toLowerCase() === "false";
 }
 
-function transformJsx(content: string): string {
+function transpileJavaScript(content: string, tag: "ts" | "jsx" | "tsx"): string {
   try {
-    return transformSync(content, {loader: "jsx", jsx: "automatic", jsxImportSource: "npm:react"}).code;
+    return transformJavaScriptSync(content, tag);
   } catch (error: any) {
     throw new SyntaxError(error.message);
   }
@@ -70,8 +75,8 @@ function transformJsx(content: string): string {
 function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
   return tag === "js"
     ? content
-    : tag === "jsx"
-    ? transformJsx(content)
+    : tag === "ts" || tag === "jsx" || tag === "tsx"
+    ? transpileJavaScript(content, tag)
     : tag === "tex"
     ? transpileTag(content, "tex.block", true)
     : tag === "html"
@@ -107,7 +112,7 @@ function getLiveSource(content: string, tag: string, attributes: Record<string, 
 
 function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
-    const {path} = context;
+    const {path, params} = context;
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
@@ -118,8 +123,8 @@ function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
       if (source != null) {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
-        const node = parseJavaScript(source, {path});
-        context.code.push({id, node, mode: tag === "jsx" ? "jsx" : "block"});
+        const node = parseJavaScript(source, {path, params});
+        context.code.push({id, node, mode: tag === "jsx" || tag === "tsx" ? "jsx" : "block"});
         html += `<div class="observablehq observablehq--block">${
           node.expression ? "<observablehq-loading></observablehq-loading>" : ""
         }<!--:${id}:--></div>\n`;
@@ -179,12 +184,13 @@ const transformPlaceholderCore: RuleCore = (state) => {
 
 function makePlaceholderRenderer(): RenderRule {
   return (tokens, idx, options, context: ParseContext) => {
-    const {path} = context;
+    const {path, params} = context;
     const token = tokens[idx];
     const id = uniqueCodeId(context, token.content);
     try {
       // TODO sourceLine: context.startLine + context.currentLine
-      const node = parseJavaScript(token.content, {path, inline: true});
+      // TODO allow TypeScript?
+      const node = parseJavaScript(token.content, {path, params, inline: true});
       context.code.push({id, node, mode: "inline"});
       return `<observablehq-loading></observablehq-loading><!--:${id}:-->`;
     } catch (error) {
@@ -211,6 +217,8 @@ export interface ParseOptions {
   head?: Config["head"];
   header?: Config["header"];
   footer?: Config["footer"];
+  source?: string;
+  params?: Params;
 }
 
 export function createMarkdownIt({
@@ -226,7 +234,7 @@ export function createMarkdownIt({
 } = {}): MarkdownIt {
   const md = MarkdownIt({html: true, linkify, typographer, quotes});
   if (linkify) md.linkify.set({fuzzyLink: false, fuzzyEmail: false});
-  md.use(MarkdownItAnchor);
+  md.use(MarkdownItAnchor, {slugify: (s) => slugify(s)});
   md.inline.ruler.push("placeholder", transformPlaceholderInline);
   md.core.ruler.after("inline", "placeholder", transformPlaceholderCore);
   md.renderer.rules.placeholder = makePlaceholderRenderer();
@@ -236,10 +244,10 @@ export function createMarkdownIt({
 }
 
 export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
-  const {md, path} = options;
+  const {md, path, source = path, params} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {code, startLine: 0, currentLine: 0, path};
+  const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params};
   const tokens = md.parse(content, context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   const title = data.title !== undefined ? data.title : findTitle(tokens);
@@ -251,7 +259,9 @@ export function parseMarkdown(input: string, options: ParseOptions): MarkdownPag
     data,
     title,
     style: getStyle(data, options),
-    code
+    code,
+    path: source,
+    params
   };
 }
 

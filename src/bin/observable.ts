@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {join} from "node:path/posix";
 import type {ParseArgsConfig} from "node:util";
 import {parseArgs} from "node:util";
 import * as clack from "@clack/prompts";
@@ -17,7 +18,7 @@ const CONFIG_OPTION = {
   config: {
     type: "string",
     short: "c",
-    description: "Path to the project config file"
+    description: "Path to the app config file"
   }
 } as const;
 
@@ -75,12 +76,12 @@ try {
       helpArgs(command, {allowPositionals: true});
       console.log(
         `usage: observable <command>
-  create       create a new project from a template
+  create       create a new app from a template
   preview      start the preview server
   build        generate a static site
   login        sign-in to Observable
   logout       sign-out of Observable
-  deploy       deploy a project to Observable
+  deploy       deploy an app to Observable
   whoami       check authentication status
   convert      convert an Observable notebook to Markdown
   help         print usage information
@@ -154,21 +155,33 @@ try {
           ...CONFIG_OPTION,
           host: {
             type: "string",
-            default: "127.0.0.1"
+            default: "127.0.0.1",
+            description: "the server host; use 0.0.0.0 to accept external connections"
           },
           port: {
-            type: "string"
+            type: "string",
+            description: "the server port; defaults to 3000 (or higher if unavailable)"
+          },
+          cors: {
+            type: "boolean",
+            description: "allow cross-origin requests on all origins (*)"
+          },
+          "allow-origin": {
+            type: "string",
+            multiple: true,
+            description: "allow cross-origin requests on a specific origin"
           },
           open: {
             type: "boolean",
-            default: true
+            default: true,
+            description: "open browser"
           },
           "no-open": {
             type: "boolean"
           }
         }
       });
-      const {config, root, host, port, open} = values;
+      const {config, root, host, port, open, cors, ["allow-origin"]: origins} = values;
       await readConfig(config, root); // Ensure the config is valid.
       await import("../preview.js").then(async (preview) =>
         preview.preview({
@@ -176,6 +189,7 @@ try {
           root,
           hostname: host!,
           port: port === undefined ? undefined : +port,
+          origins: cors ? ["*"] : origins,
           open
         })
       );
@@ -199,12 +213,27 @@ try {
     case "convert": {
       const {
         positionals,
-        values: {output, force}
+        values: {config, root, output: out, force}
       } = helpArgs(command, {
-        options: {output: {type: "string", default: "."}, force: {type: "boolean", short: "f"}},
+        options: {
+          output: {
+            type: "string",
+            short: "o",
+            description: "Output directory (defaults to the source root)"
+          },
+          force: {
+            type: "boolean",
+            short: "f",
+            description: "If true, overwrite existing resources"
+          },
+          ...CONFIG_OPTION
+        },
         allowPositionals: true
       });
-      await import("../convert.js").then((convert) => convert.convert(positionals, {output: output!, force}));
+      // The --output command-line option is relative to the cwd, but the root
+      // config option (typically "src") is relative to the project root.
+      const output = out ?? join(root ?? ".", (await readConfig(config, root)).root);
+      await import("../convert.js").then((convert) => convert.convert(positionals, {output, force}));
       break;
     }
     default: {

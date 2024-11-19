@@ -1,17 +1,21 @@
 import mime from "mime";
 import type {Config, Page, Section} from "./config.js";
 import {mergeToc} from "./config.js";
+import {enoent} from "./error.js";
 import {getClientPath} from "./files.js";
 import type {Html, HtmlResolvers} from "./html.js";
 import {html, parseHtml, rewriteHtml} from "./html.js";
 import {isJavaScript} from "./javascript/imports.js";
-import {transpileJavaScript} from "./javascript/transpile.js";
+import type {FileInfo} from "./javascript/module.js";
+import {findModule} from "./javascript/module.js";
+import type {TranspileModuleOptions} from "./javascript/transpile.js";
+import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import type {MarkdownPage} from "./markdown.js";
 import type {PageLink} from "./pager.js";
 import {findLink, normalizePath} from "./pager.js";
 import {isAssetPath, resolvePath, resolveRelativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
-import {getResolvers} from "./resolvers.js";
+import {getModuleResolver, getModuleStaticImports, getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
 
 export interface RenderOptions extends Config {
@@ -25,15 +29,18 @@ type RenderInternalOptions =
   | {preview: true}; // preview
 
 export async function renderPage(page: MarkdownPage, options: RenderOptions & RenderInternalOptions): Promise<string> {
-  const {data} = page;
+  const {data, params} = page;
   const {base, path, title, preview} = options;
   const {loaders, resolvers = await getResolvers(page, options)} = options;
   const {draft = false, sidebar = options.sidebar} = data;
   const toc = mergeToc(data.toc, options.toc);
   const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
+<html>
+<head>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="generator" content="Observable Framework v${process.env.npm_package_version}">
 ${
   page.title || title
     ? html`<title>${[page.title, page.title === title ? null : title]
@@ -57,7 +64,7 @@ if (location.pathname.endsWith("/")) {
 import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from ` : ""}${JSON.stringify(
     resolveImport("observablehq:client")
   )};${
-    files.size || data?.sql
+    files.size
       ? `\nimport {registerFile${data?.sql ? ", FileAttachment" : ""}} from ${JSON.stringify(
           resolveImport("observablehq:stdlib")
         )};`
@@ -68,21 +75,25 @@ import ${preview || page.code.length ? `{${preview ? "open, " : ""}define} from 
           files,
           resolveFile,
           preview
-            ? (name) => loaders.getSourceLastModified(resolvePath(path, name))
-            : (name) => loaders.getOutputLastModified(resolvePath(path, name))
+            ? (name) => loaders.getSourceInfo(resolvePath(path, name))
+            : (name) => loaders.getOutputInfo(resolvePath(path, name))
         )}`
       : ""
   }${data?.sql ? `\n${registerTables(data.sql, options)}` : ""}
 ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => eval(body)});\n` : ""}${page.code
-    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, mode, resolveImport})}`)
+    .map(({node, id, mode}) => `\n${transpileJavaScript(node, {id, path, params, mode, resolveImport, resolveFile})}`)
     .join("")}`)}
-</script>${sidebar ? html`\n${await renderSidebar(options, resolvers.resolveLink)}` : ""}${
+</script>
+</head>
+<body>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}
+<div id="observablehq-center">${renderHeader(page.header, resolvers)}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
-<div id="observablehq-center">${renderHeader(page.header, resolvers)}
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
 ${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
 </div>
+</body>
+</html>
 `);
 }
 
@@ -103,29 +114,31 @@ function registerTable(name: string, source: string, {path}: RenderOptions): str
 function registerFiles(
   files: Iterable<string>,
   resolve: (name: string) => string,
-  getLastModified: (name: string) => number | undefined
+  getInfo: (name: string) => FileInfo | undefined
 ): string {
   return Array.from(files)
     .sort()
-    .map((f) => registerFile(f, resolve, getLastModified))
+    .map((f) => registerFile(f, resolve, getInfo))
     .join("");
 }
 
 function registerFile(
   name: string,
   resolve: (name: string) => string,
-  getLastModified: (name: string) => number | undefined
+  getInfo: (name: string) => FileInfo | undefined
 ): string {
+  const info = getInfo(name);
   return `\nregisterFile(${JSON.stringify(name)}, ${JSON.stringify({
     name,
     mimeType: mime.getType(name) ?? undefined,
     path: resolve(name),
-    lastModified: getLastModified(name)
+    lastModified: info?.mtimeMs,
+    size: info?.size
   })});`;
 }
 
-async function renderSidebar(options: RenderOptions, resolveLink: (href: string) => string): Promise<Html> {
-  const {title = "Home", pages, root, path, search} = options;
+async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink}: Resolvers): Promise<Html> {
+  const {home, pages, root, path, search} = options;
   return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
@@ -133,13 +146,13 @@ async function renderSidebar(options: RenderOptions, resolveLink: (href: string)
     <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
-    }"><a href="${encodeURI(resolveLink("/"))}">${title}</a></li>
+    }"><a href="${encodeURI(resolveLink("/"))}">${html.unsafe(home)}</a></li>
   </ol>${
     search
       ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
   <div id="observablehq-search-results"></div>
   <script>{${html.unsafe(
-    (await rollupClient(getClientPath("search-init.js"), root, path, {minify: true})).trim()
+    (await rollupClient(getClientPath("search-init.js"), root, path, {resolveImport, minify: true})).trim()
   )}}</script>`
       : ""
   }${pages.map((p, i) =>
@@ -159,7 +172,7 @@ async function renderSidebar(options: RenderOptions, resolveLink: (href: string)
   )}
 </nav>
 <script>{${html.unsafe(
-    (await rollupClient(getClientPath("sidebar-init.js"), root, path, {minify: true})).trim()
+    (await rollupClient(getClientPath("sidebar-init.js"), root, path, {resolveImport, minify: true})).trim()
   )}}</script>`;
 }
 
@@ -217,7 +230,9 @@ function renderListItem(page: Page, path: string, resolveLink: (href: string) =>
 
 function renderHead(head: MarkdownPage["head"], resolvers: Resolvers): Html {
   const {stylesheets, staticImports, resolveImport, resolveStylesheet} = resolvers;
-  return html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${
+  return html`${
+    hasGoogleFonts(stylesheets) ? html`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>` : null
+  }${
     Array.from(new Set(Array.from(stylesheets, resolveStylesheet)), renderStylesheetPreload) // <link rel=preload as=style>
   }${
     Array.from(new Set(Array.from(stylesheets, resolveStylesheet)), renderStylesheet) // <link rel=stylesheet>
@@ -265,4 +280,33 @@ function renderPager({prev, next}: PageLink, resolveLink: (href: string) => stri
 
 function renderRel(page: Page, rel: "prev" | "next", resolveLink: (href: string) => string): Html {
   return html`<a rel="${rel}" href="${encodeURI(resolveLink(page.path))}"><span>${page.name}</span></a>`;
+}
+
+function hasGoogleFonts(stylesheets: Set<string>): boolean {
+  for (const s of stylesheets) if (s.startsWith("https://fonts.googleapis.com/")) return true;
+  return false;
+}
+
+export type RenderModuleOptions = Omit<TranspileModuleOptions, "root" | "path" | "servePath" | "params">;
+
+export async function renderModule(
+  root: string,
+  path: string,
+  {resolveImport = getModuleResolver(root, path), ...options}: RenderModuleOptions = {}
+): Promise<string> {
+  const module = findModule(root, path);
+  if (!module) throw enoent(path);
+  const imports = new Set<string>();
+  const resolutions = new Set<string>();
+  for (const i of await getModuleStaticImports(root, path)) {
+    const r = await resolveImport(i);
+    if (!resolutions.has(r)) {
+      resolutions.add(r);
+      imports.add(i);
+    }
+  }
+  const input = Array.from(imports, (i) => `import ${JSON.stringify(i)};\n`)
+    .concat(`export * from ${JSON.stringify(path)};\n`)
+    .join("");
+  return await transpileModule(input, {root, path, servePath: path, params: module.params, resolveImport, ...options});
 }

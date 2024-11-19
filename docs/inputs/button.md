@@ -92,10 +92,10 @@ const confirm = view(Inputs.button("OK", {label: "Continue?"}));
 You can change the rendered text in Markdown based on whether a button is clicked. Try clicking the `OK` button with the  `Continue?` label.
 
 ```md echo run=false
-confirm ? "Confirmed!" : "Awaiting confirmation..."
+confirm ? "Confirmed!" : "Awaiting confirmation…"
 ```
 
-${confirm ? "Confirmed!" : "Awaiting confirmation..."}
+${confirm ? "Confirmed!" : "Awaiting confirmation…"}
 
 You can also use a button to copy something to the clipboard.
 
