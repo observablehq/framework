@@ -1,7 +1,10 @@
+import {exec} from "node:child_process";
 import {createHash} from "node:crypto";
 import type {Stats} from "node:fs";
+import {existsSync} from "node:fs";
 import {readFile, stat} from "node:fs/promises";
 import {join} from "node:path/posix";
+import {promisify} from "node:util";
 import slugify from "@sindresorhus/slugify";
 import wrapAnsi from "wrap-ansi";
 import type {BuildEffects, BuildManifest, BuildOptions} from "./build.js";
@@ -15,7 +18,7 @@ import {visitFiles} from "./files.js";
 import type {Logger} from "./logger.js";
 import type {AuthEffects} from "./observableApiAuth.js";
 import {defaultEffects as defaultAuthEffects, formatUser, loginInner, validWorkspaces} from "./observableApiAuth.js";
-import {ObservableApiClient} from "./observableApiClient.js";
+import {ObservableApiClient, getObservableUiOrigin} from "./observableApiClient.js";
 import type {
   DeployManifestFile,
   GetCurrentUserResponse,
@@ -32,6 +35,26 @@ import {bold, defaultEffects as defaultTtyEffects, faint, inverse, link, underli
 const DEPLOY_POLL_MAX_MS = 1000 * 60 * 5;
 const DEPLOY_POLL_INTERVAL_MS = 1000 * 5;
 const BUILD_AGE_WARNING_MS = 1000 * 60 * 5;
+
+const OBSERVABLE_UI_ORIGIN = getObservableUiOrigin();
+
+function settingsUrl(deployTarget: DeployTargetInfo) {
+  if (deployTarget.create) throw new Error("Incorrect deploy target state");
+  return `${OBSERVABLE_UI_ORIGIN}projects/@${deployTarget.workspace.login}/${deployTarget.project.slug}`;
+}
+
+/**
+ * Returns the ownerName and repoName of the first GitHub remote (HTTPS or SSH)
+ * on the current repository. Supports both https and ssh URLs:
+ * - https://github.com/observablehq/framework.git
+ * - git@github.com:observablehq/framework.git
+ */
+async function getGitHubRemote(): Promise<{ownerName: string; repoName: string} | undefined> {
+  const firstRemote = (await promisify(exec)("git remote -v")).stdout.match(
+    /^\S+\s(https:\/\/github.com\/|git@github.com:)(?<ownerName>[^/]+)\/(?<repoName>[^/]*?)(\.git)?\s/m
+  );
+  return firstRemote?.groups as {ownerName: string; repoName: string} | undefined;
+}
 
 export interface DeployOptions {
   config: Config;
@@ -84,7 +107,7 @@ type DeployTargetInfo =
   | {create: true; workspace: {id: string; login: string}; projectSlug: string; title: string; accessLevel: string}
   | {create: false; workspace: {id: string; login: string}; project: GetProjectResponse};
 
-/** Deploy a project to ObservableHQ */
+/** Deploy a project to Observable */
 export async function deploy(deployOptions: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start", force: deployOptions.force});
   effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
@@ -180,24 +203,145 @@ class Deployer {
     const {deployId} = this.deployOptions;
     if (!deployId) throw new Error("invalid deploy options");
     await this.checkDeployCreated(deployId);
-
-    const buildFilePaths = await this.getBuildFilePaths();
-
-    await this.uploadFiles(deployId, buildFilePaths);
+    await this.uploadFiles(deployId, await this.getBuildFilePaths());
     await this.markDeployUploaded(deployId);
-    const deployInfo = await this.pollForProcessingCompletion(deployId);
+    return await this.pollForProcessingCompletion(deployId);
+  }
 
-    return deployInfo;
+  private async cloudBuild(deployTarget: DeployTargetInfo) {
+    if (deployTarget.create) throw new Error("Incorrect deploy target state");
+    const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
+    await this.apiClient.postProjectBuild(deployTarget.project.id);
+    const spinner = this.effects.clack.spinner();
+    spinner.start("Requesting deploy");
+    const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
+    while (true) {
+      if (Date.now() > pollExpiration) {
+        spinner.stop("Requesting deploy timed out.");
+        throw new CliError("Requesting deploy failed");
+      }
+      const {latestCreatedDeployId} = await this.apiClient.getProject({
+        workspaceLogin: deployTarget.workspace.login,
+        projectSlug: deployTarget.project.slug
+      });
+      if (latestCreatedDeployId !== deployTarget.project.latestCreatedDeployId) {
+        spinner.stop(
+          `Deploy started. Watch logs: ${link(`${settingsUrl(deployTarget)}/deploys/${latestCreatedDeployId}`)}`
+        );
+        // latestCreatedDeployId is initially null for a new project, but once
+        // it changes to a string it can never change back; since we know it has
+        // changed, we assert here that it’s not null
+        return latestCreatedDeployId!;
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+    }
+  }
+
+  // Throws error if local and remote GitHub repos don’t match or are invalid.
+  // Ignores this.deployOptions.config.root as we only support cloud builds from
+  // the root directory.
+  private async validateGitHubLink(deployTarget: DeployTargetInfo): Promise<void> {
+    if (deployTarget.create) throw new Error("Incorrect deploy target state");
+    if (!deployTarget.project.build_environment_id) throw new CliError("No build environment configured.");
+    if (!existsSync(".git")) throw new CliError("Not at root of a git repository.");
+    const remote = await getGitHubRemote();
+    if (!remote) throw new CliError("No GitHub remote found.");
+    const branch = (await promisify(exec)("git rev-parse --abbrev-ref HEAD")).stdout.trim();
+    if (!branch) throw new Error("Branch not found.");
+
+    // If a source repository has already been configured, check that it’s
+    // accessible and matches the linked repository and branch. TODO: validate
+    // local/remote refs match, "Your branch is up to date", and "nothing to
+    // commit, working tree clean".
+    const {source} = deployTarget.project;
+    if (source) {
+      const linkedRepo = await this.apiClient.getGitHubRepository(remote);
+      if (linkedRepo) {
+        if (source.provider_id !== linkedRepo.provider_id) {
+          throw new CliError(
+            `Configured repository does not match local repository; check build settings on ${link(
+              `${settingsUrl(deployTarget)}/settings`
+            )}`
+          );
+        }
+        if (source.branch !== branch) {
+          // TODO: If source.branch is empty, it'll use the default repository
+          // branch (usually main or master), which we don't know from our current
+          // getGitHubRepository response, and thus can't check here.
+          throw new CliError(
+            `Configured branch ${source.branch} does not match local branch ${branch}; check build settings on ${link(
+              `${settingsUrl(deployTarget)}/settings`
+            )}`
+          );
+        }
+      }
+
+      if (!(await this.apiClient.getGitHubRepository({providerId: source.provider_id}))) {
+        // TODO: This could poll for auth too, but is a distinct case because it
+        // means the repo was linked at one point and then something went wrong
+        throw new CliError(
+          `Cannot access configured repository; check build settings on ${link(
+            `${settingsUrl(deployTarget)}/settings`
+          )}`
+        );
+      }
+
+      // Configured repo is OK; proceed
+      return;
+    }
+
+    // If the source has not been configured, first check that the remote repo
+    // is linked in CD settings. If not, prompt the user to auth & link.
+    let linkedRepo = await this.apiClient.getGitHubRepository(remote);
+    if (!linkedRepo) {
+      if (!this.effects.isTty)
+        throw new CliError(
+          "Cannot access repository for continuous deployment and cannot request access in non-interactive mode"
+        );
+
+      // Repo is not authorized; link to auth page and poll for auth
+      const authUrl = new URL("/auth-github", OBSERVABLE_UI_ORIGIN);
+      authUrl.searchParams.set("owner", remote.ownerName);
+      authUrl.searchParams.set("repo", remote.repoName);
+      this.effects.clack.log.info(
+        `Authorize Observable to access the ${bold(remote.repoName)} repository: ${link(authUrl)}`
+      );
+
+      const spinner = this.effects.clack.spinner();
+      spinner.start("Waiting for authorization");
+      const {deployPollInterval: pollInterval = DEPLOY_POLL_INTERVAL_MS} = this.deployOptions;
+      const pollExpiration = Date.now() + DEPLOY_POLL_MAX_MS;
+      do {
+        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+        if (Date.now() > pollExpiration) {
+          spinner.stop("Authorization timed out.");
+          throw new CliError("Repository authorization failed");
+        }
+      } while (!(linkedRepo = await this.apiClient.getGitHubRepository(remote)));
+      spinner.stop("Repository authorized.");
+    }
+
+    // Save the linked repo as the configured source.
+    const {provider, provider_id, url} = linkedRepo;
+    await this.apiClient
+      .postProjectEnvironment(deployTarget.project.id, {source: {provider, provider_id, url, branch}})
+      .catch((error) => {
+        throw new CliError("Setting source repository for continuous deployment failed", {cause: error});
+      });
   }
 
   private async startNewDeploy(): Promise<GetDeployResponse> {
-    const deployConfig = await this.getUpdatedDeployConfig();
-    const deployTarget = await this.getDeployTarget(deployConfig);
-    const buildFilePaths = await this.getBuildFilePaths();
-    const deployId = await this.createNewDeploy(deployTarget);
-
-    await this.uploadFiles(deployId, buildFilePaths);
-    await this.markDeployUploaded(deployId);
+    const {deployConfig, deployTarget} = await this.getDeployTarget(await this.getUpdatedDeployConfig());
+    let deployId: string;
+    if (deployConfig.continuousDeployment) {
+      await this.validateGitHubLink(deployTarget);
+      deployId = await this.cloudBuild(deployTarget);
+    } else {
+      const buildFilePaths = await this.getBuildFilePaths();
+      deployId = await this.createNewDeploy(deployTarget);
+      await this.uploadFiles(deployId, buildFilePaths);
+      await this.markDeployUploaded(deployId);
+    }
     return await this.pollForProcessingCompletion(deployId);
   }
 
@@ -210,11 +354,7 @@ class Deployer {
       }
       return deployInfo;
     } catch (error) {
-      if (isHttpError(error)) {
-        throw new CliError(`Deploy ${deployId} not found.`, {
-          cause: error
-        });
-      }
+      if (isHttpError(error)) throw new CliError(`Deploy ${deployId} not found.`, {cause: error});
       throw error;
     }
   }
@@ -274,7 +414,9 @@ class Deployer {
   }
 
   // Get the deploy target, prompting the user as needed.
-  private async getDeployTarget(deployConfig: DeployConfig): Promise<DeployTargetInfo> {
+  private async getDeployTarget(
+    deployConfig: DeployConfig
+  ): Promise<{deployTarget: DeployTargetInfo; deployConfig: DeployConfig}> {
     let deployTarget: DeployTargetInfo;
     if (deployConfig.workspaceLogin && deployConfig.projectSlug) {
       try {
@@ -384,18 +526,37 @@ class Deployer {
       }
     }
 
+    let {continuousDeployment} = deployConfig;
+    if (continuousDeployment === null) {
+      const enable = await this.effects.clack.confirm({
+        message: wrapAnsi(
+          `Do you want to enable continuous deployment? ${faint(
+            "Given a GitHub repository, this builds in the cloud and redeploys whenever you push to the current branch."
+          )}`,
+          this.effects.outputColumns
+        ),
+        active: "Yes, enable and build in cloud",
+        inactive: "No, build locally"
+      });
+      if (this.effects.clack.isCancel(enable)) throw new CliError("User canceled deploy", {print: false, exitCode: 0});
+      continuousDeployment = enable;
+    }
+
+    deployConfig = {
+      projectId: deployTarget.project.id,
+      projectSlug: deployTarget.project.slug,
+      workspaceLogin: deployTarget.workspace.login,
+      continuousDeployment
+    };
+
     await this.effects.setDeployConfig(
       this.deployOptions.config.root,
       this.deployOptions.deployConfigPath,
-      {
-        projectId: deployTarget.project.id,
-        projectSlug: deployTarget.project.slug,
-        workspaceLogin: deployTarget.workspace.login
-      },
+      deployConfig,
       this.effects
     );
 
-    return deployTarget;
+    return {deployConfig, deployTarget};
   }
 
   // Create the new deploy on the server.

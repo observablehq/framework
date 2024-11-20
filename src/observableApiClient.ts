@@ -127,6 +127,35 @@ export class ObservableApiClient {
     return await this._fetch<GetProjectResponse>(url, {method: "GET"});
   }
 
+  async getGitHubRepository(
+    props: {ownerName: string; repoName: string} | {providerId: string}
+  ): Promise<GetGitHubRepositoryResponse | null> {
+    const params =
+      "providerId" in props ? `provider_id=${props.providerId}` : `owner=${props.ownerName}&repo=${props.repoName}`;
+    return await this._fetch<GetGitHubRepositoryResponse>(
+      new URL(`/cli/github/repository?${params}`, this._apiOrigin),
+      {method: "GET"}
+    ).catch(() => null);
+    // TODO: err.details.errors may be [{code: "NO_GITHUB_TOKEN"}] or [{code: "NO_REPO_ACCESS"}],
+    // which could be handled separately
+  }
+
+  async postProjectEnvironment(
+    id: string,
+    body: {source: {provider: "github"; provider_id: string; url: string; branch: string}}
+  ): Promise<PostProjectEnvironmentResponse> {
+    const url = new URL(`/cli/project/${id}/environment`, this._apiOrigin);
+    return await this._fetch<PostProjectEnvironmentResponse>(url, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body)
+    });
+  }
+
+  async postProjectBuild(id): Promise<{id: string}> {
+    return await this._fetch<{id: string}>(new URL(`/cli/project/${id}/build`, this._apiOrigin), {method: "POST"});
+  }
+
   async postProject({
     title,
     slug,
@@ -265,8 +294,41 @@ export interface GetProjectResponse {
   title: string;
   owner: {id: string; login: string};
   creator: {id: string; login: string};
+  latestCreatedDeployId: string | null;
+  automatic_builds_enabled: boolean | null;
+  build_environment_id: string | null;
+  source: null | {
+    provider: string;
+    provider_id: string;
+    url: string;
+    branch: string | null;
+  };
   // Available fields that we don't use
   // servingRoot: string | null;
+}
+
+export interface PostProjectEnvironmentResponse {
+  automatic_builds_enabled: boolean | null;
+  build_environment_id: string | null;
+  source: null | {
+    provider: string;
+    provider_id: string;
+    url: string;
+    branch: string | null;
+  };
+}
+
+export interface GetGitHubRepositoryResponse {
+  provider: "github";
+  provider_id: string;
+  url: string;
+  default_branch: string;
+  name: string;
+  linked_projects: {
+    title: string;
+    owner_id: string;
+    owner_name: string;
+  }[];
 }
 
 export interface DeployInfo {

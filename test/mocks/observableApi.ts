@@ -149,6 +149,8 @@ class ObservableApiMock {
     projectId = "project123",
     title = "Build test case",
     accessLevel = "private",
+    latestCreatedDeployId = null,
+    source = null,
     status = 200
   }: {
     workspaceLogin: string;
@@ -157,6 +159,8 @@ class ObservableApiMock {
     title?: string;
     accessLevel?: string;
     status?: number;
+    source?: GetProjectResponse["source"];
+    latestCreatedDeployId?: null | string;
   }): ObservableApiMock {
     const response =
       status === 200
@@ -166,7 +170,11 @@ class ObservableApiMock {
             slug: projectSlug,
             title,
             creator: {id: "user-id", login: "user-login"},
-            owner: {id: "workspace-id", login: "workspace-login"}
+            owner: {id: "workspace-id", login: workspaceLogin},
+            latestCreatedDeployId,
+            automatic_builds_enabled: true,
+            build_environment_id: "abc123",
+            source
           } satisfies GetProjectResponse)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 401 && status !== 403);
@@ -203,7 +211,11 @@ class ObservableApiMock {
             slug,
             title: "Mock Project",
             owner,
-            creator
+            creator,
+            latestCreatedDeployId: null,
+            automatic_builds_enabled: true,
+            build_environment_id: "abc123",
+            source: null
           } satisfies GetProjectResponse)
         : emptyErrorBody;
     const headers = authorizationHeader(status !== 403);
@@ -235,7 +247,11 @@ class ObservableApiMock {
               creator,
               owner,
               title: p.title ?? "Mock Title",
-              accessLevel: p.accessLevel ?? "private"
+              accessLevel: p.accessLevel ?? "private",
+              latestCreatedDeployId: null,
+              automatic_builds_enabled: null,
+              build_environment_id: null,
+              source: null
             }))
           } satisfies PaginatedList<GetProjectResponse>)
         : emptyErrorBody;
@@ -417,6 +433,88 @@ class ObservableApiMock {
           method: "POST"
         })
         .reply(200, JSON.stringify(response), {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handleGetRepository({
+    status = 200,
+    ownerName = "observablehq",
+    repoName = "test",
+    provider_id = "123:456",
+    useProviderId = false
+  }: {status?: number; ownerName?: string; repoName?: string; provider_id?: string; useProviderId?: boolean} = {}) {
+    const response =
+      status === 200
+        ? JSON.stringify({
+            provider: "github",
+            provider_id,
+            url: `https://github.com/${ownerName}/${repoName}.git`,
+            default_branch: "main",
+            name: "test",
+            linked_projects: []
+          })
+        : emptyErrorBody;
+    const headers = authorizationHeader(status !== 401);
+    if (useProviderId) {
+      // version that accepts provider_id
+      this._handlers.push((pool) =>
+        pool
+          .intercept({
+            path: `/cli/github/repository?provider_id=${encodeURIComponent(provider_id)}`,
+            headers: headersMatcher(headers)
+          })
+          .reply(status, response, {headers: {"content-type": "application/json"}})
+      );
+    } else {
+      // version that accepts owner & repo
+      this._handlers.push((pool) =>
+        pool
+          .intercept({
+            path: `/cli/github/repository?owner=${ownerName}&repo=${repoName}`,
+            headers: headersMatcher(headers)
+          })
+          .reply(status, response, {headers: {"content-type": "application/json"}})
+      );
+    }
+    return this;
+  }
+
+  handlePostProjectEnvironment({status = 200}: {status?: number} = {}) {
+    const response =
+      status === 200
+        ? JSON.stringify({
+            automatic_builds_enabled: true,
+            build_environment_id: "abc123",
+            source: {
+              provider: "github",
+              provider_id: "123:456",
+              url: "https://github.com/observablehq/test.git",
+              branch: "main"
+            }
+          })
+        : emptyErrorBody;
+    const headers = authorizationHeader(status !== 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: "/cli/project/project123/environment", method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
+    );
+    return this;
+  }
+
+  handlePostProjectBuild({status = 200}: {status?: number} = {}) {
+    const response =
+      status === 200
+        ? JSON.stringify({
+            id: "abc123"
+          })
+        : emptyErrorBody;
+    const headers = authorizationHeader(status !== 401);
+    this._handlers.push((pool) =>
+      pool
+        .intercept({path: "/cli/project/project123/build", method: "POST", headers: headersMatcher(headers)})
+        .reply(status, response, {headers: {"content-type": "application/json"}})
     );
     return this;
   }
