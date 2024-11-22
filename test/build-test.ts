@@ -5,7 +5,7 @@ import os from "node:os";
 import {extname} from "node:path/posix";
 import {join, normalize, relative} from "node:path/posix";
 import {PassThrough} from "node:stream";
-import {ascending, descending, difference, sort} from "d3-array";
+import {ascending, difference, sort} from "d3-array";
 import type {BuildManifest} from "../src/build.js";
 import {FileBuildEffects, build} from "../src/build.js";
 import {normalizeConfig, readConfig, setCurrentDate} from "../src/config.js";
