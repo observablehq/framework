@@ -1,2 +1,1 @@
-process.stdout.write(JSON.stringify({ a: 1 }));
-
+process.stdout.write(JSON.stringify({a: 1}));
