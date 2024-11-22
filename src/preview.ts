@@ -133,7 +133,7 @@ export class PreviewServer {
       } else if (pathname === "/_observablehq/minisearch.json") {
         end(req, res, await searchIndex(config), "application/json");
       } else if ((match = /^\/_observablehq\/theme-(?<theme>[\w-]+(,[\w-]+)*)?\.css$/.exec(pathname))) {
-        end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? []}), "text/css");
+        end(req, res, await bundleStyles({theme: match.groups!.theme?.split(",") ?? [], root}), "text/css");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".js")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
         const options =
@@ -143,7 +143,7 @@ export class PreviewServer {
         end(req, res, await rollupClient(path, root, pathname, options), "text/javascript");
       } else if (pathname.startsWith("/_observablehq/") && pathname.endsWith(".css")) {
         const path = getClientPath(pathname.slice("/_observablehq/".length));
-        end(req, res, await bundleStyles({path}), "text/css");
+        end(req, res, await bundleStyles({path, root}), "text/css");
       } else if (pathname.startsWith("/_node/") || pathname.startsWith("/_jsr/") || pathname.startsWith("/_duckdb/")) {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
@@ -156,7 +156,7 @@ export class PreviewServer {
           if (module) {
             const sourcePath = join(root, path);
             await access(sourcePath, constants.R_OK);
-            end(req, res, await bundleStyles({path: sourcePath}), "text/css");
+            end(req, res, await bundleStyles({path: sourcePath, root}), "text/css");
             return;
           }
         } else if (pathname.endsWith(".js")) {

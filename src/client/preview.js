@@ -155,6 +155,8 @@ export function open({hash, eval: compile} = {}) {
           for (const href of message.stylesheets.removed) {
             document.head.querySelector(`link[rel="stylesheet"][href="${href}"]`)?.remove();
           }
+          const tw = document.head.querySelector('link[rel="stylesheet"][href$="_observablehq/tailwind.css"]');
+          if (tw) tw.href = "" + tw.href; // reload tailwind.css
         }
         enableCopyButtons();
         break;
