@@ -3,6 +3,7 @@ import {mkdir, readFile, rm, stat, unlink, utimes, writeFile} from "node:fs/prom
 import os from "node:os";
 import {join} from "node:path/posix";
 import {sort} from "d3-array";
+import {setCurrentDate} from "../src/config.js";
 import {clearFileInfo} from "../src/javascript/module.js";
 import type {LoadEffects} from "../src/loader.js";
 import {LoaderResolver} from "../src/loader.js";
@@ -118,6 +119,8 @@ describe("LoaderResolver.find(path)", () => {
 
 describe("LoaderResolver.getSourceFileHash(path)", () => {
   const time = new Date(Date.UTC(2023, 11, 1));
+  before(() => setCurrentDate(null));
+  after(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   it("returns the content hash for the specified file’s data loader", async () => {
     await utimes("test/input/build/archives.posix/dynamic.zip.sh", time, time);
     await utimes("test/input/build/archives.posix/static.zip", time, time);
@@ -140,6 +143,8 @@ describe("LoaderResolver.get{Source,Output}Info(path)", () => {
   const time1 = new Date(Date.UTC(2023, 11, 1));
   const time2 = new Date(Date.UTC(2024, 2, 1));
   const loaders = new LoaderResolver({root: "test"});
+  before(() => setCurrentDate(null));
+  after(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   it("both return the last modification time for a simple file", async () => {
     await utimes("test/input/loader/simple.txt", time1, time1);
     assert.deepStrictEqual(loaders.getSourceInfo("input/loader/simple.txt"), {hash: "3b09aeb6f5f5336beb205d7f720371bc927cd46c21922e334d47ba264acb5ba4", mtimeMs: +time1, size: 6}); // prettier-ignore
