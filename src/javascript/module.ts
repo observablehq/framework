@@ -6,6 +6,7 @@ import {extname, join} from "node:path/posix";
 import type {Program} from "acorn";
 import type {TransformOptions} from "esbuild";
 import {transform, transformSync} from "esbuild";
+import {currentDate} from "../config.js";
 import {resolveJsrImport} from "../jsr.js";
 import {resolveNodeImport} from "../node.js";
 import {resolveNpmImport} from "../npm.js";
@@ -199,7 +200,7 @@ export function getFileInfo(root: string, path: string): FileInfo | undefined {
     const stat = statSync(key);
     if (!stat.isFile()) return; // ignore non-files
     accessSync(key, constants.R_OK); // verify that file is readable
-    mtimeMs = Math.floor(stat.mtimeMs);
+    mtimeMs = Math.floor((currentDate ?? stat.mtimeMs) as number);
     size = stat.size;
   } catch {
     fileInfoCache.delete(key); // delete stale entry

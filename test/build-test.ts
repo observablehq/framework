@@ -2,9 +2,10 @@ import assert from "node:assert";
 import {existsSync, readdirSync, statSync} from "node:fs";
 import {mkdir, mkdtemp, open, readFile, rename, rm, unlink, writeFile} from "node:fs/promises";
 import os from "node:os";
+import {extname} from "node:path/posix";
 import {join, normalize, relative} from "node:path/posix";
 import {PassThrough} from "node:stream";
-import {ascending, difference} from "d3-array";
+import {ascending, difference, sort} from "d3-array";
 import type {BuildManifest} from "../src/build.js";
 import {FileBuildEffects, build} from "../src/build.js";
 import {normalizeConfig, readConfig, setCurrentDate} from "../src/config.js";
@@ -32,6 +33,7 @@ const failureTests = ["missing-file", "missing-import"];
 
 describe("build", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
+  after(() => setCurrentDate(null));
   mockJsDelivr();
   mockJsr();
   mockDuckDB();
@@ -75,7 +77,10 @@ describe("build", () => {
       // renumber the hashes so they are sequential. This way we don’t have to
       // update the test snapshots whenever Framework’s client code changes. We
       // make an exception for minisearch.json because to test the content.
-      for (const path of findFiles(join(outputDir, "_observablehq"))) {
+      for (const path of sort(
+        findFiles(join(outputDir, "_observablehq")),
+        (a, b) => ascending(extname(a) === ".css", extname(b) === ".css") || ascending(a, b)
+      )) {
         const match = /^((.+)\.[0-9a-f]{8})\.(\w+)$/.exec(path);
         if (!match) throw new Error(`no hash found: ${path}`);
         const [, key, name, ext] = match;
@@ -232,9 +237,6 @@ class TestEffects extends FileBuildEffects {
     if (typeof contents === "string" && outputPath.endsWith(".html")) {
       contents = contents.replace(/^(\s*<script>\{).*(\}<\/script>)$/gm, "$1/* redacted init script */$2");
       contents = contents.replace(/(registerFile\(.*,"lastModified":)\d+(,"size":\d+.*\))/gm, "$1/* ts */1706742000000$2"); // prettier-ignore
-    }
-    if (typeof contents === "string" && outputPath.endsWith(".js")) {
-      contents = contents.replace(/(FileAttachment\(.*,"lastModified":)\d+(,"size":\d+.*\))/gm, "$1/* ts */1706742000000$2"); // prettier-ignore
     }
     return super.writeFile(outputPath, contents);
   }

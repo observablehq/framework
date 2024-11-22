@@ -197,11 +197,11 @@ footer: ({path}) => `<a href="https://github.com/example/test/blob/main/src${pat
 
 The base path when serving the site. Currently this only affects the custom 404 page, if any.
 
-## preserveIndex <a href="https://github.com/observablehq/framework/pulls/1784" class="observablehq-version-badge" data-version="prerelease" title="Added in #1784"></a>
+## preserveIndex <a href="https://github.com/observablehq/framework/releases/tag/v1.13.0" class="observablehq-version-badge" data-version="^1.13.0" title="Added in 1.13.0"></a>
 
 Whether page links should preserve `/index` for directories. Defaults to false. If true, a link to `/` will be formatted as `/index` if the **preserveExtension** option is false or `/index.html` if the **preserveExtension** option is true.
 
-## preserveExtension <a href="https://github.com/observablehq/framework/pulls/1784" class="observablehq-version-badge" data-version="prerelease" title="Added in #1784"></a>
+## preserveExtension <a href="https://github.com/observablehq/framework/releases/tag/v1.13.0" class="observablehq-version-badge" data-version="^1.13.0" title="Added in 1.13.0"></a>
 
 Whether page links should preserve the `.html` extension. Defaults to false. If true, a link to `/foo` will be formatted as `/foo.html`.
 
@@ -301,7 +301,7 @@ export default {
 };
 ```
 
-## duckdb <a href="https://github.com/observablehq/framework/pull/1734" class="observablehq-version-badge" data-version="prerelease" title="Added in #1734"></a>
+## duckdb <a href="https://github.com/observablehq/framework/releases/tag/v1.13.0" class="observablehq-version-badge" data-version="^1.13.0" title="Added in 1.13.0"></a>
 
 The **duckdb** option configures [self-hosting](./lib/duckdb#self-hosting-of-extensions) and loading of [DuckDB extensions](./lib/duckdb#extensions) for use in [SQL code blocks](./sql) and the `sql` and `DuckDBClient` built-ins. For example, a geospatial data app might enable the [`spatial`](https://duckdb.org/docs/extensions/spatial/overview.html) and [`h3`](https://duckdb.org/community_extensions/extensions/h3.html) extensions like so:
 

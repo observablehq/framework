@@ -300,7 +300,7 @@ export class LoaderResolver {
   getOutputFileHash(name: string): string {
     const info = this.getOutputInfo(name);
     if (!info) throw new Error(`output file not found: ${name}`);
-    return info.hash;
+    return createHash("sha256").update(info.hash).update(String(info.mtimeMs)).digest("hex");
   }
 
   getSourceInfo(name: string): FileInfo | undefined {
