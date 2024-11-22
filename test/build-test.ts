@@ -32,6 +32,7 @@ const failureTests = ["missing-file", "missing-import"];
 
 describe("build", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
+  after(() => setCurrentDate(null));
   mockJsDelivr();
   mockJsr();
   mockDuckDB();
