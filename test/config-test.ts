@@ -26,6 +26,7 @@ const DUCKDB_DEFAULTS: DuckDBConfig = {
 
 describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
+  after(() => setCurrentDate(null));
   it("imports the config file at the specified root", async () => {
     const {md, loaders, paths, normalizePath, ...config} = await readConfig(undefined, "test/input/build/config");
     assert(md instanceof MarkdownIt);

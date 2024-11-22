@@ -33,6 +33,7 @@ const failureTests = ["missing-file", "missing-import"];
 
 describe("build", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
+  after(() => setCurrentDate(null));
   mockJsDelivr();
   mockJsr();
   mockDuckDB();
@@ -233,9 +234,6 @@ class TestEffects extends FileBuildEffects {
     if (typeof contents === "string" && outputPath.endsWith(".html")) {
       contents = contents.replace(/^(\s*<script>\{).*(\}<\/script>)$/gm, "$1/* redacted init script */$2");
       contents = contents.replace(/(registerFile\(.*,"lastModified":)\d+(,"size":\d+.*\))/gm, "$1/* ts */1706742000000$2"); // prettier-ignore
-    }
-    if (typeof contents === "string" && outputPath.endsWith(".js")) {
-      contents = contents.replace(/(FileAttachment\(.*,"lastModified":)\d+(,"size":\d+.*\))/gm, "$1/* ts */1706742000000$2"); // prettier-ignore
     }
     return super.writeFile(outputPath, contents);
   }
