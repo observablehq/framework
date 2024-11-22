@@ -5,7 +5,7 @@ import os from "node:os";
 import {extname} from "node:path/posix";
 import {join, normalize, relative} from "node:path/posix";
 import {PassThrough} from "node:stream";
-import {ascending, difference, sort} from "d3-array";
+import {ascending, descending, difference, sort} from "d3-array";
 import type {BuildManifest} from "../src/build.js";
 import {FileBuildEffects, build} from "../src/build.js";
 import {normalizeConfig, readConfig, setCurrentDate} from "../src/config.js";
@@ -77,7 +77,10 @@ describe("build", () => {
       // renumber the hashes so they are sequential. This way we don’t have to
       // update the test snapshots whenever Framework’s client code changes. We
       // make an exception for minisearch.json because to test the content.
-      for (const path of sort(findFiles(join(outputDir, "_observablehq")), extname, (d) => d)) {
+      for (const path of sort(
+        findFiles(join(outputDir, "_observablehq")),
+        (a, b) => ascending(extname(a) === ".css", extname(b) === ".css") || ascending(a, b)
+      )) {
         const match = /^((.+)\.[0-9a-f]{8})\.(\w+)$/.exec(path);
         if (!match) throw new Error(`no hash found: ${path}`);
         const [, key, name, ext] = match;

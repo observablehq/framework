@@ -1,4 +1,4 @@
-import {FileAttachment} from "../_observablehq/stdlib.00000004.js";
+import {FileAttachment} from "../_observablehq/stdlib.00000003.js";
 import * as Plot from "../_npm/@observablehq/plot@0.6.11/cd372fb8.js";
 
 export async function Chart() {

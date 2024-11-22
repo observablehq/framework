@@ -1,1 +1,1 @@
-import "../_observablehq/stdlib/inputs.00000006.js";
+import "../_observablehq/stdlib/inputs.00000004.js";
