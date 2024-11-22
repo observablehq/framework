@@ -233,7 +233,7 @@ function readPages(root: string, md: MarkdownIt): Page[] {
   return pages;
 }
 
-let currentDate: Date | null = null;
+export let currentDate: Date | null = null;
 
 /** For testing only! */
 export function setCurrentDate(date: Date | null): void {
