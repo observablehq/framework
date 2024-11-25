@@ -24,7 +24,9 @@ import {cyan, faint, green, red, yellow} from "./tty.js";
 const runningCommands = new Map<string, Promise<string>>();
 
 export const defaultInterpreters: Record<string, string[]> = {
+  ".cjs": ["node", "--no-warnings=ExperimentalWarning"],
   ".js": ["node", "--no-warnings=ExperimentalWarning"],
+  ".mjs": ["node", "--no-warnings=ExperimentalWarning"],
   ".ts": ["tsx"],
   ".py": ["python3"],
   ".r": ["Rscript"],
