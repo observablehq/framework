@@ -94,7 +94,7 @@ function reject(root, error) {
 }
 
 function displayJsx(root, value) {
-  return (root._root ??= import("npm:react-dom").then(({createRoot}) => {
+  return (root._root ??= import("npm:react-dom/client").then(({createRoot}) => {
     const node = document.createElement("DIV");
     return [node, createRoot(node)];
   })).then(([node, client]) => {

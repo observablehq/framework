@@ -83,7 +83,13 @@ export function extractNodeSpecifier(path: string): string {
  */
 function isBadCommonJs(specifier: string): boolean {
   const {name} = parseNpmSpecifier(specifier);
-  return name === "react" || name === "react-dom" || name === "react-is" || name === "scheduler";
+  return (
+    name === "react" ||
+    name === "react-dom" ||
+    name === "react-dom/client" ||
+    name === "react-is" ||
+    name === "scheduler"
+  );
 }
 
 function shimCommonJs(specifier: string, require: NodeRequire): string {
