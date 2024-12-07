@@ -15,7 +15,7 @@ export const mapboxgl = () => import("npm:mapbox-gl").then((module) => module.de
 export const mermaid = () => import("observablehq:stdlib/mermaid").then((mermaid) => mermaid.default);
 export const Plot = () => import("npm:@observablehq/plot");
 export const React = () => import("npm:react");
-export const ReactDOM = () => import("npm:react-dom");
+export const ReactDOM = () => import("npm:react-dom/client");
 export const sql = () => import("observablehq:stdlib/duckdb").then((duckdb) => duckdb.sql);
 export const SQLite = () => import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.default);
 export const SQLiteDatabaseClient = () => import("observablehq:stdlib/sqlite").then((sqlite) => sqlite.SQLiteDatabaseClient); // prettier-ignore

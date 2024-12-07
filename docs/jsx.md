@@ -72,7 +72,7 @@ import {useState} from "npm:react";
 React DOM is also available as `ReactDOM` in Markdown, or can be imported as:
 
 ```js run=false
-import * as ReactDOM from "npm:react-dom";
+import * as ReactDOM from "npm:react-dom/client";
 ```
 
 You can define components in JSX modules. For example, if this were `components/Card.jsx`:

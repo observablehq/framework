@@ -153,8 +153,8 @@ export async function getResolvers(page: MarkdownPage, config: ResolversConfig):
 
   // Add React for JSX blocks.
   if (page.code.some((c) => c.mode === "jsx")) {
-    staticImports.add("npm:react-dom");
-    globalImports.add("npm:react-dom");
+    staticImports.add("npm:react-dom/client");
+    globalImports.add("npm:react-dom/client");
   }
 
   return {
