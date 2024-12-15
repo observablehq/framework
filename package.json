@@ -36,7 +36,8 @@
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
     "observable": "tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts",
-    "prepack": "yarn build"
+    "prepack": "yarn build",
+    "prepare": "workaround-broken-npm-prepack-behavior prepack"
   },
   "c8": {
     "all": true,
@@ -136,7 +137,8 @@
     "rimraf": "^5.0.5",
     "tempy": "^3.1.0",
     "typescript": "^5.2.2 <5.6.0",
-    "undici": "^6.7.1"
+    "undici": "^6.7.1",
+    "workaround-broken-npm-prepack-behavior": "https://github.com/cspotcode/workaround-broken-npm-prepack-behavior#1a7adbbb8a527784daf97edad6ba42d6e96611f6"
   },
   "engines": {
     "node": ">=18"
