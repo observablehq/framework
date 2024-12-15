@@ -475,7 +475,7 @@ function getCode({code, params}: MarkdownPage, resolvers: Resolvers): Map<string
   return new Map(code.map((code) => [code.id, transpileCode(code, resolvers, params)]));
 }
 
-// Including the file has as a comment ensures that the code changes when a
+// Including the file hash as a comment ensures that the code changes when a
 // directly-referenced file changes, triggering re-evaluation. Note that when a
 // transitive import changes, or when a file referenced by a transitive import
 // changes, the sha is already included in the transpiled code, and hence will
