@@ -36,7 +36,7 @@
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc --noEmit",
     "observable": "tsx --no-warnings=ExperimentalWarning ./src/bin/observable.ts",
-    "prepublishOnly": "yarn build"
+    "prepack": "yarn build"
   },
   "c8": {
     "all": true,
