@@ -11,6 +11,7 @@
     "url": "https://github.com/observablehq/framework.git"
   },
   "files": [
+    "dist/**/*.d.ts",
     "dist/**/*.js",
     "dist/**/*.css",
     "templates"
