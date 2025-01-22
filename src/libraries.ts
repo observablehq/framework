@@ -90,8 +90,7 @@ export function getImplicitDownloads(imports: Iterable<string>, duckdb?: DuckDBC
       }
     }
   }
-  if (set.has("npm:@observablehq/sqlite")) {
-    implicits.add("npm:sql.js/dist/sql-wasm.js");
+  if (set.has("npm:sql.js")) {
     implicits.add("npm:sql.js/dist/sql-wasm.wasm");
   }
   if (set.has("npm:leaflet")) {
@@ -176,7 +175,9 @@ export function getImplicitDependencies(imports: Iterable<string>): Set<string> 
   if (set.has("npm:@observablehq/duckdb")) implicits.add("npm:@duckdb/duckdb-wasm");
   if (set.has("npm:@observablehq/inputs")) implicits.add("npm:htl").add("npm:isoformat");
   if (set.has("npm:@observablehq/mermaid")) implicits.add("npm:mermaid");
+  if (set.has("npm:@observablehq/sqlite")) implicits.add("npm:sql.js");
   if (set.has("npm:@observablehq/tex")) implicits.add("npm:katex");
+  if (set.has("observablehq:stdlib/sqlite")) implicits.add("npm:sql.js");
   if (set.has("observablehq:stdlib/xlsx")) implicits.add("npm:exceljs");
   if (set.has("observablehq:stdlib/zip")) implicits.add("npm:jszip");
   if (set.has("observablehq:stdlib/vega-lite")) implicits.add("npm:vega-lite-api").add("npm:vega-lite").add("npm:vega");
