@@ -1,7 +1,9 @@
 import assert, {fail} from "node:assert";
+import {exec} from "node:child_process";
 import type {Stats} from "node:fs";
-import {stat} from "node:fs/promises";
+import {open, stat} from "node:fs/promises";
 import {Readable, Writable} from "node:stream";
+import {promisify} from "node:util";
 import type {BuildManifest} from "../src/build.js";
 import {normalizeConfig, setCurrentDate} from "../src/config.js";
 import type {DeployEffects, DeployOptions} from "../src/deploy.js";
@@ -12,10 +14,11 @@ import type {ObservableApiClientOptions} from "../src/observableApiClient.js";
 import type {GetCurrentUserResponse} from "../src/observableApiClient.js";
 import {ObservableApiClient} from "../src/observableApiClient.js";
 import type {DeployConfig} from "../src/observableApiConfig.js";
-import {stripColor} from "../src/tty.js";
+import {link, stripColor} from "../src/tty.js";
 import {MockAuthEffects} from "./mocks/authEffects.js";
 import {TestClackEffects} from "./mocks/clack.js";
 import {MockConfigEffects} from "./mocks/configEffects.js";
+import {mockIsolatedDirectory} from "./mocks/directory.js";
 import {mockJsDelivr} from "./mocks/jsdelivr.js";
 import {MockLogger} from "./mocks/logger.js";
 import {
@@ -115,7 +118,9 @@ class MockDeployEffects extends MockAuthEffects implements DeployEffects {
   async getDeployConfig(sourceRoot: string, deployConfigPath?: string): Promise<DeployConfig> {
     const key = this.getDeployConfigKey(sourceRoot, deployConfigPath);
     return (
-      this.deployConfigs[key] ?? this.defaultDeployConfig ?? {projectId: null, projectSlug: null, workspaceLogin: null}
+      this.deployConfigs[key] ??
+      this.defaultDeployConfig ??
+      ({projectId: null, projectSlug: null, workspaceLogin: null, continuousDeployment: null} satisfies DeployConfig)
     );
   }
 
@@ -190,7 +195,8 @@ const TEST_OPTIONS: DeployOptions = {
 const DEPLOY_CONFIG: DeployConfig & {projectId: string; projectSlug: string; workspaceLogin: string} = {
   projectId: "project123",
   projectSlug: "bi",
-  workspaceLogin: "mock-user-ws"
+  workspaceLogin: "mock-user-ws",
+  continuousDeployment: false
 };
 
 describe("deploy", () => {
@@ -198,6 +204,212 @@ describe("deploy", () => {
   after(() => setCurrentDate(null));
   mockObservableApi();
   mockJsDelivr();
+
+  describe("in isolated directory with git repo", () => {
+    mockIsolatedDirectory({git: true});
+
+    it("fails cloud build if repo has no GitHub remote", async () => {
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetWorkspaceProjects({
+          workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
+          projects: []
+        })
+        .handlePostProject({projectId: DEPLOY_CONFIG.projectId, slug: DEPLOY_CONFIG.projectSlug})
+        .start();
+      const effects = new MockDeployEffects();
+      effects.clack.inputs.push(
+        true, // No apps found. Do you want to create a new app?
+        DEPLOY_CONFIG.projectSlug, // What slug do you want to use?
+        "public", // Who is allowed to access your app?
+        true // Do you want to enable continuous deployment?
+      );
+
+      try {
+        await deploy(TEST_OPTIONS, effects);
+        assert.fail("expected error");
+      } catch (error) {
+        CliError.assert(error, {message: "No GitHub remote found."});
+      }
+
+      effects.close();
+    });
+
+    it("fails cloud build if repo doesn’t match", async () => {
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetProject({
+          ...DEPLOY_CONFIG,
+          source: {
+            provider: "github",
+            provider_id: "123:456",
+            url: "https://github.com/observablehq/test.git",
+            branch: "main"
+          },
+          latestCreatedDeployId: null
+        })
+        .handleGetRepository({ownerName: "observablehq", repoName: "wrongrepo", provider_id: "000:001"})
+        .start();
+      const effects = new MockDeployEffects({deployConfig: {...DEPLOY_CONFIG, continuousDeployment: true}});
+
+      await (await open("readme.md", "a")).close();
+      await promisify(exec)(
+        "git add . && git commit -m 'initial' && git remote add origin git@github.com:observablehq/wrongrepo.git"
+      );
+
+      try {
+        await deploy(TEST_OPTIONS, effects);
+        assert.fail("expected error");
+      } catch (error) {
+        CliError.assert(error, {
+          message: `Configured repository does not match local repository; check build settings on ${link(
+            `https://observablehq.com/projects/@${DEPLOY_CONFIG.workspaceLogin}/${DEPLOY_CONFIG.projectSlug}/settings`
+          )}`
+        });
+      }
+
+      effects.close();
+    });
+
+    it("starts cloud build when continuous deployment is enabled for new project and repo is valid", async () => {
+      const deployId = "deploy123";
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetWorkspaceProjects({
+          workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
+          projects: []
+        })
+        .handlePostProject({projectId: DEPLOY_CONFIG.projectId, slug: DEPLOY_CONFIG.projectSlug})
+        .handleGetRepository()
+        .handlePostProjectEnvironment()
+        .handlePostProjectBuild()
+        .handleGetProject({...DEPLOY_CONFIG, latestCreatedDeployId: deployId})
+        .handleGetDeploy({deployId, deployStatus: "uploaded"})
+        .start();
+      const effects = new MockDeployEffects();
+      effects.clack.inputs.push(
+        true, // No apps found. Do you want to create a new app?
+        DEPLOY_CONFIG.projectSlug, // What slug do you want to use?
+        "public", // Who is allowed to access your app?
+        true // Do you want to enable continuous deployment?
+      );
+
+      await (await open("readme.md", "a")).close();
+      await promisify(exec)(
+        "git add . && git commit -m 'initial' && git remote add origin git@github.com:observablehq/test.git"
+      );
+
+      await deploy(TEST_OPTIONS, effects);
+
+      effects.close();
+    });
+
+    it("starts cloud build when continuous deployment is enabled for new project and repo is manually auth’ed while CLI is polling", async () => {
+      const deployId = "deploy123";
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetWorkspaceProjects({
+          workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
+          projects: []
+        })
+        .handlePostProject({projectId: DEPLOY_CONFIG.projectId, slug: DEPLOY_CONFIG.projectSlug})
+        .handleGetRepository({status: 404})
+        .handleGetRepository()
+        .handlePostProjectEnvironment()
+        .handlePostProjectBuild()
+        .handleGetProject({...DEPLOY_CONFIG, latestCreatedDeployId: deployId})
+        .handleGetDeploy({deployId, deployStatus: "uploaded"})
+        .start();
+      const effects = new MockDeployEffects();
+      effects.clack.inputs.push(
+        true, // No apps found. Do you want to create a new app?
+        DEPLOY_CONFIG.projectSlug, // What slug do you want to use?
+        "public", // Who is allowed to access your app?
+        true // Do you want to enable continuous deployment?
+      );
+
+      await (await open("readme.md", "a")).close();
+      await promisify(exec)(
+        "git add . && git commit -m 'initial' && git remote add origin git@github.com:observablehq/test.git"
+      );
+
+      await deploy(TEST_OPTIONS, effects);
+
+      effects.close();
+    });
+
+    it("starts cloud build when continuous deployment is enabled for existing project with existing source", async () => {
+      const deployId = "deploy123";
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetProject({
+          ...DEPLOY_CONFIG,
+          source: {
+            provider: "github",
+            provider_id: "123:456",
+            url: "https://github.com/observablehq/test.git",
+            branch: "main"
+          },
+          latestCreatedDeployId: null
+        })
+        .handleGetRepository({useProviderId: false})
+        .handleGetRepository({useProviderId: true})
+        .handlePostProjectBuild()
+        .handleGetProject({
+          ...DEPLOY_CONFIG,
+          source: {
+            provider: "github",
+            provider_id: "123:456",
+            url: "https://github.com/observablehq/test.git",
+            branch: "main"
+          },
+          latestCreatedDeployId: deployId
+        })
+        .handleGetDeploy({deployId, deployStatus: "uploaded"})
+        .start();
+      const effects = new MockDeployEffects({deployConfig: {...DEPLOY_CONFIG, continuousDeployment: true}});
+
+      await (await open("readme.md", "a")).close();
+      await promisify(exec)(
+        "git add . && git commit -m 'initial' && git remote add origin https://github.com/observablehq/test.git"
+      );
+
+      await deploy(TEST_OPTIONS, effects);
+
+      effects.close();
+    });
+  });
+
+  describe("in isolated directory without git repo", () => {
+    mockIsolatedDirectory({git: false});
+
+    it("fails cloud build if not in a git repo", async () => {
+      getCurrentObservableApi()
+        .handleGetCurrentUser()
+        .handleGetWorkspaceProjects({
+          workspaceLogin: DEPLOY_CONFIG.workspaceLogin,
+          projects: []
+        })
+        .handlePostProject({projectId: DEPLOY_CONFIG.projectId})
+        .start();
+      const effects = new MockDeployEffects();
+      effects.clack.inputs.push(
+        true, // No apps found. Do you want to create a new app?
+        DEPLOY_CONFIG.projectSlug, // What slug do you want to use?
+        "public", // Who is allowed to access your app?
+        true // Do you want to enable continuous deployment?
+      );
+
+      try {
+        await deploy(TEST_OPTIONS, effects);
+        assert.fail("expected error");
+      } catch (error) {
+        CliError.assert(error, {message: "Not at root of a git repository."});
+      }
+
+      effects.close();
+    });
+  });
 
   it("makes expected API calls for an existing project", async () => {
     const deployId = "deploy456";
@@ -334,6 +546,7 @@ describe("deploy", () => {
     effects.clack.inputs.push(
       DEPLOY_CONFIG.projectSlug, // which project do you want to use?
       true, // Do you want to continue? (and overwrite the project)
+      false, // Do you want to enable continuous deployment?
       "change project title" // "what changed?"
     );
     await deploy(TEST_OPTIONS, effects);
@@ -570,9 +783,7 @@ describe("deploy", () => {
     const deployId = "deploy456";
     getCurrentObservableApi()
       .handleGetCurrentUser()
-      .handleGetProject({
-        ...DEPLOY_CONFIG
-      })
+      .handleGetProject({...DEPLOY_CONFIG})
       .handlePostDeploy({projectId: DEPLOY_CONFIG.projectId, deployId, status: 500})
       .start();
     const effects = new MockDeployEffects({deployConfig: DEPLOY_CONFIG});
@@ -767,10 +978,7 @@ describe("deploy", () => {
       const deployId = "deployId";
       getCurrentObservableApi()
         .handleGetCurrentUser()
-        .handleGetProject({
-          ...DEPLOY_CONFIG,
-          projectId: newProjectId
-        })
+        .handleGetProject({...DEPLOY_CONFIG, projectId: newProjectId})
         .handlePostDeploy({projectId: newProjectId, deployId})
         .expectStandardFiles({deployId})
         .handlePostDeployUploaded({deployId})
@@ -788,10 +996,7 @@ describe("deploy", () => {
       const oldDeployConfig = {...DEPLOY_CONFIG, projectId: "oldProjectId"};
       getCurrentObservableApi()
         .handleGetCurrentUser()
-        .handleGetProject({
-          ...DEPLOY_CONFIG,
-          projectId: newProjectId
-        })
+        .handleGetProject({...DEPLOY_CONFIG, projectId: newProjectId})
         .start();
       const effects = new MockDeployEffects({deployConfig: oldDeployConfig, isTty: true});
       effects.clack.inputs.push(false); // State doesn't match do you want to continue deploying?
