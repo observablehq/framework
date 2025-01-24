@@ -265,7 +265,9 @@ The **interpreters** option specifies additional interpreted languages for data 
 
 ```js run=false
 {
+  ".cjs": ["node", "--no-warnings=ExperimentalWarning"],
   ".js": ["node", "--no-warnings=ExperimentalWarning"],
+  ".mjs": ["node", "--no-warnings=ExperimentalWarning"],
   ".ts": ["tsx"],
   ".py": ["python3"],
   ".r": ["Rscript"],
