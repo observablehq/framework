@@ -61,10 +61,7 @@ describe("getImplicitDownloads(imports)", () => {
         "npm:@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js"
       ])
     );
-    assert.deepStrictEqual(
-      getImplicitDownloads(["npm:@observablehq/sqlite"]),
-      new Set(["npm:sql.js/dist/sql-wasm.js", "npm:sql.js/dist/sql-wasm.wasm"])
-    );
+    assert.deepStrictEqual(getImplicitDownloads(["npm:sql.js"]), new Set(["npm:sql.js/dist/sql-wasm.wasm"]));
   });
 });
 
@@ -74,7 +71,9 @@ describe("getImplicitDependencies(imports)", () => {
     assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/duckdb"]), new Set(["npm:@duckdb/duckdb-wasm"]));
     assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/inputs"]), new Set(["npm:htl", "npm:isoformat"])); // prettier-ignore
     assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/mermaid"]), new Set(["npm:mermaid"]));
+    assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/sqlite"]), new Set(["npm:sql.js"]));
     assert.deepStrictEqual(getImplicitDependencies(["npm:@observablehq/tex"]), new Set(["npm:katex"]));
+    assert.deepStrictEqual(getImplicitDependencies(["observablehq:stdlib/sqlite"]), new Set(["npm:sql.js"]));
     assert.deepStrictEqual(getImplicitDependencies(["observablehq:stdlib/xlsx"]), new Set(["npm:exceljs"]));
     assert.deepStrictEqual(getImplicitDependencies(["observablehq:stdlib/zip"]), new Set(["npm:jszip"]));
     assert.deepStrictEqual(getImplicitDependencies(["observablehq:stdlib/vega-lite"]), new Set(["npm:vega-lite-api", "npm:vega-lite", "npm:vega"])); // prettier-ignore

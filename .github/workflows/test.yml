@@ -10,7 +10,7 @@ jobs:
   test:
     strategy:
       matrix:
-        version: [20, 21]
+        version: [20, 22]
         os: [ubuntu-latest, windows-latest]
       fail-fast: false
     runs-on: ${{ matrix.os }}
