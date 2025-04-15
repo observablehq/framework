@@ -89,9 +89,9 @@ export async function deploy(deployOptions: DeployOptions, effects = defaultEffe
   effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
   effects.clack.log.warn(
     wrapAnsi(
-      `Deploying data apps to Observable Cloud is now deprecated. Please migrate your data app to another static site hosting provider, such as GitHub Pages, Render, Cloudflare Pages, Vercel, or Netlify. For more details, please see ${underline(
+      `Deploying data apps to Observable Cloud is now deprecated. Please migrate your data app to another static site hosting provider, such as GitHub Pages, Render, Cloudflare Pages, Vercel, or Netlify. For more details, please see: ${underline(
         "https://observablehq.com/release-notes/2025-04-15-deprecating-observable-cloud"
-      )}.`,
+      )}`,
       effects.outputColumns
     )
   );
