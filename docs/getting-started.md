@@ -74,7 +74,7 @@ const digraph = dot`digraph {
   ${digraph}
 </figure>
 
-First you’ll setup your local development environment by [**creating**](#1-create) a new project. A project contains all the source code needed to build an app. Next you’ll [**develop**](#2-develop): an iterative process where you save changes to source files in your editor while previewing the result in your browser. When you’re ready to share, it’s time to [**publish**](#3-publish): you can either build a static site for self-hosting or deploy directly to Observable. Lastly, you can invite people to view your app!
+First you’ll setup your local development environment by [**creating**](#1-create) a new project. A project contains all the source code needed to build an app. Next you’ll [**develop**](#2-develop): an iterative process where you save changes to source files in your editor while previewing the result in your browser. When you’re ready to share, it’s time to [**publish**](#3-publish): you build and deploy your static site to your preferred hosting provider.
 
 These are just first steps. You can continue to develop apps after publishing, and republish as needed. You can also setup continuous deployment to publish your app automatically on commit or on schedule. We’ll cover these [next steps](#next-steps) briefly below.
 
@@ -476,52 +476,7 @@ _Ta-da!_ 🎉 Perhaps not the most exciting dashboard yet, but it has potential!
 
 ## 3. Publish
 
-When you’re ready to share your app — either privately or publicly — you can quickly deploy it to [Observable](https://observablehq.com) using the `deploy` command:
-
-<pre data-copy>npm run deploy</pre>
-
-Or with Yarn:
-
-<pre data-copy>yarn deploy</pre>
-
-<div class="note">If you don’t have an Observable account yet, you will be prompted to sign up. Observable is free for individuals and small teams, and we offer paid tiers for larger teams.</div>
-
-This command will ask you a few questions to configure your deploy, including which Observable workspace to use and whether the app should be public or private. You can also enter an optional message to associate with the deploy, but for now feel free to leave this blank by hitting Enter.
-
-When deploy completes, Framework will show your app’s URL on observablehq.cloud, like below. From there you can invite people to your private workspace to see your app, or make your app public so anyone can see it.
-
-<pre data-copy="none">
-<span class="muted">┌</span>  <span class="invert"> observable deploy </span>
-<span class="muted">│</span>
-<span class="blue">●</span>  To configure deploy, we need to ask you a few questions.
-<span class="muted">│</span>
-<span class="green">◇</span>  Which Observable workspace do you want to use?
-<span class="muted">│  Example Inc. (@example)</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  Which app do you want to use?
-<span class="muted">│  Create a new app</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  What slug do you want to use?
-<span class="muted">│  hello-framework</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  Who is allowed to access your app?
-<span class="muted">│  Private</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  What changed in this deploy?
-<span class="muted">│</span>  <span class="muted">Enter a deploy message (optional)</span>
-<span class="muted">│</span>
-<span class="green">◇</span>  18 uploaded
-<span class="muted">│</span>
-<span class="green">◇</span>  Deploy complete
-<span class="muted">│</span>
-<span class="muted">└</span>  <span class="muted">Deployed app now visible at <u>https://example.observablehq.cloud/hello-framework/</u></span>
-</pre>
-
-<div class="tip">Your deploy configuration is saved to <code>src<span class="wbr">/</span>.observablehq<span class="wbr">/</span>deploy.json</code>. When collaborating on an app, you should commit this file to git so your collaborators don’t have to separately configure deploy.</div>
-
-### Self hosting
-
-Of course, you don’t have to deploy to Observable — Framework apps are simply static sites, so you can host them anywhere!
+When you’re ready to share your app, you can quickly build and deploy it to your preferred hosting provider, such as GitHub Pages.
 
 To build your app with npm, run:
 
@@ -531,7 +486,7 @@ Or with Yarn:
 
 <pre data-copy>yarn build</pre>
 
-The <code>build</code> command generates the `dist` directory; you can then copy this directory to your static site server or preferred hosting service. To preview your built app locally, you can use a local static HTTP server such as [http-server](https://github.com/http-party/http-server):
+The <code>build</code> command generates the `dist` directory; you can then upload this directory to your preferred hosting provider or copy it to your static site server for self-hosting. To preview your built app locally, you can use a local static HTTP server such as [http-server](https://github.com/http-party/http-server):
 
 <pre data-copy>npx http-server dist</pre>
 
@@ -540,6 +495,8 @@ The <code>build</code> command generates the `dist` directory; you can then copy
 <div class="tip">When deploying to GitHub Pages without using GitHub’s related actions (<a href="https://github.com/actions/configure-pages">configure-pages</a>,
 <a href="https://github.com/actions/deploy-pages">deploy-pages</a>, and
 <a href="https://github.com/actions/upload-pages-artifact">upload-pages-artifact</a>), you may need to create a <code>.nojekyll</code> file in your <code>dist</code> folder after building. See GitHub’s documentation on <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#static-site-generators">static site generators</a> for more.</div>
+
+To deploy your app to GitHub Pages using GitHub Actions, read our [Deploying guide](./deploying).
 
 ## Next steps
 
