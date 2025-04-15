@@ -47,7 +47,7 @@ jobs:
         uses: actions/deploy-pages@v4
 ```
 
-Commit this file to your main branch and push to GitHub. Then follow [GitHub’s instructions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site) to specify your main branch as the publishing source for GitHub Pages.
+Commit this file to your main branch and push to GitHub. Then follow [GitHub’s instructions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow) to specify GitHub Actions as the source for GitHub Pages.
 
 After you’ve performed these steps, the `deploy.yml` above will automatically build and deploy your app once per day (to keep your data up-to-date), as well as whenever you push new commits to your GitHub repository’s main branch (so you can make changes at any time). You will also be able to manually trigger a deploy through GitHub’s user interface. If you like, you can disable any of these triggers (`push`, `schedule`, or `workflow_dispatch`) by updating the `deploy.yml` file.
 
