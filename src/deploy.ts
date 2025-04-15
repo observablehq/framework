@@ -84,13 +84,18 @@ type DeployTargetInfo =
   | {create: true; workspace: {id: string; login: string}; projectSlug: string; title: string; accessLevel: string}
   | {create: false; workspace: {id: string; login: string}; project: GetProjectResponse};
 
-/** Deploy a project to ObservableHQ */
 export async function deploy(deployOptions: DeployOptions, effects = defaultEffects): Promise<void> {
   Telemetry.record({event: "deploy", step: "start", force: deployOptions.force});
   effects.clack.intro(`${inverse(" observable deploy ")} ${faint(`v${process.env.npm_package_version}`)}`);
-
+  effects.clack.log.warn(
+    wrapAnsi(
+      `Deploying data apps to Observable Cloud is now deprecated. Please migrate your data app to another static site hosting provider, such as GitHub Pages, Render, Cloudflare Pages, Vercel, or Netlify. For more details, please see: ${underline(
+        "https://observablehq.com/release-notes/2025-04-15-deprecating-observable-cloud"
+      )}`,
+      effects.outputColumns
+    )
+  );
   const deployInfo = await new Deployer(deployOptions, effects).deploy();
-
   effects.clack.outro(`Deployed app now visible at ${link(deployInfo.url)}`);
   Telemetry.record({event: "deploy", step: "finish"});
 }
