@@ -81,7 +81,7 @@ try {
   build        generate a static site
   login        sign-in to Observable
   logout       sign-out of Observable
-  deploy       deploy an app to Observable
+  deploy       deploy an app to Observable [deprecated]
   whoami       check authentication status
   convert      convert an Observable notebook to Markdown
   help         print usage information
