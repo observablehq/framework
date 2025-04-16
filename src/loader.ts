@@ -62,7 +62,7 @@ export interface LoaderOptions {
 
 export class LoaderResolver {
   private readonly root: string;
-  private readonly interpreters: Map<string, string[]>;
+  public readonly interpreters: Map<string, string[]>; // TODO cleaner
 
   constructor({root, interpreters}: {root: string; interpreters?: Record<string, string[] | null>}) {
     this.root = root;
@@ -81,7 +81,7 @@ export class LoaderResolver {
     const loader = this.findPage(path);
     if (!loader) throw enoent(path);
     const input = await readFile(join(this.root, await loader.load(options, effects)), "utf8");
-    return parseMarkdown(input, {source: loader.path, params: loader.params, ...options});
+    return await parseMarkdown(input, {source: loader.path, params: loader.params, ...options});
   }
 
   /**
@@ -213,7 +213,7 @@ export class LoaderResolver {
       const eext = fext.slice(0, -iext.length); // .zip
       const loader = new CommandLoader({
         command: command ?? commandPath,
-        args: params ? args.concat(defineParams(params)) : args,
+        args: withParams(args, params),
         path,
         params,
         root: this.root,
@@ -330,6 +330,10 @@ export class LoaderResolver {
   resolveFilePath(path: string): string {
     return `/${join("_file", path)}?sha=${this.getSourceFileHash(path)}`;
   }
+}
+
+export function withParams(args: string[], params?: Params): string[] {
+  return params ? args.concat(defineParams(params)) : args;
 }
 
 function defineParams(params: Params): string[] {
