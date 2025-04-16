@@ -114,6 +114,43 @@ describe("LoaderResolver.find(path)", () => {
       ]
     );
   });
+  it("data loaders reload when cacheExpiration is set and expired", async () => {
+    const out = [] as string[];
+    const outputEffects: LoadEffects = {
+      logger: {log() {}, warn() {}, error() {}},
+      output: {
+        write(a) {
+          out.push(a);
+        }
+      }
+    };
+    const loader = loaders.find("/dataloaders/data1.txt")!;
+    // remove the cache set by another test (unless we it.only this test).
+    try {
+      await unlink("test/.observablehq/cache/dataloaders/data1.txt");
+    } catch {
+      // ignore;
+    }
+    // populate the cache (missing)
+    await loader.load(undefined, outputEffects);
+    // run again (fresh)
+    await loader.load(undefined, outputEffects);
+    // run again (stale due to cacheExpiration)
+    await loader.load({cacheExpiration: 0}, outputEffects);
+
+    assert.deepStrictEqual(
+      // eslint-disable-next-line no-control-regex
+      out.map((l) => l.replaceAll(/\x1b\[[0-9]+m/g, "")),
+      [
+        "load /dataloaders/data1.txt → ",
+        "[missing] ",
+        "load /dataloaders/data1.txt → ",
+        "[fresh] ",
+        "load /dataloaders/data1.txt → ",
+        "[expired] "
+      ]
+    );
+  });
 });
 
 describe("LoaderResolver.getSourceFileHash(path)", () => {
