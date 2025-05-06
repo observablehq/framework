@@ -86,7 +86,7 @@ For missing files, `file.size` and `file.lastModified` are undefined. The `file.
 [arquero]: ./lib/arquero
 [arquero-table]: https://idl.uw.edu/arquero/api/#table
 [array-buffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
-[arrow-table]: https://arrow.apache.org/docs/js/classes/Arrow_dom.Table.html
+[arrow-table]: https://arrow.apache.org/docs/js/classes/Arrow.dom.Table.html
 [blob]: https://developer.mozilla.org/en-US/docs/Web/API/Blob
 [array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array
 [document]: https://developer.mozilla.org/en-US/docs/Web/API/Document
