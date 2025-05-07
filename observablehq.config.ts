@@ -120,10 +120,10 @@ export default {
       : ""
   }
 <script type="module">/Win/.test(navigator.platform) || Array.from(document.querySelectorAll(".win"), (e) => e.remove())</script>`,
-  home: `<span style="display: flex; align-items: center; font-weight: 500; gap: 0.5rem; margin-left: -0.5rem; color: var(--theme-foreground);">
+  home: `<span style="display: flex; align-items: center; font-weight: 500; gap: 0.5rem; color: var(--theme-foreground);">
     ${logo()} Framework
   </span>`,
-  header: `<div style="display: flex; flex-grow: 1; align-items: center; justify-content: space-between; white-space: nowrap;">
+  header: `<div> 
     <div>
       <a href="/" class="hide-if-sidebar" style="display: flex; align-items: center; gap: 0.5rem;">
         ${logo()} Framework
