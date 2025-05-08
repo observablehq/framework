@@ -1,0 +1,14 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "observable preview",
+    "build": "rm -rf dist && observable build",
+    "postinstall": "ln -sf ../../../../bin/observable-init.js node_modules/.bin/observable"
+  },
+  "dependencies": {
+    "@observablehq/framework": "link:../.."
+  },
+  "engines": {
+    "node": ">=20.6"
+  }
+}
