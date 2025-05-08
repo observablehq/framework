@@ -1,24 +1,13 @@
 /* eslint-disable import/no-named-as-default-member */
+import {extname} from "node:path/posix";
 import he from "he";
 import hljs from "highlight.js";
 import type {DOMWindow} from "jsdom";
 import {JSDOM, VirtualConsole} from "jsdom";
 import {isAssetPath, parseRelativeUrl, relativePath, resolveLocalPath, resolvePath} from "./path.js";
 
-const ASSET_ATTRIBUTES: readonly [selector: string, src: string][] = [
-  ["a[href][download]", "href"],
-  ["audio source[src]", "src"],
-  ["audio[src]", "src"],
-  ["img[src]", "src"],
-  ["img[srcset]", "srcset"],
-  ["link[href]", "href"],
-  ["picture source[srcset]", "srcset"],
-  ["video source[src]", "src"],
-  ["video[src]", "src"]
-];
-
-const PATH_ATTRIBUTES: readonly [selector: string, src: string][] = [
-  ["a[href]", "href"],
+const ASSET_ATTRIBUTES: readonly [selector: string, src: string, skip?: (source: string) => boolean][] = [
+  ["a[href]", "href", (p: string) => !(p = extname(p)) || p === ".html"],
   ["audio source[src]", "src"],
   ["audio[src]", "src"],
   ["img[src]", "src"],
@@ -67,10 +56,11 @@ export function findAssets(html: string, path: string): Assets {
     }
   };
 
-  for (const [selector, src] of ASSET_ATTRIBUTES) {
+  for (const [selector, src, skip] of ASSET_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
       if (isExternal(element)) continue;
       const source = decodeURI(element.getAttribute(src)!);
+      if (skip?.(source)) continue;
       if (src === "srcset") {
         for (const s of parseSrcset(source)) {
           maybeFile(s);
@@ -126,7 +116,7 @@ export function rewriteHtmlPaths(html: string, path: string): string {
     return isAssetPath(specifier) ? relativePath(path, specifier) : specifier;
   };
 
-  for (const [selector, src] of PATH_ATTRIBUTES) {
+  for (const [selector, src] of ASSET_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
       if (isExternal(element)) continue;
       const source = decodeURI(element.getAttribute(src)!);
@@ -154,10 +144,11 @@ export function rewriteHtml(
     return isAssetPath(specifier) ? resolveFile(specifier) : resolveImport(specifier);
   };
 
-  for (const [selector, src] of ASSET_ATTRIBUTES) {
+  for (const [selector, src, skip] of ASSET_ATTRIBUTES) {
     for (const element of document.querySelectorAll(selector)) {
       if (isExternal(element)) continue;
       const source = decodeURI(element.getAttribute(src)!);
+      if (skip?.(source)) continue;
       element.setAttribute(src, src === "srcset" ? resolveSrcset(source, resolvePath) : encodeURI(resolvePath(source)));
     }
   }
