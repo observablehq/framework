@@ -379,7 +379,13 @@ class Deployer {
         } else {
           this.effects.clack.log.error(
             wrapAnsi(
-              `Could not create app: ${error instanceof Error ? error.message : error}`,
+              `Could not create app: ${
+                isHttpError(error) && error.statusCode === 409
+                  ? "conflicting slug."
+                  : error instanceof Error
+                  ? error.message
+                  : error
+              }`,
               this.effects.outputColumns
             )
           );
