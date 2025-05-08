@@ -92,7 +92,11 @@ db.queryRow("SELECT count() AS count FROM gaia")
 
 See the [DatabaseClient Specification](https://observablehq.com/@observablehq/database-client-specification) for more details on these methods.
 
-Finally, the `DuckDBClient.sql` method <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> takes the same arguments as `DuckDBClient.of` and returns the corresponding `db.sql` tagged template literal. The returned function can be used to redefine the built-in [`sql` tagged template literal](../sql#sql-literals) and thereby change the database used by [SQL code blocks](../sql), allowing you to query dynamically-registered tables (unlike the **sql** front matter option).
+## Custom setup
+
+The `DuckDBClient.sql` method <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> takes the same arguments as `DuckDBClient.of` and returns the corresponding `db.sql` tagged template literal.
+
+The returned function can be used to redefine the built-in [`sql` tagged template literal](../sql#sql-literals) and thereby change the database used by [SQL code blocks](../sql), allowing you to query dynamically-registered tables (unlike the **sql** front matter option).
 
 ```js
 const feed = view(Inputs.select(new Map([["M4.5+", "4.5"], ["M2.5+", "2.5"], ["All", "all"]]), {label: "Earthquake feed"}));
@@ -104,6 +108,13 @@ const sql = DuckDBClient.sql({quakes: `https://earthquake.usgs.gov/earthquakes/f
 
 ```sql echo
 SELECT * FROM quakes ORDER BY updated DESC;
+```
+
+The definition above is shorthand for:
+
+```js run=false
+const db = await DuckDBClient.of({quakes: `https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/${feed}_day.csv`});
+const sql = db.sql.bind(db);
 ```
 
 ## Extensions <a href="https://github.com/observablehq/framework/releases/tag/v1.13.0" class="observablehq-version-badge" data-version="^1.13.0" title="Added in 1.13.0"></a>
