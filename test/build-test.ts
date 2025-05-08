@@ -221,6 +221,7 @@ function* findFiles(root: string): Iterable<string> {
       visited.add(status.ino);
       for (const entry of readdirSync(path)) {
         if (entry === ".DS_Store") continue; // macOS
+        if (entry === ".ignoreme") continue; // see inputs/build/chain/
         queue.push(join(path, entry));
       }
     } else {
