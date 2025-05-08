@@ -51,6 +51,9 @@ const defaultEffects: LoadEffects = {
 export interface LoadOptions {
   /** Whether to use a stale cache; true when building. */
   useStale?: boolean;
+
+  /** Cache expiration time in seconds */
+  cacheExpiration?: number;
 }
 
 export interface LoaderOptions {
@@ -398,7 +401,7 @@ abstract class AbstractLoader implements Loader {
     this.targetPath = targetPath;
   }
 
-  async load({useStale = false}: LoadOptions = {}, effects = defaultEffects): Promise<string> {
+  async load({useStale = false, cacheExpiration}: LoadOptions = {}, effects = defaultEffects): Promise<string> {
     const loaderPath = join(this.root, this.path);
     const key = join(this.root, this.targetPath);
     let command = runningCommands.get(key);
@@ -409,7 +412,9 @@ abstract class AbstractLoader implements Loader {
         const loaderStat = await maybeStat(loaderPath);
         const cacheStat = await maybeStat(cachePath);
         if (!cacheStat) effects.output.write(faint("[missing] "));
-        else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) {
+        else if (cacheExpiration !== undefined && (Date.now() - cacheStat.mtimeMs > cacheExpiration * 1000)) {
+          effects.output.write(faint("[expired] "));
+        } else if (cacheStat.mtimeMs < loaderStat!.mtimeMs) {
           if (useStale) return effects.output.write(faint("[using stale] ")), outputPath;
           else effects.output.write(faint("[stale] "));
         } else return effects.output.write(faint("[fresh] ")), outputPath;
