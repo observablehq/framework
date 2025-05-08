@@ -2,6 +2,18 @@
 index: false
 ---
 
+```js server echo
+console.log(`The current version of Node is: <b>${process.env.npm_package_version}.`);
+```
+
+```sh server echo
+uname -a
+```
+
+```sh server echo
+date
+```
+
 <style>
 
 .hero {
