@@ -77,6 +77,8 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
           options: [
             {value: "npm", label: "Yes, via npm", hint: "recommended"},
             {value: "yarn", label: "Yes, via yarn", hint: "recommended"},
+            {value: "pnpm", label: "Yes, via pnpm", hint: "recommended"},
+            {value: "bun", label: "Yes, via bun", hint: "recommended"},
             {value: null, label: "No"}
           ],
           initialValue: inferPackageManager("npm")
@@ -92,8 +94,27 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         s.start("Copying template files");
         const template = includeSampleFiles ? "default" : "empty";
         const templateDir = op.resolve(fileURLToPath(import.meta.url), "..", "..", "templates", template);
-        const runCommand = packageManager === "yarn" ? "yarn" : `${packageManager ?? "npm"} run`;
-        const installCommand = `${packageManager ?? "npm"} install`;
+        const runCommand =
+          packageManager === "npm"
+            ? "npm run"
+            : packageManager === "yarn"
+            ? "yarn"
+            : packageManager === "pnpm"
+            ? "pnpm run"
+            : packageManager === "bun"
+            ? "bun run"
+            : "npm run";
+        const installCommand =
+          packageManager === "npm"
+            ? "npm install"
+            : packageManager === "yarn"
+            ? "yarn install"
+            : packageManager === "pnpm"
+            ? "pnpm install"
+            : packageManager === "bun"
+            ? "bun install"
+            : "npm install";
+
         await effects.sleep(1000); // this step is fast; give the spinner a chance to show
         await recursiveCopyTemplate(
           templateDir,
@@ -111,6 +132,9 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         if (packageManager) {
           s.message(`Installing dependencies via ${packageManager}`);
           if (packageManager === "yarn") await writeFile(join(rootPath, "yarn.lock"), "");
+          if (packageManager === "pnpm") await writeFile(join(rootPath, "pnpm-lock.yaml"), "");
+          if (packageManager === "bun") await writeFile(join(rootPath, "bun.lock"), "");
+
           await promisify(exec)(installCommand, {cwd: rootPath});
         }
         if (initializeGit) {
@@ -137,6 +161,7 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
         if (spinning) s.stop("Installed! 🎉");
         const instructions: string[] = [];
         if (rootPath !== ".") instructions.push(`cd ${rootPath}`);
+        if (packageManager === "pnpm") instructions.push("pnpm approve-builds");
         if (!packageManager) instructions.push(installCommand);
         instructions.push(`${runCommand} dev`);
         clack.note(instructions.map((line) => reset(cyan(line))).join("\n"), "Next steps…");
