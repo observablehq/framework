@@ -100,9 +100,9 @@ export async function create(effects: CreateEffects = defaultEffects): Promise<v
             : packageManager === "yarn"
             ? "yarn"
             : packageManager === "pnpm"
-            ? "pnpm run"
+            ? "pnpm"
             : packageManager === "bun"
-            ? "bun run"
+            ? "bun"
             : "npm run";
         const installCommand =
           packageManager === "npm"
