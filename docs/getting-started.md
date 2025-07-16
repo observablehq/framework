@@ -80,7 +80,7 @@ These are just first steps. You can continue to develop apps after publishing, a
 
 ## 1. Create
 
-Framework includes a helper script (`observable create`) for creating new apps. After a few quick prompts — where to create the project, your preferred package manager, *etc.* — it will stamp out a fresh project from a template.
+Framework includes a helper script (`observable create`) for creating new apps. After a few quick prompts — where to create the project, your preferred package manager, _etc._ — it will stamp out a fresh project from a template.
 
 <div class="tip">
   <p>Framework is a <a href="https://nodejs.org/">Node.js</a> application published to npm. You must have <a href="https://nodejs.org/en/download">Node.js 18 or later</a> installed before you can install Framework. Framework is a command-line interface (CLI) that runs in the terminal.</p>
@@ -146,6 +146,17 @@ Or with Yarn:
 
 <pre data-copy>yarn dev</pre>
 
+Or with Pnpm:
+
+<pre data-copy>
+pnpm approve-builds
+pnpm dev
+</pre>
+
+Or with Bun:
+
+<pre data-copy>bun dev</pre>
+
 You should see something like this:
 
 <pre data-copy="none"><b class="green">Observable Framework</b> v1.13.3
@@ -181,7 +192,7 @@ Now visit <http://127.0.0.1:3000> in your browser, which should look like:
 
 ### Test live preview
 
-Live preview means that as you save changes, your in-browser preview updates instantly. Live preview applies to Markdown pages, imported JavaScript modules (so-called *hot module replacement*), data loaders, page loaders, and file attachments. This feature is implemented by the preview server watching files and pushing changes to the browser over a socket.
+Live preview means that as you save changes, your in-browser preview updates instantly. Live preview applies to Markdown pages, imported JavaScript modules (so-called _hot module replacement_), data loaders, page loaders, and file attachments. This feature is implemented by the preview server watching files and pushing changes to the browser over a socket.
 
 To experience live preview, open <code>src/index.md</code> in your preferred text editor — below we show Zed — and position your browser window so that you can see your editor and browser side-by-side. If you then replace the text “Hello Framework” with “Hi, Mom!” and save, you should see:
 
@@ -219,7 +230,7 @@ If you click on the **Weather report** link in the sidebar, it’ll take you to 
 
 <div class="tip">The sidebar is hidden by default in narrow windows. If you don’t see the sidebar, you can show it by making the window wider, or using Command-B (⌘B) or Option-B (⌥B) on Firefox and non-macOS, or clicking the right-pointing arrow ↦ on the left edge of the window.</div>
 
-As evidenced by the code <code class="language-js">1 + 2</code> rendered as <code class="language-js">3</code>, JavaScript fenced code blocks (<code>```js</code>) are *live*: the code runs in the browser. Try replacing <code class="language-js">2</code> with <code class="language-js">Math.random()</code>, and the code will re-run automatically on save. In a bit, we’ll write code to render a chart. We can also use code to debug as we develop, say to inspect data.
+As evidenced by the code <code class="language-js">1 + 2</code> rendered as <code class="language-js">3</code>, JavaScript fenced code blocks (<code>```js</code>) are _live_: the code runs in the browser. Try replacing <code class="language-js">2</code> with <code class="language-js">Math.random()</code>, and the code will re-run automatically on save. In a bit, we’ll write code to render a chart. We can also use code to debug as we develop, say to inspect data.
 
 ### Data loader
 
@@ -397,7 +408,7 @@ As before, the code block contains an expression (a call to `Plot.plot`) and hen
 
 ### Components
 
-As pages grow, complex inline JavaScript may become unwieldy and repetitive. Tidy code by moving it into functions. In Framework, a function that returns a DOM element is called a *component*.
+As pages grow, complex inline JavaScript may become unwieldy and repetitive. Tidy code by moving it into functions. In Framework, a function that returns a DOM element is called a _component_.
 
 To turn the chart above into a component, wrap it in a function and promote the `data` to a required argument. Accept any named options (such as `width`) as an optional second argument with destructuring.
 
@@ -485,6 +496,14 @@ To build your app with npm, run:
 Or with Yarn:
 
 <pre data-copy>yarn build</pre>
+
+Or with Pnpm:
+
+<pre data-copy>pnpm build</pre>
+
+Or with Bun
+
+<pre data-copy>bun run build</pre>
 
 The <code>build</code> command generates the `dist` directory; you can then upload this directory to your preferred hosting provider or copy it to your static site server for self-hosting. To preview your built app locally, you can use a local static HTTP server such as [http-server](https://github.com/http-party/http-server):
 
