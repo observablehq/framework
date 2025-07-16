@@ -497,6 +497,14 @@ Or with Yarn:
 
 <pre data-copy>yarn build</pre>
 
+Or with Pnpm:
+
+<pre data-copy>pnpm build</pre>
+
+Or with Bun
+
+<pre data-copy>bun run build</pre>
+
 The <code>build</code> command generates the `dist` directory; you can then upload this directory to your preferred hosting provider or copy it to your static site server for self-hosting. To preview your built app locally, you can use a local static HTTP server such as [http-server](https://github.com/http-party/http-server):
 
 <pre data-copy>npx http-server dist</pre>
