@@ -1,0 +1,157 @@
+{
+  "data": {},
+  "title": "Fenced code with space after backticks",
+  "style": null,
+  "code": [
+    {
+      "id": "5472e671",
+      "node": {
+        "body": {
+          "type": "Program",
+          "start": 0,
+          "end": 75,
+          "body": [
+            {
+              "type": "ExpressionStatement",
+              "start": 0,
+              "end": 75,
+              "expression": {
+                "type": "CallExpression",
+                "start": 0,
+                "end": 74,
+                "callee": {
+                  "type": "Identifier",
+                  "start": 0,
+                  "end": 7,
+                  "name": "display"
+                },
+                "arguments": [
+                  {
+                    "type": "CallExpression",
+                    "start": 8,
+                    "end": 73,
+                    "callee": {
+                      "type": "MemberExpression",
+                      "start": 8,
+                      "end": 20,
+                      "object": {
+                        "type": "Identifier",
+                        "start": 8,
+                        "end": 14,
+                        "name": "Inputs"
+                      },
+                      "property": {
+                        "type": "Identifier",
+                        "start": 15,
+                        "end": 20,
+                        "name": "table"
+                      },
+                      "computed": false,
+                      "optional": false
+                    },
+                    "arguments": [
+                      {
+                        "type": "AwaitExpression",
+                        "start": 21,
+                        "end": 55,
+                        "argument": {
+                          "type": "TaggedTemplateExpression",
+                          "start": 27,
+                          "end": 55,
+                          "tag": {
+                            "type": "Identifier",
+                            "start": 27,
+                            "end": 30,
+                            "name": "sql"
+                          },
+                          "quasi": {
+                            "type": "TemplateLiteral",
+                            "start": 30,
+                            "end": 55,
+                            "expressions": [],
+                            "quasis": [
+                              {
+                                "type": "TemplateElement",
+                                "start": 31,
+                                "end": 54,
+                                "value": {
+                                  "raw": "SELECT 3 + 4 AS result;",
+                                  "cooked": "SELECT 3 + 4 AS result;"
+                                },
+                                "tail": true
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "ObjectExpression",
+                        "start": 57,
+                        "end": 72,
+                        "properties": [
+                          {
+                            "type": "Property",
+                            "start": 58,
+                            "end": 71,
+                            "method": false,
+                            "shorthand": false,
+                            "computed": false,
+                            "key": {
+                              "type": "Identifier",
+                              "start": 58,
+                              "end": 64,
+                              "name": "select"
+                            },
+                            "value": {
+                              "type": "Literal",
+                              "start": 66,
+                              "end": 71,
+                              "value": false,
+                              "raw": "false"
+                            },
+                            "kind": "init"
+                          }
+                        ]
+                      }
+                    ],
+                    "optional": false
+                  }
+                ],
+                "optional": false
+              }
+            }
+          ],
+          "sourceType": "module"
+        },
+        "declarations": [],
+        "references": [
+          {
+            "type": "Identifier",
+            "start": 0,
+            "end": 7,
+            "name": "display"
+          },
+          {
+            "type": "Identifier",
+            "start": 8,
+            "end": 14,
+            "name": "Inputs"
+          },
+          {
+            "type": "Identifier",
+            "start": 27,
+            "end": 30,
+            "name": "sql"
+          }
+        ],
+        "files": [],
+        "imports": [],
+        "expression": false,
+        "async": true,
+        "input": "display(Inputs.table(await sql`SELECT 3 + 4 AS result;`, {select: false}));"
+      },
+      "mode": "block"
+    }
+  ],
+  "path": "fenced-code-space-after-backticks.md"
+}
