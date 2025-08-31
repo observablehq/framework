@@ -33,14 +33,21 @@ export function parseInfo(input: string): Info {
   let attributeName: string | undefined;
   let attributeNameStart: number | undefined;
   let attributeValueStart: number | undefined;
+  let tagStart = 0;
   const attributes = {};
-  for (let i = 0, n = input.length; i <= n; ++i) {
+
+  // Skip leading whitespace
+  while (tagStart < input.length && isSpaceCode(input.charCodeAt(tagStart))) {
+    tagStart++;
+  }
+
+  for (let i = tagStart, n = input.length; i <= n; ++i) {
     const code = input.charCodeAt(i); // note: inclusive upper bound; code may be NaN!
     switch (state) {
       case STATE_TAG_NAME: {
         if (isSpaceCode(code) || isNaN(code)) {
           state = STATE_BEFORE_ATTRIBUTE_NAME;
-          tag = lower(input, 0, i);
+          tag = lower(input, tagStart, i);
         }
         break;
       }
