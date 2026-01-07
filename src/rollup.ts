@@ -9,7 +9,7 @@ import {getClientPath, getStylePath} from "./files.js";
 import {annotatePath} from "./javascript/annotate.js";
 import type {StringLiteral} from "./javascript/source.js";
 import {getStringLiteralValue, isStringLiteral} from "./javascript/source.js";
-import {resolveNpmImport} from "./npm.js";
+import {resolvePackageImport} from "./packageResolution.js";
 import {getObservableUiOrigin} from "./observableApiClient.js";
 import {isAssetPath, isPathImport, relativePath} from "./path.js";
 import {builtins} from "./resolvers.js";
@@ -126,9 +126,9 @@ export async function resolveImport(root: string, specifier: string): Promise<st
     : specifier.startsWith("observablehq:")
     ? `/_observablehq/${specifier.slice("observablehq:".length)}${extname(specifier) ? "" : ".js"}`
     : specifier.startsWith("npm:")
-    ? await resolveNpmImport(root, specifier.slice("npm:".length))
+    ? await resolvePackageImport(root, specifier.slice("npm:".length))
     : !/^[a-z]:\\/i.test(specifier) && !isPathImport(specifier)
-    ? await resolveNpmImport(root, specifier)
+    ? await resolvePackageImport(root, specifier)
     : undefined;
 }
 

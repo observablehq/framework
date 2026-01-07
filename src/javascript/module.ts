@@ -9,7 +9,7 @@ import {transform, transformSync} from "esbuild";
 import {currentDate} from "../config.js";
 import {resolveJsrImport} from "../jsr.js";
 import {resolveNodeImport} from "../node.js";
-import {resolveNpmImport} from "../npm.js";
+import {resolvePackageImport} from "../packageResolution.js";
 import {resolvePath} from "../path.js";
 import {builtins, resolveBuiltin} from "../resolvers.js";
 import type {RouteResult} from "../route.js";
@@ -99,7 +99,7 @@ export async function getLocalModuleHash(root: string, path: string, getHash?: (
       if (builtins.has(i) || i.startsWith("observablehq:")) {
         hash.update(`${resolveBuiltin(i)}?version=${process.env.npm_package_version}`); // change hash when Framework changes
       } else if (i.startsWith("npm:")) {
-        globalPaths.add(await resolveNpmImport(root, i.slice("npm:".length)));
+        globalPaths.add(await resolvePackageImport(root, i.slice("npm:".length)));
       } else if (i.startsWith("jsr:")) {
         globalPaths.add(await resolveJsrImport(root, i.slice("jsr:".length)));
       } else if (!/^\w+:/.test(i)) {

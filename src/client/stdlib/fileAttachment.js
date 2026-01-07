@@ -112,8 +112,7 @@ export class AbstractFile {
     return aq[from](body, options);
   }
   async parquet() {
-    const [Arrow, Parquet, buffer] = await Promise.all([import("npm:apache-arrow"), import("npm:parquet-wasm").then(async (Parquet) => (await Parquet.default(import.meta.resolve("npm:parquet-wasm/esm/parquet_wasm_bg.wasm")), Parquet)), this.arrayBuffer()]); // prettier-ignore
-    return Arrow.tableFromIPC(Parquet.readParquet(new Uint8Array(buffer)).intoIPCStream());
+    throw new Error("Parquet support is disabled in this build.");
   }
   async sqlite() {
     const [{SQLiteDatabaseClient}, response] = await Promise.all([import("observablehq:stdlib/sqlite"), this.arrayBuffer()]); // prettier-ignore

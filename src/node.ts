@@ -24,16 +24,36 @@ export async function resolveNodeImport(root: string, spec: string): Promise<str
   return resolveNodeImportInternal(op.join(root, ".observablehq", "cache", "_node"), root, spec);
 }
 
+export async function resolveNodeImportFrom(root: string, packageRoot: string, spec: string): Promise<string> {
+  return resolveNodeImportInternal(op.join(root, ".observablehq", "cache", "_node"), packageRoot, spec);
+}
+
 const bundlePromises = new Map<string, Promise<string>>();
 
 async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string, spec: string): Promise<string> {
   const {name, path = "."} = parseNpmSpecifier(spec);
   const require = createRequire(pathToFileURL(op.join(packageRoot, "/")));
-  const pathResolution = require.resolve(spec);
-  const packageResolution = await packageDirectory({cwd: op.dirname(pathResolution)});
+  let pathResolution: string;
+  let packageResolution: string | undefined;
+  let entryPath = path;
+  try {
+    pathResolution = require.resolve(spec);
+  } catch (error) {
+    if (path !== ".") throw error;
+    const packagePath = op.join(packageRoot, "node_modules", ...name.split("/"));
+    const pkgJsonPath = op.join(packagePath, "package.json");
+    if (!existsSync(pkgJsonPath)) throw error;
+    const pkg = JSON.parse(await readFile(pkgJsonPath, "utf-8"));
+    entryPath = pkg.module ?? pkg.main ?? "index.js";
+    if (!extname(entryPath)) entryPath = `${entryPath}.js`;
+    pathResolution = op.join(packagePath, entryPath);
+    packageResolution = packagePath;
+  }
+  if (!packageResolution) packageResolution = await packageDirectory({cwd: op.dirname(pathResolution)});
   if (!packageResolution) throw new Error(`unable to resolve package.json: ${spec}`);
   const {version} = JSON.parse(await readFile(op.join(packageResolution, "package.json"), "utf-8"));
-  const resolution = `${name}@${version}/${extname(path) ? path : path === "." ? "index.js" : `${path}.js`}`;
+  const resolvedPath = extname(entryPath) ? entryPath : entryPath === "." ? "index.js" : `${entryPath}.js`;
+  const resolution = `${name}@${version}/${resolvedPath}`;
   const outputPath = op.join(cacheRoot, toOsPath(resolution));
   const resolutionPath = `/_node/${resolution}`;
   if (existsSync(outputPath)) return resolutionPath;

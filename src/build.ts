@@ -10,7 +10,8 @@ import {findModule, getModuleHash, readJavaScript} from "./javascript/module.js"
 import {transpileModule} from "./javascript/transpile.js";
 import type {Logger, Writer} from "./logger.js";
 import type {MarkdownPage} from "./markdown.js";
-import {populateNpmCache, resolveNpmImport, rewriteNpmImports} from "./npm.js";
+import {rewriteNpmImports} from "./npm.js";
+import {ensurePackageCache, resolvePackageImport} from "./packageResolution.js";
 import {isAssetPath, isPathImport, relativePath, resolvePath, within} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
@@ -213,8 +214,8 @@ export async function build(
       await effects.writeFile(alias, contents);
     } else if (specifier.startsWith("npm:")) {
       effects.output.write(`${faint("copy")} ${specifier} ${faint("→")} `);
-      const path = await resolveNpmImport(root, specifier.slice("npm:".length));
-      const sourcePath = await populateNpmCache(root, path); // TODO effects
+      const path = await resolvePackageImport(root, specifier.slice("npm:".length));
+      const sourcePath = await ensurePackageCache(root, path); // TODO effects
       await effects.copyFile(sourcePath, path);
     } else if (!/^\w+:/.test(specifier)) {
       const sourcePath = join(root, specifier);

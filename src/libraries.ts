@@ -6,9 +6,9 @@ export function getImplicitFileImports(methods: Iterable<string>): Set<string> {
   const implicits = new Set<string>();
   if (set.has("arrow")) implicits.add("npm:apache-arrow");
   if (set.has("arquero")) implicits.add("npm:apache-arrow").add("npm:arquero");
-  if (set.has("arquero-parquet")) implicits.add("npm:apache-arrow").add("npm:arquero").add("npm:parquet-wasm");
+  if (set.has("arquero-parquet")) implicits.add("npm:apache-arrow").add("npm:arquero");
   if (set.has("csv") || set.has("tsv")) implicits.add("npm:d3-dsv");
-  if (set.has("parquet")) implicits.add("npm:apache-arrow").add("npm:parquet-wasm");
+  if (set.has("parquet")) implicits.add("npm:apache-arrow");
   if (set.has("sqlite")) implicits.add("npm:@observablehq/sqlite");
   if (set.has("xlsx")) implicits.add("observablehq:stdlib/xlsx");
   if (set.has("zip")) implicits.add("observablehq:stdlib/zip");
@@ -162,9 +162,7 @@ export function getImplicitDownloads(imports: Iterable<string>, duckdb?: DuckDBC
     implicits.add("npm:katex/dist/fonts/KaTeX_Typewriter-Regular.woff");
     implicits.add("npm:katex/dist/fonts/KaTeX_Typewriter-Regular.woff2");
   }
-  if (set.has("npm:parquet-wasm")) {
-    implicits.add("npm:parquet-wasm/esm/parquet_wasm_bg.wasm");
-  }
+  // Parquet support disabled (no parquet-wasm dependency).
   return implicits;
 }
 

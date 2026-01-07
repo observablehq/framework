@@ -12,8 +12,9 @@ import {getImplicitFileImports, getImplicitInputImports} from "./libraries.js";
 import {getImplicitStylesheets} from "./libraries.js";
 import type {LoaderResolver} from "./loader.js";
 import type {MarkdownPage} from "./markdown.js";
-import {extractNodeSpecifier, resolveNodeImport, resolveNodeImports} from "./node.js";
-import {extractNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
+import {extractNodeSpecifier} from "./node.js";
+import {extractNpmSpecifier} from "./npm.js";
+import {ensurePackageCache, resolvePackageImport, resolvePackageImports} from "./packageResolution.js";
 import {isAssetPath, isPathImport, parseRelativeUrl} from "./path.js";
 import {relativePath, resolveLocalPath, resolvePath, resolveRelativePath} from "./path.js";
 
@@ -261,12 +262,12 @@ async function resolveResolvers(
   for (const i of globalImports) {
     if (builtins.has(i)) continue;
     if (i.startsWith("npm:")) {
-      resolutions.set(i, await resolveNpmImport(root, i.slice("npm:".length)));
+      resolutions.set(i, await resolvePackageImport(root, i.slice("npm:".length)));
     } else if (i.startsWith("jsr:")) {
       resolutions.set(i, await resolveJsrImport(root, i.slice("jsr:".length)));
     } else if (!/^\w+:/.test(i)) {
       try {
-        resolutions.set(i, await resolveNodeImport(root, i));
+        resolutions.set(i, await resolvePackageImport(root, i));
       } catch {
         // ignore error; allow the import to be resolved at runtime
       }
@@ -277,10 +278,10 @@ async function resolveResolvers(
   // the remainder of the import caches.
   for (const [key, value] of resolutions) {
     if (key.startsWith("npm:")) {
-      for (const i of await resolveNpmImports(root, value)) {
+      for (const i of await resolvePackageImports(root, value)) {
         if (i.type === "local") {
           const path = resolvePath(value, i.name);
-          const specifier = `npm:${extractNpmSpecifier(path)}`;
+          const specifier = path.startsWith("/_node/") ? extractNodeSpecifier(path) : `npm:${extractNpmSpecifier(path)}`;
           globalImports.add(specifier);
           resolutions.set(specifier, path);
         }
@@ -298,10 +299,10 @@ async function resolveResolvers(
         }
       }
     } else if (!/^\w+:/.test(key)) {
-      for (const i of await resolveNodeImports(root, value)) {
+      for (const i of await resolvePackageImports(root, value)) {
         if (i.type === "local") {
           const path = resolvePath(value, i.name);
-          const specifier = extractNodeSpecifier(path);
+          const specifier = path.startsWith("/_node/") ? extractNodeSpecifier(path) : `npm:${extractNpmSpecifier(path)}`;
           globalImports.add(specifier);
           resolutions.set(specifier, path);
         }
@@ -319,10 +320,10 @@ async function resolveResolvers(
   }
   for (const [key, value] of staticResolutions) {
     if (key.startsWith("npm:")) {
-      for (const i of await resolveNpmImports(root, value)) {
+      for (const i of await resolvePackageImports(root, value)) {
         if (i.type === "local" && i.method === "static") {
           const path = resolvePath(value, i.name);
-          const specifier = `npm:${extractNpmSpecifier(path)}`;
+          const specifier = path.startsWith("/_node/") ? extractNodeSpecifier(path) : `npm:${extractNpmSpecifier(path)}`;
           staticImports.add(specifier);
           staticResolutions.set(specifier, path);
         }
@@ -340,10 +341,10 @@ async function resolveResolvers(
         }
       }
     } else if (!/^\w+:/.test(key)) {
-      for (const i of await resolveNodeImports(root, value)) {
+      for (const i of await resolvePackageImports(root, value)) {
         if (i.type === "local" && i.method === "static") {
           const path = resolvePath(value, i.name);
-          const specifier = extractNodeSpecifier(path);
+          const specifier = path.startsWith("/_node/") ? extractNodeSpecifier(path) : `npm:${extractNpmSpecifier(path)}`;
           staticImports.add(specifier);
           staticResolutions.set(specifier, path);
         }
@@ -355,9 +356,9 @@ async function resolveResolvers(
   for (const specifier of getImplicitStylesheets(staticImports)) {
     stylesheets.add(specifier);
     if (specifier.startsWith("npm:")) {
-      const path = await resolveNpmImport(root, specifier.slice("npm:".length));
+      const path = await resolvePackageImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
-      await populateNpmCache(root, path);
+      await ensurePackageCache(root, path);
     } else if (!specifier.startsWith("observablehq:")) {
       throw new Error(`unhandled implicit stylesheet: ${specifier}`);
     }
@@ -368,9 +369,9 @@ async function resolveResolvers(
   for (const specifier of getImplicitDownloads(globalImports, duckdb)) {
     globalImports.add(specifier);
     if (specifier.startsWith("npm:")) {
-      const path = await resolveNpmImport(root, specifier.slice("npm:".length));
+      const path = await resolvePackageImport(root, specifier.slice("npm:".length));
       resolutions.set(specifier, path);
-      await populateNpmCache(root, path);
+      await ensurePackageCache(root, path);
     } else if (specifier.startsWith("duckdb:")) {
       const path = await cacheDuckDBExtension(root, specifier.slice("duckdb:".length));
       resolutions.set(specifier, path);
@@ -461,9 +462,13 @@ export async function getModuleStaticImports(root: string, path: string): Promis
   for (const i of globalImports) {
     if (builtins.has(i)) continue;
     if (i.startsWith("npm:")) {
-      const p = await resolveNpmImport(root, i.slice("npm:".length));
-      for (const o of await resolveNpmImports(root, p)) {
-        if (o.type === "local") globalImports.add(`npm:${extractNpmSpecifier(resolvePath(p, o.name))}`);
+      const p = await resolvePackageImport(root, i.slice("npm:".length));
+      for (const o of await resolvePackageImports(root, p)) {
+        if (o.type === "local") {
+          const path = resolvePath(p, o.name);
+          const specifier = path.startsWith("/_node/") ? extractNodeSpecifier(path) : `npm:${extractNpmSpecifier(path)}`;
+          globalImports.add(specifier);
+        }
       }
     } else if (i.startsWith("jsr:")) {
       const p = await resolveJsrImport(root, i.slice("jsr:".length));
@@ -471,9 +476,13 @@ export async function getModuleStaticImports(root: string, path: string): Promis
         if (o.type === "local") globalImports.add(`jsr:${extractJsrSpecifier(resolvePath(p, o.name))}`);
       }
     } else if (!/^\w+:/.test(i)) {
-      const p = await resolveNodeImport(root, i);
-      for (const o of await resolveNodeImports(root, p)) {
-        if (o.type === "local") globalImports.add(extractNodeSpecifier(resolvePath(p, o.name)));
+      const p = await resolvePackageImport(root, i);
+      for (const o of await resolvePackageImports(root, p)) {
+        if (o.type === "local") {
+          const path = resolvePath(p, o.name);
+          const specifier = path.startsWith("/_node/") ? extractNodeSpecifier(path) : `npm:${extractNpmSpecifier(path)}`;
+          globalImports.add(specifier);
+        }
       }
     }
   }
@@ -499,11 +508,11 @@ export function getModuleResolver(
       : builtins.has(specifier) || specifier.startsWith("observablehq:")
       ? relativePath(servePath, resolveBuiltin(specifier))
       : specifier.startsWith("npm:")
-      ? relativePath(servePath, await resolveNpmImport(root, specifier.slice("npm:".length)))
+      ? relativePath(servePath, await resolvePackageImport(root, specifier.slice("npm:".length)))
       : specifier.startsWith("jsr:")
       ? relativePath(servePath, await resolveJsrImport(root, specifier.slice("jsr:".length)))
       : !/^\w+:/.test(specifier)
-      ? relativePath(servePath, await resolveNodeImport(root, specifier))
+      ? relativePath(servePath, await resolvePackageImport(root, specifier))
       : specifier;
   };
 }

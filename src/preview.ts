@@ -27,6 +27,7 @@ import {transpileJavaScript, transpileModule} from "./javascript/transpile.js";
 import type {LoaderResolver} from "./loader.js";
 import type {MarkdownCode, MarkdownPage} from "./markdown.js";
 import {populateNpmCache} from "./npm.js";
+import {isLocalNpmMode} from "./packageResolution.js";
 import {isPathImport, resolvePath} from "./path.js";
 import {renderModule, renderPage} from "./render.js";
 import type {Resolvers} from "./resolvers.js";
@@ -147,6 +148,7 @@ export class PreviewServer {
       } else if (pathname.startsWith("/_node/") || pathname.startsWith("/_jsr/") || pathname.startsWith("/_duckdb/")) {
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_npm/")) {
+        if (isLocalNpmMode()) throw new Error("Local npm resolution is enabled; /_npm requests are not supported.");
         await populateNpmCache(root, pathname);
         send(req, pathname, {root: join(root, ".observablehq", "cache")}).pipe(res);
       } else if (pathname.startsWith("/_import/")) {
