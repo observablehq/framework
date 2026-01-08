@@ -16,6 +16,7 @@ import {findModule} from "./javascript/module.js";
 import {LoaderResolver} from "./loader.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
 import {getPagePaths} from "./pager.js";
+import {setLocalNpmResolve} from "./packageResolution.js";
 import {isAssetPath, parseRelativeUrl, resolvePath} from "./path.js";
 import {isParameterized} from "./route.js";
 import {resolveTheme} from "./theme.js";
@@ -112,6 +113,7 @@ export interface Config {
   style: null | Style; // defaults to {theme: ["light", "dark"]}
   globalStylesheets: string[]; // defaults to Source Serif from Google Fonts
   search: SearchConfig | null; // default to null
+  localNpmResolve: boolean; // defaults to false
   md: MarkdownIt;
   normalizePath: (path: string) => string;
   loaders: LoaderResolver;
@@ -147,6 +149,7 @@ export interface ConfigSpec {
   preserveExtension?: unknown;
   markdownIt?: unknown;
   duckdb?: unknown;
+  localNpmResolve?: unknown;
 }
 
 interface ScriptSpec {
@@ -283,6 +286,8 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const normalizePath = getPathNormalizer(spec);
   const duckdb = normalizeDuckDB(spec.duckdb);
+  const localNpmResolve = spec.localNpmResolve === undefined ? false : Boolean(spec.localNpmResolve);
+  setLocalNpmResolve(localNpmResolve);
 
   // If this path ends with a slash, then add an implicit /index to the
   // end of the path. Otherwise, remove the .html extension (we use clean
@@ -330,6 +335,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     style,
     globalStylesheets,
     search,
+    localNpmResolve,
     md,
     normalizePath,
     loaders: new LoaderResolver({root, interpreters}),

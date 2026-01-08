@@ -6,11 +6,16 @@ import type {ImportReference} from "./javascript/imports.js";
 import {parseNpmSpecifier, populateNpmCache, resolveNpmImport, resolveNpmImports} from "./npm.js";
 import {resolveNodeImportFrom, resolveNodeImports} from "./node.js";
 
-const LOCAL_NPM_MODE = process.env.OBSERVABLE_NPM_RESOLVE === "local";
+let localNpmResolve = false;
 let loggedLocalMode = false;
 
+export function setLocalNpmResolve(value: boolean): void {
+  localNpmResolve = value;
+  loggedLocalMode = false;
+}
+
 function logLocalMode(): void {
-  if (!LOCAL_NPM_MODE || loggedLocalMode) return;
+  if (!localNpmResolve || loggedLocalMode) return;
   loggedLocalMode = true;
   console.log("[observable] npm resolution: local (node_modules)");
 }
@@ -37,22 +42,22 @@ async function findPackageRoot(root: string): Promise<string> {
 }
 
 export function isLocalNpmMode(): boolean {
-  return LOCAL_NPM_MODE;
+  return localNpmResolve;
 }
 
 export async function resolvePackageImport(root: string, specifier: string): Promise<string> {
   logLocalMode();
-  if (!LOCAL_NPM_MODE) return resolveNpmImport(root, specifier);
+  if (!localNpmResolve) return resolveNpmImport(root, specifier);
   const packageRoot = await findPackageRoot(root);
   return resolveNodeImportFrom(root, packageRoot, toLocalSpecifier(specifier));
 }
 
 export async function resolvePackageImports(root: string, path: string): Promise<ImportReference[]> {
   logLocalMode();
-  return LOCAL_NPM_MODE || path.startsWith("/_node/") ? resolveNodeImports(root, path) : resolveNpmImports(root, path);
+  return localNpmResolve || path.startsWith("/_node/") ? resolveNodeImports(root, path) : resolveNpmImports(root, path);
 }
 
 export async function ensurePackageCache(root: string, path: string): Promise<string> {
   logLocalMode();
-  return LOCAL_NPM_MODE || path.startsWith("/_node/") ? join(root, ".observablehq", "cache", path) : populateNpmCache(root, path);
+  return localNpmResolve || path.startsWith("/_node/") ? join(root, ".observablehq", "cache", path) : populateNpmCache(root, path);
 }
