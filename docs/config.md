@@ -74,6 +74,7 @@ The custom stylesheet should typically import `observablehq:default.css` to buil
 ```css
 @import url("observablehq:default.css");
 @import url("observablehq:theme-air.css");
+@import url("observablehq:theme-near-midnight.css") (prefers-color-scheme: dark);
 
 :root {
   --theme-foreground-focus: green;
