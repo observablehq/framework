@@ -21,4 +21,4 @@ jobs:
           cache: 'yarn'
       - run: yarn --frozen-lockfile
       - run: yarn test
-      - run: npm publish --access publish
+      - run: npm publish --access public
