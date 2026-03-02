@@ -533,8 +533,8 @@ function normalizeDuckDB(spec: unknown): DuckDBConfig {
   const extensions: {[name: string]: DuckDBExtensionConfig} = {};
   let extspec: Record<string, unknown> = spec?.["extensions"] ?? {};
   if (Array.isArray(extspec)) extspec = Object.fromEntries(extspec.map((name) => [name, {}]));
-  if (extspec.json === undefined) extspec = {...extspec, json: false};
-  if (extspec.parquet === undefined) extspec = {...extspec, parquet: false};
+  if (extspec.json === undefined) extspec = {...extspec, json: {}};
+  if (extspec.parquet === undefined) extspec = {...extspec, parquet: {}};
   for (let name in extspec) {
     if (!/^\w+$/.test(name)) throw new Error(`invalid extension: ${name}`);
     const vspec = extspec[name];

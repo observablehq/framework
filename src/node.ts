@@ -36,6 +36,8 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
   let pathResolution: string;
   let packageResolution: string | undefined;
   let entryPath = path;
+  let bundleInput = spec;
+  const preferParquetWasm = name === "parquet-wasm";
   try {
     pathResolution = require.resolve(spec);
   } catch (error) {
@@ -51,6 +53,19 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
   }
   if (!packageResolution) packageResolution = await packageDirectory({cwd: op.dirname(pathResolution)});
   if (!packageResolution) throw new Error(`unable to resolve package.json: ${spec}`);
+  if (preferParquetWasm) {
+    const preferred = resolveParquetWasmEntry(packageResolution);
+    if (
+      preferred &&
+      preferred !== entryPath &&
+      !entryPath.startsWith("esm/") &&
+      !entryPath.startsWith("esm2/")
+    ) {
+      entryPath = preferred;
+      pathResolution = op.join(packageResolution, entryPath);
+      bundleInput = pathResolution;
+    }
+  }
   const {version} = JSON.parse(await readFile(op.join(packageResolution, "package.json"), "utf-8"));
   const resolvedPath = extname(entryPath) ? entryPath : entryPath === "." ? "index.js" : `${entryPath}.js`;
   const resolution = `${name}@${version}/${resolvedPath}`;
@@ -63,7 +78,11 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
     console.log(`${spec} ${faint("→")} ${outputPath}`);
     await prepareOutput(outputPath);
     if (isJavaScript(pathResolution)) {
-      await writeFile(outputPath, await bundle(resolutionPath, spec, require, cacheRoot, packageResolution), "utf-8");
+      await writeFile(
+        outputPath,
+        await bundle(resolutionPath, bundleInput, require, cacheRoot, packageResolution),
+        "utf-8"
+      );
     } else {
       await copyFile(pathResolution, outputPath);
     }
@@ -72,6 +91,16 @@ async function resolveNodeImportInternal(cacheRoot: string, packageRoot: string,
   promise.catch(console.error).then(() => bundlePromises.delete(outputPath));
   bundlePromises.set(outputPath, promise);
   return promise;
+}
+
+function resolveParquetWasmEntry(packageResolution: string): string | null {
+  const parquetEntry = op.join(packageResolution, "esm", "parquet_wasm.js");
+  if (existsSync(parquetEntry)) return "esm/parquet_wasm.js";
+  const arrowEntry = op.join(packageResolution, "esm", "arrow2.js");
+  if (existsSync(arrowEntry)) return "esm/arrow2.js";
+  const esm2ArrowEntry = op.join(packageResolution, "esm2", "arrow2.js");
+  if (existsSync(esm2ArrowEntry)) return "esm2/arrow2.js";
+  return null;
 }
 
 /**

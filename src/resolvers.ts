@@ -369,9 +369,23 @@ async function resolveResolvers(
   for (const specifier of getImplicitDownloads(globalImports, duckdb)) {
     globalImports.add(specifier);
     if (specifier.startsWith("npm:")) {
-      const path = await resolvePackageImport(root, specifier.slice("npm:".length));
-      resolutions.set(specifier, path);
-      await ensurePackageCache(root, path);
+      if (specifier === "npm:parquet-wasm/esm/parquet_wasm_bg.wasm") {
+        try {
+          const path = await resolvePackageImport(root, specifier.slice("npm:".length));
+          resolutions.set(specifier, path);
+          await ensurePackageCache(root, path);
+        } catch (error) {
+          const fallback = "npm:parquet-wasm/esm/arrow2_bg.wasm";
+          globalImports.add(fallback);
+          const path = await resolvePackageImport(root, fallback.slice("npm:".length));
+          resolutions.set(fallback, path);
+          await ensurePackageCache(root, path);
+        }
+      } else {
+        const path = await resolvePackageImport(root, specifier.slice("npm:".length));
+        resolutions.set(specifier, path);
+        await ensurePackageCache(root, path);
+      }
     } else if (specifier.startsWith("duckdb:")) {
       const path = await cacheDuckDBExtension(root, specifier.slice("duckdb:".length));
       resolutions.set(specifier, path);
