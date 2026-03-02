@@ -34,13 +34,13 @@ describe("resolveNodeImport(root, spec) with top-level node_modules", () => {
   before(() => rm(join(testRoot, ".observablehq/cache/_node"), {recursive: true, force: true}));
   it("resolves the version of a direct dependency", async () => {
     assert.deepStrictEqual(await resolveNodeImport(testRoot, "d3-array"), "/_node/d3-array@3.2.4/index.js");
-    assert.deepStrictEqual(await resolveNodeImport(testRoot, "mime"), "/_node/mime@4.0.6/index.js");
+    assert.deepStrictEqual(await resolveNodeImport(testRoot, "mime"), "/_node/mime@4.1.0/index.js");
   });
   it("allows entry points", async () => {
-    assert.deepStrictEqual(await resolveNodeImport(testRoot, "mime/lite"), "/_node/mime@4.0.6/lite.js");
+    assert.deepStrictEqual(await resolveNodeImport(testRoot, "mime/lite"), "/_node/mime@4.1.0/lite.js");
   });
   it("allows non-javascript entry points", async () => {
-    assert.deepStrictEqual(await resolveNodeImport(testRoot, "glob/package.json"), "/_node/glob@10.4.5/package.json");
+    assert.deepStrictEqual(await resolveNodeImport(testRoot, "glob/package.json"), "/_node/glob@10.5.0/package.json");
   });
   it("does not allow version ranges", async () => {
     await assert.rejects(() => resolveNodeImport(testRoot, "mime@4"), /Cannot find module/);
