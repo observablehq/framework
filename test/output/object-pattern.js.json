@@ -31,13 +31,13 @@
                     "end": 8,
                     "name": "x"
                   },
-                  "kind": "init",
                   "value": {
                     "type": "Identifier",
                     "start": 7,
                     "end": 8,
                     "name": "x"
-                  }
+                  },
+                  "kind": "init"
                 },
                 {
                   "type": "Property",
@@ -52,13 +52,13 @@
                     "end": 11,
                     "name": "y"
                   },
-                  "kind": "init",
                   "value": {
                     "type": "Identifier",
                     "start": 10,
                     "end": 11,
                     "name": "y"
-                  }
+                  },
+                  "kind": "init"
                 }
               ]
             },

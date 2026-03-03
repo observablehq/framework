@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/framework",
   "license": "ISC",
-  "version": "1.13.3-npm-resolution",
+  "version": "1.13.4",
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -70,7 +70,7 @@
     "cross-spawn": "^7.0.3",
     "d3-array": "^3.2.4",
     "d3-hierarchy": "^3.1.2",
-    "esbuild": "^0.20.1",
+    "esbuild": "^0.27.3",
     "fast-array-diff": "^1.1.0",
     "fast-deep-equal": "^3.1.3",
     "glob": "^10.3.10",
@@ -93,7 +93,7 @@
     "rollup-plugin-esbuild": "^6.1.0",
     "semver": "^7.5.4",
     "send": "^0.19.0",
-    "tar": "^6.2.0",
+    "tar": "^7.5.9",
     "tar-stream": "^3.1.6",
     "tsx": "^4.7.1",
     "untildify": "^5.0.0",
@@ -111,7 +111,6 @@
     "@types/mocha": "^10.0.8",
     "@types/node": "^18.11.9",
     "@types/send": "^0.17.4",
-    "@types/tar": "^6.1.13",
     "@types/tar-stream": "^3.1.3",
     "@types/ws": "^8.5.12",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
@@ -127,7 +126,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.0",
-    "mocha": "^10.2.0",
+    "mocha": "^11.7.5",
     "prettier": "^3.0.3 <3.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

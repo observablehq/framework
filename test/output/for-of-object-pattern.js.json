@@ -59,13 +59,13 @@
                 "end": 17,
                 "name": "a"
               },
-              "kind": "init",
               "value": {
                 "type": "Identifier",
                 "start": 16,
                 "end": 17,
                 "name": "a"
-              }
+              },
+              "kind": "init"
             },
             {
               "type": "Property",
@@ -80,13 +80,13 @@
                 "end": 20,
                 "name": "b"
               },
-              "kind": "init",
               "value": {
                 "type": "Identifier",
                 "start": 19,
                 "end": 20,
                 "name": "b"
-              }
+              },
+              "kind": "init"
             }
           ]
         },
