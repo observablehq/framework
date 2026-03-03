@@ -8,7 +8,7 @@ import type {RuleInline} from "markdown-it/lib/parser_inline.mjs";
 import type {RenderRule} from "markdown-it/lib/renderer.mjs";
 import type Token from "markdown-it/lib/token.mjs";
 import MarkdownItAnchor from "markdown-it-anchor";
-import type {Config} from "./config.js";
+import type {CodeExtensions, Config} from "./config.js";
 import {mergeStyle} from "./config.js";
 import type {FrontMatter} from "./frontMatter.js";
 import {readFrontMatter} from "./frontMatter.js";
@@ -50,6 +50,7 @@ interface ParseContext {
   currentLine: number;
   path: string;
   params?: Params;
+  codeExtensions: CodeExtensions;
 }
 
 function uniqueCodeId(context: ParseContext, content: string): string {
@@ -72,7 +73,14 @@ function transpileJavaScript(content: string, tag: "ts" | "jsx" | "tsx"): string
   }
 }
 
-function getLiveSource(content: string, tag: string, attributes: Record<string, string>): string | undefined {
+function getLiveSource(
+  content: string,
+  tag: string,
+  attributes: Record<string, string>,
+  codeExtensions: CodeExtensions = {}
+): string | undefined {
+  const codeExtension = codeExtensions[tag];
+  if (codeExtension) return codeExtension(content, attributes);
   return tag === "js"
     ? content
     : tag === "ts" || tag === "jsx" || tag === "tsx"
@@ -112,14 +120,14 @@ function getLiveSource(content: string, tag: string, attributes: Record<string, 
 
 function makeFenceRenderer(baseRenderer: RenderRule): RenderRule {
   return (tokens, idx, options, context: ParseContext, self) => {
-    const {path, params} = context;
+    const {path, params, codeExtensions} = context;
     const token = tokens[idx];
     const {tag, attributes} = parseInfo(token.info);
     token.info = tag;
     let html = "";
     let source: string | undefined;
     try {
-      source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag, attributes);
+      source = isFalse(attributes.run) ? undefined : getLiveSource(token.content, tag, attributes, codeExtensions);
       if (source != null) {
         const id = uniqueCodeId(context, source);
         // TODO const sourceLine = context.startLine + context.currentLine;
@@ -219,6 +227,7 @@ export interface ParseOptions {
   footer?: Config["footer"];
   source?: string;
   params?: Params;
+  codeExtensions?: Config["codeExtensions"];
 }
 
 export function createMarkdownIt({
@@ -244,10 +253,10 @@ export function createMarkdownIt({
 }
 
 export function parseMarkdown(input: string, options: ParseOptions): MarkdownPage {
-  const {md, path, source = path, params} = options;
+  const {md, path, source = path, params, codeExtensions = {}} = options;
   const {content, data} = readFrontMatter(input);
   const code: MarkdownCode[] = [];
-  const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params};
+  const context: ParseContext = {code, startLine: 0, currentLine: 0, path, params, codeExtensions};
   const tokens = md.parse(content, context);
   const body = md.renderer.render(tokens, md.options, context); // Note: mutates code!
   const title = data.title !== undefined ? data.title : findTitle(tokens);
