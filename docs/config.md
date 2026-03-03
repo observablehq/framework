@@ -340,6 +340,26 @@ The `json` and `parquet` are configured (and therefore self-hosted) by default. 
 
 For more, see [DuckDB extensions](./lib/duckdb#extensions).
 
+## localNpmResolve
+
+If true, resolves npm imports from the local `node_modules` directory instead of fetching them from the [jsDelivr](https://www.jsdelivr.com/) CDN. Defaults to false.
+
+This is useful for air-gapped environments, corporate networks that block CDN access, or workflows that require reproducible builds from pinned local installs.
+
+```js run=false
+export default {
+  localNpmResolve: true
+};
+```
+
+When enabled, Framework logs a one-time notice at startup:
+
+```
+[observable] npm resolution: local (node_modules)
+```
+
+All npm specifiers — including those with CDN-specific `/+esm` suffixes — are resolved against the project's `node_modules`. The exact version used is whatever is installed locally; no version negotiation with the npm registry occurs. If a required package is not installed, Node's resolver will throw a `Cannot find module` error.
+
 ## markdownIt <a href="https://github.com/observablehq/framework/releases/tag/v1.1.0" class="observablehq-version-badge" data-version="^1.1.0" title="Added in v1.1.0"></a>
 
 A hook for registering additional [markdown-it](https://github.com/markdown-it/markdown-it) plugins. For example, to use [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote), first install the plugin with either `npm add markdown-it-footnote` or `yarn add markdown-it-footnote`, then register it like so:
