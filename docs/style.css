@@ -3,10 +3,11 @@
 @import url("observablehq:theme-near-midnight.css") (prefers-color-scheme: dark);
 
 :root {
-  --sans-serif: Inter, -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu, roboto,
-    noto, "segoe ui", arial, sans-serif;
+  --sans-serif: Inter, -apple-system, BlinkMacSystemFont, "avenir next", avenir, helvetica, "helvetica neue", ubuntu,
+    roboto, noto, "segoe ui", arial, sans-serif;
   --monospace: "Spline Sans Mono", Menlo, Consolas, monospace;
   --theme-foreground-focus: #148576;
+  --observablehq-header-height: 64px;
 }
 
 h1 code,
@@ -32,6 +33,22 @@ code:not(pre code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code) {
     --theme-foreground: #f5f5f5;
     --theme-foreground-focus: #37d5be;
   }
+}
+
+#observablehq-header {
+  padding: 0;
+  left: calc(max(0rem, (100vw - var(--observablehq-max-width)) / 2) + 2rem);
+  right: calc(max(0rem, (100vw - var(--observablehq-max-width)) / 2) + 2rem);
+}
+
+#observablehq-header > div:first-child {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  justify-content: space-between;
+  white-space: nowrap;
+  margin-left: 2rem;
+  margin-right: 2rem;
 }
 
 #observablehq-header a[href] {
@@ -72,8 +89,9 @@ body {
   font: 16px/1.5 var(--sans-serif);
 }
 
-#observablehq-main {
+#observablehq-header ~ #observablehq-main {
   min-height: calc(100vh - 23.8rem);
+  margin-top: calc(var(--observablehq-header-height) + 2rem);
 }
 
 #observablehq-main a[href]:not(.observablehq-header-anchor) {
@@ -96,12 +114,24 @@ h1 {
   .hide-if-small {
     display: none !important;
   }
+  #observablehq-header > div:first-child {
+    margin-left: 1.5rem;
+    margin-right: 0.5rem;
+  }
 }
 
 @media (min-width: calc(640px + 6rem + 272px)) {
   #observablehq-sidebar-toggle:is(:checked, :indeterminate) ~ #observablehq-center .hide-if-sidebar {
     display: none !important;
   }
+}
+#observablehq-sidebar > ol:first-child {
+  padding: 0;
+}
+
+#observablehq-sidebar-close {
+  top: 0;
+  justify-content: right;
 }
 
 #observablehq-sidebar > ol:first-child > li::before {
@@ -111,6 +141,30 @@ h1 {
 #observablehq-sidebar > ol:first-child > li > a {
   background: none;
   color: inherit;
+}
+
+#observablehq-sidebar > * {
+  margin-left: 0.5rem !important;
+  margin-right: 0.5rem !important;
+}
+
+#observablehq-search {
+  margin-left: 1rem !important;
+}
+
+#observablehq-sidebar .observablehq-link-active::before {
+  left: -1rem;
+}
+
+#observablehq-sidebar .observablehq-link a,
+#observablehq-sidebar summary {
+  margin-left: -1rem;
+  padding-left: 2rem;
+}
+
+
+#observablehq-header ~ #observablehq-toc {
+  top: calc(var(--observablehq-header-height));
 }
 
 a.observablehq-version-badge {
