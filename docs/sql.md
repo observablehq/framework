@@ -191,18 +191,36 @@ The `sql` tag is available by default in Markdown. You can also import it explic
 import {sql} from "npm:@observablehq/duckdb";
 ```
 
-The `sql` tag is also useful for working around a current limitation of DuckDB-Wasm: prepared statements do not support array arguments. (Please upvote [#447](https://github.com/duckdb/duckdb-wasm/issues/447) if you run into this issue.) Instead of passing the array as a parameter, you can interpolate the array values directly into the SQL query.
+For a more custom setup, see [DuckDBClient](./lib/duckdb#custom-setup).
+
+<div class="tip">
+
+DuckDB only supports interpolation of strings and numbers with `${…}`. To interpolate an array of values, such as a list of ids, serialize to JSON:
 
 ```js echo
-const source_ids = [2028328031008716288n, 2076498116457016960n, 4315266827603868160n, 4123529214004874624n, 5312548578630777344n];
+const ids = ["2028328031008716288", "2076498116457016960", "4315266827603868160", "4123529214004874624", "5312548578630777344"];
+```
+
+```sql echo
+SELECT * FROM gaia
+ WHERE source_id::string IN JSON(${JSON.stringify(ids)});
+```
+
+If you need to create a query on the fly, say with inputs that drive the name of a field or table, you can call the `sql` tagged template literal directly.
+
+```js echo
+const field = view(Inputs.select(["ra", "dec", "parallax"], {label: "field"}))
+```
+
+```js
+display(extent);
 ```
 
 ```js echo
-Inputs.table(await sql([`SELECT * FROM gaia WHERE source_id IN (${[source_ids]})`]))
+const query = `SELECT MIN(${field}) AS min, MAX(${field}) AS max FROM gaia;`;
+const [extent] = await sql([query]);
 ```
 
-<div class="warning">
-
-When interpolating values into SQL queries, be careful to avoid [SQL injection](https://en.wikipedia.org/wiki/SQL_injection) by properly escaping or sanitizing user input. The example above is safe only because `source_ids` are known to be numeric.
+Be careful to avoid [SQL injection](https://en.wikipedia.org/wiki/SQL_injection) by properly escaping or sanitizing user input.
 
 </div>

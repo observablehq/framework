@@ -25,6 +25,7 @@ const db = await DuckDBClient.of({trips: FileAttachment("nyc-taxi.parquet")});
 const coordinator = new vgplot.Coordinator();
 coordinator.databaseConnector(vgplot.wasmConnector({duckdb: db._db}));
 const vg = vgplot.createAPIContext({coordinator});
+const sql = db.sql.bind(db);
 ```
 
 The code below creates three views, coordinated by Mosaic’s [crossfilter](https://uwdata.github.io/mosaic/api/core/selection.html#selection-crossfilter) helper.
