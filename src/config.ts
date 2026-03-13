@@ -97,6 +97,7 @@ interface DuckDBExtensionConfigSpec {
 export interface Config {
   root: string; // defaults to src
   output: string; // defaults to dist
+  cacheExpiration?: number; // cache expiration in seconds
   base: string; // defaults to "/"
   home: string; // defaults to the (escaped) title, or "Home"
   title?: string;
@@ -122,6 +123,7 @@ export interface Config {
 export interface ConfigSpec {
   root?: unknown;
   output?: unknown;
+  cacheExpiration?: unknown;
   base?: unknown;
   sidebar?: unknown;
   style?: unknown;
@@ -251,6 +253,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   if (cachedConfig) return cachedConfig;
   const root = spec.root === undefined ? findDefaultRoot(defaultRoot) : String(spec.root);
   const output = spec.output === undefined ? "dist" : String(spec.output);
+  const cacheExpiration = spec.cacheExpiration === undefined ? undefined : Number(spec.cacheExpiration);
   const base = spec.base === undefined ? "/" : normalizeBase(spec.base);
   const style =
     spec.style === null
@@ -298,6 +301,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const config: Config = {
     root,
     output,
+    cacheExpiration,
     base,
     home,
     title,

@@ -119,7 +119,7 @@ export class PreviewServer {
 
   _handleRequest: RequestListener = async (req, res) => {
     const config = await this._readConfig();
-    const {root, loaders, duckdb} = config;
+    const {root, loaders, duckdb, cacheExpiration} = config;
     if (this._verbose) console.log(faint(req.method!), req.url);
     const url = new URL(req.url!, "http://localhost");
     const {origin} = req.headers;
@@ -180,7 +180,7 @@ export class PreviewServer {
         const path = pathname.slice("/_file".length);
         const loader = loaders.find(path);
         if (!loader) throw enoent(path);
-        send(req, await loader.load(), {root}).pipe(res);
+        send(req, await loader.load({cacheExpiration}), {root}).pipe(res);
       } else {
         if ((pathname = normalize(pathname)).startsWith("..")) throw new Error("Invalid path: " + pathname);
 

@@ -297,6 +297,8 @@ During preview, Framework considers the cache “fresh” if the modification ti
 
 During build, Framework ignores modification times and only runs a data loader if its output is not cached. Continuous integration caches typically don’t preserve modification times, so this design makes it easier to control which data loaders to run by selectively populating the cache.
 
+A custom [cache expiration](./config#cache-expiration) can be set, causing the cache to expire if the cached output's modification time exceeds the specified value. The data loader will then reload the data.
+
 To purge the data loader cache and force all data loaders to run on the next build, delete the entire cache. For example:
 
 ```sh
