@@ -31,7 +31,8 @@ if (toggle) {
       event.preventDefault();
     }
   });
-  const title = `Toggle sidebar ${
+  const baseTitle = toggle.dataset.title || "Toggle sidebar";
+  const title = `${baseTitle} ${
     /Mac|iPhone/.test(navigator.platform)
       ? /Firefox/.test(navigator.userAgent)
         ? "⌥" // option symbol for mac firefox

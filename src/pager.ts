@@ -1,4 +1,5 @@
 import type {Config, Page} from "./config.js";
+import {getFrameworkMessages} from "./i18n.js";
 
 export type PageLink =
   | {prev: undefined; next: Page} // first page
@@ -45,7 +46,8 @@ export function findLink(path: string, config: Config): PageLink | undefined {
  * adds a link at the beginning to the home page (/index).
  */
 function walk(config: Config): Iterable<Iterable<Page>> {
-  const {pages, loaders, title = "Home"} = config;
+  const {pages, loaders, title} = config;
+  const {home} = getFrameworkMessages(config.locale, config.lang);
   const pageGroups = new Map<string, Page[]>();
   const visited = new Set<string>();
 
@@ -57,7 +59,7 @@ function walk(config: Config): Iterable<Iterable<Page>> {
     pageGroup.push(page);
   }
 
-  if (loaders.findPage("/index")) visit({name: title, path: "/index", pager: "main"});
+  if (loaders.findPage("/index")) visit({name: title ?? home, path: "/index", pager: "main"});
 
   for (const page of pages) {
     if (page.path !== null) visit(page as Page);

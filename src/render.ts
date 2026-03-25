@@ -17,6 +17,7 @@ import {isAssetPath, resolvePath, resolveRelativePath} from "./path.js";
 import type {Resolvers} from "./resolvers.js";
 import {getModuleResolver, getModuleStaticImports, getResolvers} from "./resolvers.js";
 import {rollupClient} from "./rollup.js";
+import {getFrameworkDirection, getFrameworkLanguage, getFrameworkMessages} from "./i18n.js";
 
 export interface RenderOptions extends Config {
   root: string;
@@ -33,10 +34,18 @@ export async function renderPage(page: MarkdownPage, options: RenderOptions & Re
   const {base, path, title, preview} = options;
   const {loaders, resolvers = await getResolvers(page, options)} = options;
   const {draft = false, sidebar = options.sidebar} = data;
+  const locale = data.locale ?? options.locale;
+  const lang = data.lang ?? getFrameworkLanguage(data.locale) ?? options.lang ?? getFrameworkLanguage(options.locale);
+  const dir =
+    data.dir ??
+    (data.lang !== undefined || data.locale !== undefined ? getFrameworkDirection(data.locale, lang) : undefined) ??
+    options.dir ??
+    getFrameworkDirection(options.locale, options.lang);
+  const messages = getFrameworkMessages(locale, lang);
   const toc = mergeToc(data.toc, options.toc);
   const {files, resolveFile, resolveImport} = resolvers;
   return String(html`<!DOCTYPE html>
-<html>
+<html${lang ? html` lang="${lang}"` : ""}${dir ? html` dir="${dir}"` : ""}>
 <head>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -85,12 +94,12 @@ ${preview ? `\nopen({hash: ${JSON.stringify(resolvers.hash)}, eval: (body) => ev
     .join("")}`)}
 </script>
 </head>
-<body>${sidebar ? html`\n${await renderSidebar(options, resolvers)}` : ""}
+<body>${sidebar ? html`\n${await renderSidebar(options, resolvers, messages)}` : ""}
 <div id="observablehq-center">${renderHeader(page.header, resolvers)}${
     toc.show ? html`\n${renderToc(findHeaders(page), toc.label)}` : ""
   }
 <main id="observablehq-main" class="observablehq${draft ? " observablehq--draft" : ""}">
-${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options)}
+${html.unsafe(rewriteHtml(page.body, resolvers))}</main>${renderFooter(page.footer, resolvers, options, messages)}
 </div>
 </body>
 </html>
@@ -137,19 +146,23 @@ function registerFile(
   })});`;
 }
 
-async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink}: Resolvers): Promise<Html> {
+async function renderSidebar(
+  options: RenderOptions,
+  {resolveImport, resolveLink}: Resolvers,
+  messages: ReturnType<typeof getFrameworkMessages>
+): Promise<Html> {
   const {home, pages, root, path, search} = options;
-  return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
-<label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
+  return html`<input id="observablehq-sidebar-toggle" type="checkbox" title="${messages.toggleSidebar}" data-title="${messages.toggleSidebar}">
+<label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle" title="${messages.toggleSidebar}" data-title="${messages.toggleSidebar}"></label>
 <nav id="observablehq-sidebar">
   <ol>
-    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
+    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle" title="${messages.toggleSidebar}" data-title="${messages.toggleSidebar}"></label>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
     }"><a href="${encodeURI(resolveLink("/"))}">${html.unsafe(home)}</a></li>
   </ol>${
     search
-      ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
+      ? html`\n  <div id="observablehq-search"><input type="search" placeholder="${messages.search}" aria-label="${messages.search}"></div>
   <div id="observablehq-search-results"></div>
   <script>{${html.unsafe(
     (await rollupClient(getClientPath("search-init.js"), root, path, {resolveImport, minify: true})).trim()
@@ -261,25 +274,34 @@ function renderHeader(header: MarkdownPage["header"], resolvers: HtmlResolvers):
     : null;
 }
 
-function renderFooter(footer: MarkdownPage["footer"], resolvers: HtmlResolvers, options: RenderOptions): Html | null {
+function renderFooter(
+  footer: MarkdownPage["footer"],
+  resolvers: HtmlResolvers,
+  options: RenderOptions,
+  messages: ReturnType<typeof getFrameworkMessages>
+): Html | null {
   const {path} = options;
   const link = options.pager ? findLink(path, options) : null;
   return link || footer
-    ? html`\n<footer id="observablehq-footer">${link ? renderPager(link, resolvers.resolveLink) : ""}${
+    ? html`\n<footer id="observablehq-footer">${link ? renderPager(link, resolvers.resolveLink, messages) : ""}${
         footer ? html`\n<div>${html.unsafe(rewriteHtml(footer, resolvers))}</div>` : ""
       }
 </footer>`
     : null;
 }
 
-function renderPager({prev, next}: PageLink, resolveLink: (href: string) => string): Html {
-  return html`\n<nav>${prev ? renderRel(prev, "prev", resolveLink) : ""}${
-    next ? renderRel(next, "next", resolveLink) : ""
+function renderPager(
+  {prev, next}: PageLink,
+  resolveLink: (href: string) => string,
+  messages: ReturnType<typeof getFrameworkMessages>
+): Html {
+  return html`\n<nav>${prev ? renderRel(prev, "prev", resolveLink, messages.previousPage) : ""}${
+    next ? renderRel(next, "next", resolveLink, messages.nextPage) : ""
   }</nav>`;
 }
 
-function renderRel(page: Page, rel: "prev" | "next", resolveLink: (href: string) => string): Html {
-  return html`<a rel="${rel}" href="${encodeURI(resolveLink(page.path))}"><span>${page.name}</span></a>`;
+function renderRel(page: Page, rel: "prev" | "next", resolveLink: (href: string) => string, label: string): Html {
+  return html`<a rel="${rel}" data-label="${label}" href="${encodeURI(resolveLink(page.path))}"><span>${page.name}</span></a>`;
 }
 
 function hasGoogleFonts(stylesheets: Set<string>): boolean {
