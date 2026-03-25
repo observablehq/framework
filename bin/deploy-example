@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+cd "examples/$1" \
+  && yarn install --pure-lockfile \
+  && yarn clean \
+  && yarn build \
+  && npx wrangler pages deploy --commit-dirty=true --branch=main --project-name="observable-framework-example-$1" dist
