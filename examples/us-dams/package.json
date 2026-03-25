@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "clean": "rimraf src/.observablehq/cache",
-    "build": "observable build",
+    "build": "Rscript -e \"install.packages(c('data.table', 'dplyr', 'readr'))\" && observable build",
     "dev": "observable preview",
     "deploy": "observable deploy",
     "observable": "observable"
