@@ -1,25 +1,31 @@
 #!/usr/bin/env sh
+set -e
+project="observable-framework-example-$1"
+
+cd "examples/$1"
+# Create the project if it does not exist
+npx vercel api --silent "/v10/projects/$project" 2>/dev/null || npx vercel api --silent /v10/projects -X POST \
+  -F "name=$project" \
+  -F "outputDirectory=dist" \
+  -F "framework=null"
+npx vercel link --yes --project "$project"
+npx vercel pull
 
 # We set:
-# - forcing platform because the image is not available for arm64
-# - setting user back to root to keep the volumes accessible
-# - volume node_modules because conflicting platforms might otherwise cause errors
-# - env R_LIBS because the default location is not writable; install might take a long time, so we want to cache the outcome.
+# - platform because the image is not available for arm64
+# - user back to root to keep the volumes writable
+# - volume node_modules because a conflicting host platform might otherwise cause errors
+# - volume r_libs to cache R package installations
 # - env COREPACK_ENABLE_AUTO_PIN to prevent changes to package.json
-cd "examples/$1" \
-  && docker run \
-    --rm \
-    --platform linux/amd64 \
-    --mount 'type=bind,src=.,dst=/project' \
-    --mount "type=volume,src=node_modules--$1,dst=/project/node_modules" \
-    --mount "type=volume,src=r_libs--$1,dst=/project/.r_libs" \
-    --user 0 \
-    --env 'R_LIBS=/project/.r_libs' \
-    --env 'COREPACK_ENABLE_AUTO_PIN=0' \
-    ghcr.io/observablehq/framework-runtime \
-    sh -c 'yarn install --pure-lockfile && yarn clean && yarn build' \
-  && npx wrangler pages deploy \
-    --commit-dirty=true \
-    --branch=main \
-    --project-name="observable-framework-example-$1" \
-    dist
+docker run \
+  --rm \
+  --platform "linux/amd64" \
+  --user "0" \
+  --mount "type=bind,src=.,dst=/project" \
+  --mount "type=volume,src=node_modules--$1,dst=/project/node_modules" \
+  --mount "type=volume,src=r_libs--$1,dst=/usr/local/lib/R/site-library" \
+  --env "COREPACK_ENABLE_AUTO_PIN=0" \
+  ghcr.io/observablehq/framework-runtime \
+  sh -c 'yarn install --pure-lockfile && yarn clean && npx vercel build --prod'
+
+npx vercel deploy --prod --prebuilt

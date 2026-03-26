@@ -1,6 +1,13 @@
 #!/usr/bin/env sh
-cd "examples/$1" \
-  && yarn install --pure-lockfile \
-  && yarn clean \
-  && yarn build \
-  && npx wrangler pages deploy --commit-dirty=true --branch=main --project-name="observable-framework-example-$1" dist
+set -e
+project="observable-framework-example-$1"
+
+cd "examples/$1"
+# Create the project if it does not exist
+npx vercel api --silent "/v10/projects/$project" 2>/dev/null || npx vercel api --silent /v10/projects -X POST \
+  -F "name=$project" \
+  -F "outputDirectory=dist" \
+  -F "framework=null"
+npx vercel link --yes --project "$project"
+
+npx vercel deploy --prod
