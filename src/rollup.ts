@@ -21,7 +21,7 @@ const STYLE_MODULES = {
   ...Object.fromEntries(THEMES.map(({name, path}) => [`observablehq:theme-${name}.css`, path]))
 };
 
-// These libraries are currently bundled in to a wrapper.
+// These libraries are currently bundled into a wrapper.
 const BUNDLED_MODULES = [
   "@observablehq/inputs", // observablehq:stdlib/inputs.js
   "@observablehq/inspector", // observablehq:runtime.js
