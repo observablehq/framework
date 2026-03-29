@@ -63,7 +63,7 @@
 - [`loader-github`](https://observablehq.observablehq.cloud/framework-example-loader-github/) - Load data from GitHub
 - [`loader-google-analytics`](https://observablehq.observablehq.cloud/framework-example-loader-google-analytics/) - Load data from Google Analytics
 - [`loader-julia-to-txt`](https://observablehq.observablehq.cloud/framework-example-loader-julia-to-txt/) - Generate TXT from Julia
-- [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generat Apache Parquet files
+- [`loader-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-parquet/) - Generate Apache Parquet files
 - [`loader-postgres`](https://observablehq.observablehq.cloud/framework-example-loader-postgres/) - Load data from PostgreSQL
 - [`loader-python-to-csv`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-csv/) - Generate CSV from Python
 - [`loader-python-to-parquet`](https://observablehq.observablehq.cloud/framework-example-loader-python-to-parquet) - Generate Apache Parquet from Python
