@@ -15,7 +15,7 @@ import {syntaxError} from "./syntaxError.js";
 export interface ParseOptions {
   /** The path to the source within the source root. */
   path: string;
-  /** If true, require the input to be an expresssion. */
+  /** If true, require the input to be an expression. */
   inline?: boolean;
   /** Any dynamic route parameters for observable.params. */
   params?: Params;
