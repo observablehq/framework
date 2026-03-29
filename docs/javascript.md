@@ -76,7 +76,7 @@ And here’s a line chart of Apple’s stock price using [Observable Plot](./lib
 Plot.lineY(aapl, {x: "Date", y: "Close"}).plot({y: {grid: true}})
 ```
 
-Code blocks automatically re-run when referenced [reactive variables](./reactivity) change, or when you edit the page during preview. The block below references the built-in variable `now` representing the current time in milliseconds; because `now` is reactive, this block runs sixty times a second and each each new span it returns replaces the one previously displayed.
+Code blocks automatically re-run when referenced [reactive variables](./reactivity) change, or when you edit the page during preview. The block below references the built-in variable `now` representing the current time in milliseconds; because `now` is reactive, this block runs sixty times a second and each new span it returns replaces the one previously displayed.
 
 ```js echo
 html`<span style=${{color: `hsl(${(now / 10) % 360} 100% 50%)`}}>Rainbow text!</span>`
