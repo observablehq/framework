@@ -10,7 +10,7 @@ describe("formatIsoDate", () => {
 });
 
 describe("formatLocaleDate", () => {
-  it("returns an string formatted for en-US", () => {
+  it("returns a string formatted for en-US", () => {
     assert.strictEqual(formatLocaleDate(new Date("2013-01-02")), "Jan 1, 2013");
     assert.strictEqual(formatLocaleDate(new Date("2013-01-02T08:00:00")), "Jan 2, 2013");
     assert.strictEqual(formatLocaleDate(new Date("2013-01-02T08:00:00Z")), "Jan 2, 2013");
