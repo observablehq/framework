@@ -36,7 +36,7 @@ The above data loader lives in `data/samples.arrow.js`, so we can load the data 
 const samples = FileAttachment("./data/samples.arrow").arrow();
 ```
 
-The `samples` table has two columns: `date` and `value`. We can display the table using `Inputs.table`, though note that the `date` column is represented as numbers intead of `Date` instances — some information was lost when serialized as Arrow. (Perhaps in the future the Apache Arrow JavaScript library could return `Date` instances for date columns? Though this is typically much slower than representing dates as numbers in typed arrays.) We use the **format** option to make these dates readable.
+The `samples` table has two columns: `date` and `value`. We can display the table using `Inputs.table`, though note that the `date` column is represented as numbers instead of `Date` instances — some information was lost when serialized as Arrow. (Perhaps in the future the Apache Arrow JavaScript library could return `Date` instances for date columns? Though this is typically much slower than representing dates as numbers in typed arrays.) We use the **format** option to make these dates readable.
 
 ```js echo
 Inputs.table(samples, {
@@ -46,7 +46,7 @@ Inputs.table(samples, {
 })
 ```
 
-Lastly, we can pass the table to `Plot.plot` to make a simple line chart. Again, since the `date` column is numbers, Plot will interpret these as quantitative values by default; by setting the **type** of the *x* scale to *utc*, we tell Plot to treat these values as dates intead, producing a more readable axis.
+Lastly, we can pass the table to `Plot.plot` to make a simple line chart. Again, since the `date` column is numbers, Plot will interpret these as quantitative values by default; by setting the **type** of the *x* scale to *utc*, we tell Plot to treat these values as dates instead, producing a more readable axis.
 
 ```js echo
 Plot.plot({
