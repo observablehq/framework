@@ -196,7 +196,7 @@ async function resolveResolvers(
     fileMethods: initialFileMethods,
     localImports: initialLocalImports,
     globalImports: initialGlobalImports,
-    staticImports: intialStaticImports,
+    staticImports: initialStaticImports,
     stylesheets: initialStylesheets
   }: {
     files?: Iterable<string> | null;
@@ -212,7 +212,7 @@ async function resolveResolvers(
   const fileMethods = new Set<string>(initialFileMethods);
   const localImports = new Set<string>(initialLocalImports);
   const globalImports = new Set<string>(initialGlobalImports);
-  const staticImports = new Set<string>(intialStaticImports);
+  const staticImports = new Set<string>(initialStaticImports);
   const stylesheets = new Set<string>(initialStylesheets);
   const resolutions = new Map<string, string>();
 
