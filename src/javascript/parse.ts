@@ -28,7 +28,7 @@ export const acornOptions: Options = {
 
 export interface JavaScriptNode {
   body: Program | Expression;
-  declarations: Identifier[] | null; // null for expressions that can’t declare top-level variables, a.k.a outputs
+  declarations: Identifier[] | null; // null for expressions that can’t declare top-level variables, a.k.a. outputs
   references: Identifier[]; // the unbound references, a.k.a. inputs
   files: FileExpression[];
   imports: ImportReference[];
