@@ -216,7 +216,7 @@ describe("normalizePath(path) with {cleanUrls: false} (deprecated)", () => {
   it("appends .html to extension-less links", () => {
     assert.strictEqual(normalize("foo"), "foo.html");
   });
-  it("does not append .html to extensioned links", () => {
+  it("does not append .html to links with extensions", () => {
     assert.strictEqual(normalize("foo.png"), "foo.png");
     assert.strictEqual(normalize("foo.html"), "foo.html");
     assert.strictEqual(normalize("foo.md"), "foo.md");
@@ -263,11 +263,11 @@ describe("normalizePath(path) with {cleanUrls: true} (deprecated)", () => {
   it("does not append .html to extension-less links", () => {
     assert.strictEqual(normalize("foo"), "foo");
   });
-  it("does not append .html to extensioned links", () => {
+  it("does not append .html to links with extensions", () => {
     assert.strictEqual(normalize("foo.png"), "foo.png");
     assert.strictEqual(normalize("foo.md"), "foo.md");
   });
-  it("removes .html from extensioned links", () => {
+  it("removes .html from links with extensions", () => {
     assert.strictEqual(normalize("foo.html"), "foo");
   });
   it("preserves absolute paths", () => {
@@ -312,7 +312,7 @@ describe("normalizePath(path) with {preserveExtension: true}", () => {
   it("appends .html to extension-less links", () => {
     assert.strictEqual(normalize("foo"), "foo.html");
   });
-  it("does not append .html to extensioned links", () => {
+  it("does not append .html to links with extensions", () => {
     assert.strictEqual(normalize("foo.png"), "foo.png");
     assert.strictEqual(normalize("foo.html"), "foo.html");
     assert.strictEqual(normalize("foo.md"), "foo.md");
@@ -359,11 +359,11 @@ describe("normalizePath(path) with {preserveExtension: false}", () => {
   it("does not append .html to extension-less links", () => {
     assert.strictEqual(normalize("foo"), "foo");
   });
-  it("does not append .html to extensioned links", () => {
+  it("does not append .html to links with extensions", () => {
     assert.strictEqual(normalize("foo.png"), "foo.png");
     assert.strictEqual(normalize("foo.md"), "foo.md");
   });
-  it("removes .html from extensioned links", () => {
+  it("removes .html from links with extensions", () => {
     assert.strictEqual(normalize("foo.html"), "foo");
   });
   it("preserves absolute paths", () => {

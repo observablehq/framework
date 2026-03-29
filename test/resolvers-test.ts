@@ -99,7 +99,7 @@ describe("resolveLink(href) with {preserveExtension: true}", () => {
     const normalize = await getResolveLink();
     assert.strictEqual(normalize("foo"), "./foo.html");
   });
-  it("does not append .html to extensioned links", async () => {
+  it("does not append .html to links with extensions", async () => {
     const normalize = await getResolveLink();
     assert.strictEqual(normalize("foo.png"), "./foo.png");
     assert.strictEqual(normalize("foo.html"), "./foo.html");
@@ -174,12 +174,12 @@ describe("resolveLink(href) with {preserveExtension: false}", () => {
     const normalize = await getResolveLink();
     assert.strictEqual(normalize("foo"), "./foo");
   });
-  it("does not append .html to extensioned links", async () => {
+  it("does not append .html to links with extensions", async () => {
     const normalize = await getResolveLink();
     assert.strictEqual(normalize("foo.png"), "./foo.png");
     assert.strictEqual(normalize("foo.md"), "./foo.md");
   });
-  it("removes .html from extensioned links", async () => {
+  it("removes .html from links with extensions", async () => {
     const normalize = await getResolveLink();
     assert.strictEqual(normalize("foo.html"), "./foo");
   });
