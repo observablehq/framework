@@ -98,7 +98,7 @@ const colorLegend = Plot.plot({
 
 ### 3. The DeckGL instance
 
-We create a DeckGL instance targetting the container defined in the layout. During development & preview, this code can run several times, so we take care to clean it up each time the code block runs:
+We create a DeckGL instance targeting the container defined in the layout. During development & preview, this code can run several times, so we take care to clean it up each time the code block runs:
 
 ```js echo
 const deckInstance = new DeckGL({
