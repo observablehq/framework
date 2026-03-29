@@ -5,7 +5,7 @@ export class Deferred<T> {
 
   constructor() {
     // The Promise constructor will re-set these before they can be observed,
-    // and so they can never be called.  Typescript doesn't know that though, so
+    // and so they can never be called. TypeScript doesn't know that though, so
     // assign throw-away functions. These throw errors in case something goes
     // wrong in the future.
     this.resolve = () => {
