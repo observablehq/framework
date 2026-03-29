@@ -103,7 +103,7 @@ const size2 = view(
 size2
 ```
 
-Passing a Map to checkbox is especially useful in conjunction with [d3.group](https://d3js.org/d3-array/group). For example, given a the sample `olympians` dataset of Olympic athletes, we can use d3.group to group them by gold medal count, and then checkbox to select the athletes for the chosen count. Note that the value of the checkbox will be an array of arrays, since d3.group returns a Map from key to array; use [*array*.flat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat) to merge these arrays if desired.
+Passing a Map to checkbox is especially useful in conjunction with [d3.group](https://d3js.org/d3-array/group). For example, given the sample `olympians` dataset of Olympic athletes, we can use d3.group to group them by gold medal count, and then checkbox to select the athletes for the chosen count. Note that the value of the checkbox will be an array of arrays, since d3.group returns a Map from key to array; use [*array*.flat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat) to merge these arrays if desired.
 
 ```js echo
 const goldAthletes = view(
