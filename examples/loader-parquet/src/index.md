@@ -40,7 +40,7 @@ The above data loader lives in `data/samples.parquet.js`, so we can load the dat
 const samples = FileAttachment("./data/samples.parquet").parquet();
 ```
 
-The `samples` table has two columns: `date` and `value`. We can display the table using `Inputs.table`, though note that the `date` column is represented as numbers instead of `Date` instances — some information was lost when serialized as Parquet. (Perhaps in the future the Apache Arrow JavaScript library could return `Date` instances for date columns? Though this is typically much slower than representing dates as numbers in typed arrays.) We use the **format** option to make these dates readable.
+The `samples` table has two columns: `date` and `value`. We can display the table using `Inputs.table`, though note that the `date` column is represented as numbers instead of `Date` instances — some information was lost when serialized as Parquet. (Perhaps, in the future, the Apache Arrow JavaScript library could return `Date` instances for date columns? Though this is typically much slower than representing dates as numbers in typed arrays.) We use the **format** option to make these dates readable.
 
 ```js echo
 Inputs.table(samples, {
