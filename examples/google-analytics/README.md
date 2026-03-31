@@ -26,4 +26,4 @@ The Google Analytics [API Quickstart](https://developers.google.com/analytics/de
 
 ## Charts
 
-The dashboard displays a variety of charts made using [Observable Plot](https://observablehq.com/plot/) with the key numbers at the top displayed as line charts. Active users are displayed with a horizon chart faceted by channel. The “new vs. returning” chart is a Marimekko. Finally, the activity by day and hour is a punchcard chart. The code for each of these charts is available in [`src/index.md`](./src/index.md?plain=1).
+The dashboard displays a variety of charts made using [Observable Plot](https://observablehq.com/plot/) with the key numbers at the top displayed as line charts. Rolling 28-day active users and engaged sessions are shown with horizon charts. Active users by channel (partitioned between New and Returning) is shown as a Marimekko chart. Finally, active and new usersby day and hour are punchcard charts. The code for each of these charts is available in [`src/index.md`](./src/index.md?plain=1).
