@@ -35,7 +35,7 @@ jobs:
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
+          path: docs/.observablehq/dist
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v5
