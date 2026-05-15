@@ -22,6 +22,7 @@ jobs:
         with:
           node-version: 24
           cache: yarn
+      - run: yarn --frozen-lockfile
       - id: date
         run: echo "date=$(TZ=America/Los_Angeles date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - id: cache-data
