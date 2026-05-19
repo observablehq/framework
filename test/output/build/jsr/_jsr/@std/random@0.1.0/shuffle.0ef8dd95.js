@@ -28,7 +28,7 @@ import { randomIntegerBetween } from "./integer_between.4528767d.js";
     ...items
   ];
   // https://en.wikipedia.org/wiki/Fisher–Yates_shuffle#The_modern_algorithm
-  // -- To shuffle an array a of n elements (indices 0..n-1):
+  // -- To shuffle an array of n elements (indices 0..n-1):
   // for i from n−1 down to 1 do
   for(let i = result.length - 1; i >= 1; --i){
     // j ← random integer such that 0 ≤ j ≤ i

@@ -340,22 +340,22 @@ export async function build(
         resolveFile(specifier) {
           const r = resolvers.resolveFile(specifier);
           const a = aliases.get(resolvePath(path, r));
-          return a ? relativePath(path, a) : specifier; // fallback to specifier if enoent
+          return a ? relativePath(path, a) : specifier; // fall back to specifier if enoent
         },
         resolveStylesheet(specifier) {
           const r = resolvers.resolveStylesheet(specifier);
           const a = aliases.get(resolvePath(path, r));
-          return a ? relativePath(path, a) : isPathImport(specifier) ? specifier : r; // fallback to specifier if enoent
+          return a ? relativePath(path, a) : isPathImport(specifier) ? specifier : r; // fall back to specifier if enoent
         },
         resolveImport(specifier) {
           const r = resolvers.resolveImport(specifier);
           const a = aliases.get(resolvePath(path, r));
-          return a ? relativePath(path, a) : isPathImport(specifier) ? specifier : r; // fallback to specifier if enoent
+          return a ? relativePath(path, a) : isPathImport(specifier) ? specifier : r; // fall back to specifier if enoent
         },
         resolveScript(specifier) {
           const r = resolvers.resolveScript(specifier);
           const a = aliases.get(resolvePath(path, r));
-          return a ? relativePath(path, a) : specifier; // fallback to specifier if enoent
+          return a ? relativePath(path, a) : specifier; // fall back to specifier if enoent
         }
       }
     });

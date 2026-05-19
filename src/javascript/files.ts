@@ -86,7 +86,7 @@ export function findFiles(
 
   // Find all calls to FileAttachment. If the call is part of a member
   // expression such as FileAttachment("foo.txt").csv, use this to determine the
-  // file method ("csv"); otherwise fallback to the to file extension to
+  // file method ("csv"); otherwise, fall back to the to file extension to
   // determine the method. Also enforce that FileAttachment is passed a single
   // static string literal.
   //

@@ -15,7 +15,7 @@ import {syntaxError} from "./syntaxError.js";
 export interface ParseOptions {
   /** The path to the source within the source root. */
   path: string;
-  /** If true, require the input to be an expresssion. */
+  /** If true, require the input to be an expression. */
   inline?: boolean;
   /** Any dynamic route parameters for observable.params. */
   params?: Params;
@@ -28,7 +28,7 @@ export const acornOptions: Options = {
 
 export interface JavaScriptNode {
   body: Program | Expression;
-  declarations: Identifier[] | null; // null for expressions that can’t declare top-level variables, a.k.a outputs
+  declarations: Identifier[] | null; // null for expressions that can’t declare top-level variables, a.k.a. outputs
   references: Identifier[]; // the unbound references, a.k.a. inputs
   files: FileExpression[];
   imports: ImportReference[];

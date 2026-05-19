@@ -123,7 +123,7 @@ describe("parseInfo(input)", () => {
   it("parses single-quoted strings with double quotes", () => {
     assert.deepStrictEqual(parseInfo("js echo='hello \"world\"'"), {tag: "js", attributes: {echo: 'hello "world"'}});
   });
-  it("parses attribute values with escaped entites", () => {
+  it("parses attribute values with escaped entities", () => {
     assert.deepStrictEqual(parseInfo("js echo=&quot;world&quot;"), {tag: "js", attributes: {echo: '"world"'}});
     assert.deepStrictEqual(parseInfo('js echo="&quot;world&quot;"'), {tag: "js", attributes: {echo: '"world"'}});
     assert.deepStrictEqual(parseInfo("js echo='&quot;world&quot;'"), {tag: "js", attributes: {echo: '"world"'}});

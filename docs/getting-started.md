@@ -276,7 +276,7 @@ const [longitude, latitude] = location;
 
 To personalize this code snippet to your current location, edit the <code>longitude</code> and <code>latitude</code> values above, or click the **Locate me** button above.
 
-<div class="caution">NWS does not provide forecasts for points outside the United States. If you specify such a location the API will error and the data loader will fail.</div>
+<div class="caution">NWS does not provide forecasts for points outside the United States. If you specify such a location, the API will error and the data loader will fail.</div>
 
 <div class="tip">If you would rather write your data loader in Python, R, or some other language, take a peek at the <a href="#next-steps">next steps</a> below before continuing.</div>
 

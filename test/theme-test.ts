@@ -86,7 +86,7 @@ describe("renderTheme", () => {
 @import url("observablehq:theme-alt.css");`
     );
   });
-  it("renders an wide theme", () => {
+  it("renders a wide theme", () => {
     assert.strictEqual(
       renderTheme(["air", "wide"]),
       `@import url("observablehq:default.css");

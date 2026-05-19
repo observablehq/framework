@@ -39,7 +39,7 @@ form.__ns__-toggle > label {
   margin-right: var(--length2);
 }
 
-/* Since toggles won’t wrap on narrow screens, collpase to content. */
+/* Since toggles won’t wrap on narrow screens, collapse to content. */
 form.__ns__-toggle > label,
 form.__ns__-toggle .__ns__-input {
   width: initial;

@@ -37,7 +37,7 @@ And here is how you can define the footnotes.
     belong to the previous footnote.
 ```
 
-Footnotes always appear at the bottom of the page, regardless of where they are defined. The remaining text is gibberish so that the page is taller, allowing you to try clicking on the footnote references to scroll down and then clicking on ther return link to scroll back up again.
+Footnotes always appear at the bottom of the page, regardless of where they are defined. The remaining text is gibberish so that the page is taller, allowing you to try clicking on the footnote references to scroll down and then clicking on the return link to scroll back up again.
 
 Aliquam porta accumsan eros, ut posuere lorem congue at. Cras lobortis metus sit amet ex ullamcorper lobortis. Donec vitae nulla dictum, cursus nunc auctor, facilisis tellus. Morbi iaculis ex sed nisi tristique, a auctor elit suscipit. Vestibulum varius, massa in laoreet facilisis, quam arcu dictum metus, sit amet ultricies erat metus non elit. Quisque fringilla gravida sapien non facilisis. Aliquam a ligula vitae tellus rutrum tincidunt. Integer mattis suscipit ex vel egestas. Aenean pharetra sit amet tellus ac tempus.
 

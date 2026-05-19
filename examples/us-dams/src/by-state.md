@@ -228,7 +228,7 @@ const damSearch = Inputs.search(damsSelectedState);
 const damSearchValue = Generators.input(damSearch);
 ```
 
-<!-- Create interactived map with deck.gl -->
+<!-- Create interactive map with deck.gl -->
 
 ```js
 import deck from "npm:deck.gl";
