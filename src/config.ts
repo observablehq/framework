@@ -94,6 +94,12 @@ interface DuckDBExtensionConfigSpec {
   load: unknown;
 }
 
+export type CodeExtensionFunction = (content: string, attributes: Record<string, string>) => string;
+
+export interface CodeExtensions {
+  [tag: string]: CodeExtensionFunction;
+}
+
 export interface Config {
   root: string; // defaults to src
   output: string; // defaults to dist
@@ -117,6 +123,7 @@ export interface Config {
   loaders: LoaderResolver;
   watchPath?: string;
   duckdb: DuckDBConfig;
+  codeExtensions: CodeExtensions; // defaults to {}
 }
 
 export interface ConfigSpec {
@@ -147,6 +154,7 @@ export interface ConfigSpec {
   preserveExtension?: unknown;
   markdownIt?: unknown;
   duckdb?: unknown;
+  codeExtensions?: unknown;
 }
 
 interface ScriptSpec {
@@ -283,6 +291,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const normalizePath = getPathNormalizer(spec);
   const duckdb = normalizeDuckDB(spec.duckdb);
+  const codeExtensions = normalizeCodeExtensions(spec.codeExtensions);
 
   // If this path ends with a slash, then add an implicit /index to the
   // end of the path. Otherwise, remove the .html extension (we use clean
@@ -334,7 +343,8 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     normalizePath,
     loaders: new LoaderResolver({root, interpreters}),
     watchPath,
-    duckdb
+    duckdb,
+    codeExtensions
   };
   if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
@@ -487,6 +497,17 @@ function normalizeInterpreters(spec: {[key: string]: unknown} = {}): {[key: stri
       return [String(key), normalizeArray(value, String)];
     })
   );
+}
+
+function normalizeCodeExtensions(spec: unknown): CodeExtensions {
+  if (spec == null) return {};
+  if (typeof spec !== "object") throw new Error("codeExtensions must be an object");
+  const extensions: CodeExtensions = {};
+  for (const [tag, fn] of Object.entries(spec)) {
+    if (typeof fn !== "function") throw new Error(`codeExtensions.${tag} must be a function`);
+    extensions[tag] = fn as CodeExtensionFunction;
+  }
+  return extensions;
 }
 
 function normalizeToc(spec: TableOfContentsSpec | boolean = true): TableOfContents {
