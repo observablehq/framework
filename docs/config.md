@@ -106,17 +106,35 @@ In this case, the path to the stylesheet is resolved relative to the page’s Ma
 
 The app’s title. If specified, this text is appended to page titles with a separating pipe symbol (“|”). For instance, a page titled “Sales” in an app titled “ACME, Inc.” will display “Sales | ACME, Inc.” in the browser’s title bar. See also the [**home** option](#home).
 
+## locale
+
+The app’s default locale, such as `en-US`, `fr-FR`, or `ar-EG`. This locale is used for Framework-owned UI defaults such as the footer date, search placeholder, pager labels, and other built-in labels. If [**lang**](#lang) is not specified, it defaults to the locale’s language subtag.
+
+Page-level YAML front matter may override the locale for an individual page.
+
+## lang
+
+The document language, used to set the root HTML `lang` attribute. If not specified, it defaults to the language subtag of [**locale**](#locale), if any.
+
+Page-level YAML front matter may override the language for an individual page.
+
+## dir
+
+The document direction, either `ltr` or `rtl`, used to set the root HTML `dir` attribute. If not specified, Framework derives the direction from the page language when possible.
+
+Page-level YAML front matter may override the direction for an individual page.
+
 ## sidebar
 
 Whether to show the sidebar. Defaults to true if **pages** is not empty.
 
 ## home <a href="https://github.com/observablehq/framework/releases/tag/v1.12.0" class="observablehq-version-badge" data-version="^1.12.0" title="Added in 1.12.0"></a>
 
-An HTML fragment to render the link to the home page in the top of the sidebar. Defaults to the [app’s title](#title), if any, and otherwise the word “Home”. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
+An HTML fragment to render the link to the home page in the top of the sidebar. Defaults to the [app’s title](#title), if any, and otherwise a localized equivalent of “Home” based on [**locale**](#locale) or [**lang**](#lang). If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
 
 ## pages
 
-An array containing pages and sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order.
+An array containing pages and sections. If not specified, it defaults to all Markdown files found in the source root in directory listing order. Pages without an inferred title use a localized equivalent of “Untitled” based on [**locale**](#locale) or [**lang**](#lang).
 
 Both pages and sections have a **name**, which typically corresponds to the page’s title. The name gets displayed in the sidebar. Sections are used to group related pages; each section must specify an array of **pages**. (Sections can only contain pages; nested sections are not currently supported.)
 
@@ -185,7 +203,7 @@ By default, the header is fixed to the top of the window. To instead have the he
 
 ## footer
 
-An HTML fragment to add to the footer. Defaults to “Built with Observable.” If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
+An HTML fragment to add to the footer. By default, Framework renders a localized “Built with Observable on [date].” footer based on [**locale**](#locale) or [**lang**](#lang), and page-level front matter locale overrides are respected. If specified as a function, receives an object with the page’s `title`, (front-matter) `data`, and `path`, and must return a string.
 
 For example, the following adds a link to the bottom of each page:
 
@@ -218,7 +236,7 @@ export interface TableOfContents {
 }
 ```
 
-If **show** is not set, it defaults to true. If **label** is not set, it defaults to “Contents”. The **toc** option can also be set to a boolean, in which case it is shorthand for **toc.show**.
+If **show** is not set, it defaults to true. If **label** is not set, it defaults to a localized equivalent of “Contents” based on [**locale**](#locale) or [**lang**](#lang). The **toc** option can also be set to a boolean, in which case it is shorthand for **toc.show**.
 
 If shown, the table of contents enumerates the second-level headings (H2 elements, such as `## Section name`) on the right-hand side of the page. The currently-shown section is highlighted in the table of contents.
 
@@ -232,7 +250,7 @@ toc: false
 
 ## search
 
-If true, enable [search](./search); defaults to false. The **search** option may also be specified as an object with an **index** method <a href="https://github.com/observablehq/framework/releases/tag/v1.9.0" class="observablehq-version-badge" data-version="^1.9.0" title="Added in 1.9.0"></a>, in which case additional results can be added to the search index. Each result is specified as:
+If true, enable [search](./search); defaults to false. Framework localizes the built-in search placeholder from [**locale**](#locale) or [**lang**](#lang). The **search** option may also be specified as an object with an **index** method <a href="https://github.com/observablehq/framework/releases/tag/v1.9.0" class="observablehq-version-badge" data-version="^1.9.0" title="Added in 1.9.0"></a>, in which case additional results can be added to the search index. Each result is specified as:
 
 ```ts run=false
 interface SearchResult {

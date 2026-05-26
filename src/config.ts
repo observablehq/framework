@@ -12,6 +12,7 @@ import {DUCKDB_CORE_ALIASES, DUCKDB_CORE_EXTENSIONS} from "./duckdb.js";
 import {visitFiles} from "./files.js";
 import {formatIsoDate, formatLocaleDate} from "./format.js";
 import type {FrontMatter} from "./frontMatter.js";
+import {getFrameworkLanguage, getFrameworkLocale, getFrameworkMessages} from "./i18n.js";
 import {findModule} from "./javascript/module.js";
 import {LoaderResolver} from "./loader.js";
 import {createMarkdownIt, parseMarkdownMetadata} from "./markdown.js";
@@ -100,6 +101,9 @@ export interface Config {
   base: string; // defaults to "/"
   home: string; // defaults to the (escaped) title, or "Home"
   title?: string;
+  lang?: string;
+  dir?: "ltr" | "rtl";
+  locale?: string;
   sidebar: boolean; // defaults to true if pages isn’t empty
   pages: (Page | Section<Page>)[];
   pager: boolean; // defaults to true
@@ -135,6 +139,9 @@ export interface ConfigSpec {
   interpreters?: unknown;
   home?: unknown;
   title?: unknown;
+  lang?: unknown;
+  dir?: unknown;
+  locale?: unknown;
   pages?: unknown;
   pager?: unknown;
   dynamicPaths?: unknown;
@@ -206,7 +213,8 @@ async function resolveDefaultConfig(root?: string): Promise<string | undefined> 
 
 let cachedPages: {key: string; pages: Page[]} | null = null;
 
-function readPages(root: string, md: MarkdownIt): Page[] {
+function readPages(root: string, md: MarkdownIt, locale?: string, lang?: string): Page[] {
+  const messages = getFrameworkMessages(locale, lang);
   const files: {file: string; source: string}[] = [];
   const hash = createHash("sha256");
   for (const file of visitFiles(root, (name) => !isParameterized(name))) {
@@ -225,7 +233,7 @@ function readPages(root: string, md: MarkdownIt): Page[] {
     if (data.draft) continue;
     const name = basename(file, ".md");
     const {pager = "main"} = data;
-    const page = {path: join("/", dirname(file), name), name: title ?? "Untitled", pager};
+    const page = {path: join("/", dirname(file), name), name: title ?? messages.untitled, pager};
     if (name === "index") pages.unshift(page);
     else pages.push(page);
   }
@@ -269,16 +277,20 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     markdownIt: spec.markdownIt as any
   });
   const title = spec.title === undefined ? undefined : String(spec.title);
-  const home = spec.home === undefined ? he.escape(title ?? "Home") : String(spec.home); // eslint-disable-line import/no-named-as-default-member
+  const locale = spec.locale === undefined ? undefined : String(spec.locale);
+  const lang = spec.lang === undefined ? getFrameworkLanguage(locale) : String(spec.lang);
+  const dir = spec.dir === undefined ? undefined : normalizeDir(spec.dir);
+  const messages = getFrameworkMessages(locale, lang);
+  const home = spec.home === undefined ? he.escape(title ?? messages.home) : String(spec.home); // eslint-disable-line import/no-named-as-default-member
   const pages = spec.pages === undefined ? undefined : normalizePages(spec.pages);
   const pager = spec.pager === undefined ? true : Boolean(spec.pager);
   const dynamicPaths = normalizeDynamicPaths(spec.dynamicPaths);
-  const toc = normalizeToc(spec.toc as any);
+  const toc = normalizeToc(spec.toc as any, messages.contents);
   const sidebar = spec.sidebar === undefined ? undefined : Boolean(spec.sidebar);
   const scripts = spec.scripts === undefined ? [] : normalizeScripts(spec.scripts);
   const head = pageFragment(spec.head === undefined ? "" : spec.head);
   const header = pageFragment(spec.header === undefined ? "" : spec.header);
-  const footer = pageFragment(spec.footer === undefined ? defaultFooter() : spec.footer);
+  const footer = pageFragment(spec.footer === undefined ? defaultFooter(locale, lang) : spec.footer);
   const search = spec.search == null || spec.search === false ? null : normalizeSearch(spec.search as any);
   const interpreters = normalizeInterpreters(spec.interpreters as any);
   const normalizePath = getPathNormalizer(spec);
@@ -301,6 +313,9 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     base,
     home,
     title,
+    lang,
+    dir,
+    locale,
     sidebar: sidebar!, // see below
     pages: pages!, // see below
     pager,
@@ -336,7 +351,7 @@ export function normalizeConfig(spec: ConfigSpec = {}, defaultRoot?: string, wat
     watchPath,
     duckdb
   };
-  if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md)});
+  if (pages === undefined) Object.defineProperty(config, "pages", {get: () => readPages(root, md, locale, lang)});
   if (sidebar === undefined) Object.defineProperty(config, "sidebar", {get: () => config.pages.length > 0});
   configCache.set(spec, config);
   return config;
@@ -378,11 +393,16 @@ function defaultGlobalStylesheets(): string[] {
   ];
 }
 
-function defaultFooter(): string {
-  const date = currentDate ?? new Date();
-  return `Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="${formatIsoDate(
-    date
-  )}">${formatLocaleDate(date)}</a>.`;
+function defaultFooter(projectLocale?: string, projectLang?: string): PageFragmentFunction {
+  return ({data}) => {
+    const locale = data.locale ?? projectLocale;
+    const lang = data.lang ?? getFrameworkLanguage(data.locale) ?? projectLang ?? getFrameworkLanguage(projectLocale);
+    const date = currentDate ?? new Date();
+    const messages = getFrameworkMessages(locale, lang);
+    return `${messages.footerPrefix} <a href="https://observablehq.com/" target="_blank">Observable</a> ${
+      messages.footerDatePreposition
+    } <a title="${formatIsoDate(date)}">${formatLocaleDate(date, getFrameworkLocale(locale, lang))}</a>.`;
+  };
 }
 
 function findDefaultRoot(defaultRoot?: string): string {
@@ -414,6 +434,12 @@ function normalizeBase(spec: unknown): string {
   if (!base.startsWith("/")) throw new Error(`base must start with slash: ${base}`);
   if (!base.endsWith("/")) base += "/";
   return base;
+}
+
+function normalizeDir(spec: unknown): "ltr" | "rtl" {
+  const dir = String(spec);
+  if (dir !== "ltr" && dir !== "rtl") throw new Error(`invalid dir: ${dir}`);
+  return dir;
 }
 
 function normalizeGlobalStylesheets(spec: unknown): string[] {
@@ -489,9 +515,9 @@ function normalizeInterpreters(spec: {[key: string]: unknown} = {}): {[key: stri
   );
 }
 
-function normalizeToc(spec: TableOfContentsSpec | boolean = true): TableOfContents {
+function normalizeToc(spec: TableOfContentsSpec | boolean = true, defaultLabel = "Contents"): TableOfContents {
   const toc = typeof spec === "boolean" ? {show: spec} : (spec as TableOfContentsSpec);
-  const label = toc.label === undefined ? "Contents" : String(toc.label);
+  const label = toc.label === undefined ? defaultLabel : String(toc.label);
   const show = toc.show === undefined ? true : Boolean(toc.show);
   return {label, show};
 }

@@ -3,6 +3,7 @@ import {resolve} from "node:path";
 import MarkdownIt from "markdown-it";
 import type {DuckDBConfig} from "../src/config.js";
 import {normalizeConfig as config, mergeToc, readConfig, setCurrentDate} from "../src/config.js";
+import {formatLocaleDate} from "../src/format.js";
 import {LoaderResolver} from "../src/loader.js";
 
 const DUCKDB_DEFAULTS: DuckDBConfig = {
@@ -28,10 +29,17 @@ describe("readConfig(undefined, root)", () => {
   before(() => setCurrentDate(new Date("2024-01-10T16:00:00")));
   after(() => setCurrentDate(null));
   it("imports the config file at the specified root", async () => {
-    const {md, loaders, paths, normalizePath, ...config} = await readConfig(undefined, "test/input/build/config");
+    const {md, loaders, paths, normalizePath, footer, ...config} = await readConfig(undefined, "test/input/build/config");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
     assert.strictEqual(typeof normalizePath, "function");
+    assert.strictEqual(typeof footer, "function");
+    if (typeof footer === "function") {
+      assert.strictEqual(
+        footer({title: null, data: {}, path: "index.md"}),
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.'
+      );
+    }
     assert.deepStrictEqual(config, {
       root: "test/input/build/config",
       output: "dist",
@@ -55,24 +63,32 @@ describe("readConfig(undefined, root)", () => {
         }
       ],
       title: undefined,
+      lang: undefined,
+      dir: undefined,
+      locale: undefined,
       home: "Home",
       toc: {label: "On this page", show: true},
       pager: true,
       scripts: [],
       head: "",
       header: "",
-      footer:
-        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: null,
       watchPath: resolve("test/input/build/config/observablehq.config.js"),
       duckdb: DUCKDB_DEFAULTS
     });
   });
   it("returns the default config if no config file is found", async () => {
-    const {md, loaders, paths, normalizePath, ...config} = await readConfig(undefined, "test/input/build/simple");
+    const {md, loaders, paths, normalizePath, footer, ...config} = await readConfig(undefined, "test/input/build/simple");
     assert(md instanceof MarkdownIt);
     assert(loaders instanceof LoaderResolver);
     assert.strictEqual(typeof normalizePath, "function");
+    assert.strictEqual(typeof footer, "function");
+    if (typeof footer === "function") {
+      assert.strictEqual(
+        footer({title: null, data: {}, path: "index.md"}),
+        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.'
+      );
+    }
     assert.deepStrictEqual(config, {
       root: "test/input/build/simple",
       output: "dist",
@@ -84,14 +100,15 @@ describe("readConfig(undefined, root)", () => {
       sidebar: true,
       pages: [{name: "Build test case", path: "/simple", pager: "main"}],
       title: undefined,
+      lang: undefined,
+      dir: undefined,
+      locale: undefined,
       home: "Home",
       toc: {label: "Contents", show: true},
       pager: true,
       scripts: [],
       head: "",
       header: "",
-      footer:
-        'Built with <a href="https://observablehq.com/" target="_blank">Observable</a> on <a title="2024-01-10T16:00:00">Jan 10, 2024</a>.',
       search: null,
       watchPath: undefined,
       duckdb: DUCKDB_DEFAULTS
@@ -109,10 +126,32 @@ describe("normalizeConfig(spec, root)", () => {
     assert.strictEqual(config({pages: []}, root).title, undefined);
     assert.strictEqual(config({title: undefined, pages: []}, root).title, undefined);
   });
+  it("accepts lang, dir, and locale", () => {
+    const c = config({pages: [], lang: "fr", dir: "ltr", locale: "fr-FR"}, root);
+    assert.strictEqual(c.lang, "fr");
+    assert.strictEqual(c.dir, "ltr");
+    assert.strictEqual(c.locale, "fr-FR");
+  });
   it("defaults the home to the escaped title", () => {
     assert.strictEqual(config({title: "dollar&pound", pages: []}, root).home, "dollar&amp;pound");
     assert.strictEqual(config({title: 42, pages: []}, root).home, "42");
     assert.strictEqual(config({title: null, pages: []}, root).home, "null");
+  });
+  it("localizes defaults from locale", () => {
+    setCurrentDate(new Date("2024-01-10T16:00:00"));
+    const c = config({pages: [], locale: "fr-FR"}, root);
+    assert.strictEqual(c.lang, "fr");
+    assert.strictEqual(c.home, "Accueil");
+    assert.deepStrictEqual(c.toc, {label: "Sommaire", show: true});
+    assert.strictEqual(
+      typeof c.footer === "function" ? c.footer({title: null, data: {}, path: "index.md"}) : c.footer,
+      `Créé avec <a href="https://observablehq.com/" target="_blank">Observable</a> le <a title="2024-01-10T16:00:00">${formatLocaleDate(new Date("2024-01-10T16:00:00"), "fr-FR")}</a>.`
+    );
+    setCurrentDate(null);
+  });
+  it("localizes untitled page fallbacks", () => {
+    const c = config({root: "test/input/build/files", locale: "fr-FR"});
+    assert.strictEqual(c.pages[0].name, "Sans titre");
   });
   it("populates default pages", () => {
     assert.deepStrictEqual(config({}, root).pages, [

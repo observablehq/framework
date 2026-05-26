@@ -72,6 +72,14 @@ describe("findLink(path, options)", () => {
     assert.deepStrictEqual(findLink("/b", config), {prev: a, next: c});
     assert.deepStrictEqual(findLink("/c", config), {prev: b, next: undefined});
   });
+  it("localizes the implicit home page label", () => {
+    const a = {name: "a", path: "/a", pager: "main"};
+    const config = normalizeConfig({pages: [a], locale: "fr-FR"});
+    assert.deepStrictEqual(findLink("/a", config), {
+      prev: {name: "Accueil", path: "/index", pager: "main"},
+      next: undefined
+    });
+  });
   it("normalizes / to /index", async () => {
     const config = normalizeConfig({pages: [{name: "Home", path: "/", pager: "main"}]});
     assert.strictEqual(findLink("/index", config), undefined);

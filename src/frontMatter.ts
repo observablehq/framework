@@ -4,6 +4,9 @@ import {yellow} from "./tty.js";
 
 export interface FrontMatter {
   title?: string | null;
+  lang?: string | null;
+  dir?: "ltr" | "rtl" | null;
+  locale?: string | null;
   toc?: {show?: boolean; label?: string};
   style?: string | null;
   theme?: string[];
@@ -36,6 +39,9 @@ export function normalizeFrontMatter(spec: any = {}): FrontMatter {
   if (spec == null || typeof spec !== "object") return frontMatter;
   const {title, sidebar, toc, index, keywords, draft, sql, head, header, footer, pager, style, theme} = spec;
   if (title !== undefined) frontMatter.title = stringOrNull(title);
+  if (spec.lang !== undefined) frontMatter.lang = stringOrNull(spec.lang);
+  if (spec.dir !== undefined) frontMatter.dir = normalizeDir(spec.dir);
+  if (spec.locale !== undefined) frontMatter.locale = stringOrNull(spec.locale);
   if (sidebar !== undefined) frontMatter.sidebar = Boolean(sidebar);
   if (toc !== undefined) frontMatter.toc = normalizeToc(toc);
   if (index !== undefined) frontMatter.index = Boolean(index);
@@ -70,4 +76,11 @@ function normalizeSql(spec: unknown): {[key: string]: string} {
   const sql: {[key: string]: string} = {};
   for (const key in spec) sql[key] = String(spec[key]);
   return sql;
+}
+
+function normalizeDir(spec: unknown): "ltr" | "rtl" | null {
+  if (spec == null || spec === false) return null;
+  const dir = String(spec);
+  if (dir !== "ltr" && dir !== "rtl") throw new Error(`invalid front matter dir: ${dir}`);
+  return dir;
 }

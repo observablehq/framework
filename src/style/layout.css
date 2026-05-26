@@ -101,11 +101,11 @@ body {
 }
 
 #observablehq-footer nav a[rel="prev"]::before {
-  content: "Previous page";
+  content: attr(data-label);
 }
 
 #observablehq-footer nav a[rel="next"]::before {
-  content: "Next page";
+  content: attr(data-label);
 }
 
 #observablehq-center {

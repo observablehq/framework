@@ -21,6 +21,16 @@ describe("normalizeFrontMatter(spec)", () => {
     assert.deepStrictEqual(normalizeFrontMatter({title: "foo"}), {title: "foo"});
     assert.deepStrictEqual(normalizeFrontMatter({title: {toString: () => "foo"}}), {title: "foo"});
   });
+  it("coerces lang, dir, and locale", () => {
+    assert.deepStrictEqual(normalizeFrontMatter({lang: 42}), {lang: "42"});
+    assert.deepStrictEqual(normalizeFrontMatter({lang: null}), {lang: null});
+    assert.deepStrictEqual(normalizeFrontMatter({locale: "fr-FR"}), {locale: "fr-FR"});
+    assert.deepStrictEqual(normalizeFrontMatter({locale: false}), {locale: null});
+    assert.deepStrictEqual(normalizeFrontMatter({dir: "ltr"}), {dir: "ltr"});
+    assert.deepStrictEqual(normalizeFrontMatter({dir: "rtl"}), {dir: "rtl"});
+    assert.deepStrictEqual(normalizeFrontMatter({dir: null}), {dir: null});
+    assert.throws(() => normalizeFrontMatter({dir: "auto"}), /invalid front matter dir/);
+  });
   it("coerces the toc to {show?, label?}", () => {
     assert.deepStrictEqual(normalizeFrontMatter({toc: false}), {toc: {show: false}});
     assert.deepStrictEqual(normalizeFrontMatter({toc: true}), {toc: {show: true}});
