@@ -92,7 +92,17 @@ db.queryRow("SELECT count() AS count FROM gaia")
 
 See the [DatabaseClient Specification](https://observablehq.com/@observablehq/database-client-specification) for more details on these methods.
 
-Finally, the `DuckDBClient.sql` method <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> takes the same arguments as `DuckDBClient.of` and returns the corresponding `db.sql` tagged template literal. The returned function can be used to redefine the built-in [`sql` tagged template literal](../sql#sql-literals) and thereby change the database used by [SQL code blocks](../sql), allowing you to query dynamically-registered tables (unlike the **sql** front matter option).
+## Configuring SQL code blocks
+
+In order to use a custom database for [`sql` code blocks](../sql#sql-code-blocks) Observable calls the function stored in the variable `sql` to run the queries. The database provides this functionality via the method `db.sql`, though we need to bind the database in order to use it for code blocks. This allows you to use dynamically-registered tables in SQL code blocks (unlike the **sql** front matter option).
+
+```js run=false
+const sql = db.sql.bind(db);
+```
+
+The returned function can be used to redefine the built-in [`sql` tagged template literal](../sql#sql-literals) and thereby change the database used by [SQL code blocks](../sql), allowing you to query dynamically-registered tables (unlike the **sql** front matter option).
+
+As a shortcut, the `DuckDBClient.sql` method <a href="https://github.com/observablehq/framework/releases/tag/v1.4.0" class="observablehq-version-badge" data-version="^1.4.0" title="Added in 1.4.0"></a> takes the same arguments as `DuckDBClient.of` and returns the corresponding `db.sql` tagged template literal.
 
 ```js
 const feed = view(Inputs.select(new Map([["M4.5+", "4.5"], ["M2.5+", "2.5"], ["All", "all"]]), {label: "Earthquake feed"}));
