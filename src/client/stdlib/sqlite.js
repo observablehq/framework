@@ -76,6 +76,9 @@ export class SQLiteDatabaseClient {
   queryTag(strings, ...params) {
     return [strings.join("?"), params];
   }
+  export() {
+    return this._db.export(this._db);
+  }
 }
 
 Object.defineProperty(SQLiteDatabaseClient.prototype, "dialect", {
