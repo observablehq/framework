@@ -27,6 +27,16 @@ The path to the source root; defaults to `src`. (Prior to <a href="https://githu
 
 The path to the output root; defaults to `dist`.
 
+## cacheExpiration
+
+The duration in seconds after which the cache is considered expired causing the data loader to reload the data.
+
+To set a cache expiration of 3600 seconds (one hour):
+
+```js run=false
+cacheExpiration: 3600
+```
+
 ## theme
 
 The theme name or names, if any; defaults to `default`. [Themes](./themes) affect visual appearance by specifying colors and fonts, or by augmenting default styles. The theme option is a shorthand alternative to specifying a [custom stylesheet](#style).
