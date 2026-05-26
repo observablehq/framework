@@ -46,6 +46,7 @@ export interface PreviewOptions {
   port?: number;
   origins?: string[];
   verbose?: boolean;
+  dependencies?: Set<string>;
 }
 
 export async function preview(options: PreviewOptions): Promise<PreviewServer> {
@@ -59,19 +60,22 @@ export class PreviewServer {
   private readonly _server: ReturnType<typeof createServer>;
   private readonly _socketServer: WebSocketServer;
   private readonly _verbose: boolean;
+  private readonly dependencies: Set<string> | undefined;
 
   private constructor({
     config,
     root,
     origins = [],
     server,
-    verbose
+    verbose,
+    dependencies
   }: {
     config?: string;
     root?: string;
     origins?: string[];
     server: Server;
     verbose: boolean;
+    dependencies?: Set<string>;
   }) {
     this._config = config;
     this._root = root;
@@ -81,6 +85,7 @@ export class PreviewServer {
     this._server.on("request", this._handleRequest);
     this._socketServer = new WebSocketServer({server: this._server});
     this._socketServer.on("connection", this._handleConnection);
+    this.dependencies = dependencies;
   }
 
   static async start({verbose = true, hostname, port, open, ...options}: PreviewOptions) {
@@ -178,6 +183,7 @@ export class PreviewServer {
         throw enoent(path);
       } else if (pathname.startsWith("/_file/")) {
         const path = pathname.slice("/_file".length);
+        if (this.dependencies) this.dependencies.add(path);
         const loader = loaders.find(path);
         if (!loader) throw enoent(path);
         send(req, await loader.load(), {root}).pipe(res);
