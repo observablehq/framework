@@ -4,7 +4,7 @@ export function input(element) {
   return observe((change) => {
     const event = eventof(element);
     let value = valueof(element);
-    const inputted = () => change(valueof(element));
+    const inputted = (event) => change(valueof(event.target));
     element.addEventListener(event, inputted);
     if (value !== undefined) change(value);
     return () => element.removeEventListener(event, inputted);
