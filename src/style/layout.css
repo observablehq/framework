@@ -235,6 +235,14 @@ body {
   z-index: 1;
 }
 
+/* Only <li> (and <script> and <template>) may be a child of <ol>, so the close button is
+ * wrapped in one. The wrapper generates no box, which keeps the list as the button's
+ * containing block: it stays where it was, pinned to the sticky first list rather than
+ * scrolling away with the sidebar's contents. */
+#observablehq-sidebar > ol > .observablehq-sidebar-close-item {
+  display: contents;
+}
+
 #observablehq-sidebar-close {
   position: absolute;
   top: 1rem;

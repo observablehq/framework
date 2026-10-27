@@ -39,7 +39,7 @@ export async function renderPage(page: MarkdownPage, options: RenderOptions & Re
 <html>
 <head>
 <meta charset="utf-8">${path === "/404" ? html`\n<base href="${preview ? "/" : base}">` : ""}
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="generator" content="Observable Framework v${process.env.npm_package_version}">
 ${
   page.title || title
@@ -143,13 +143,13 @@ async function renderSidebar(options: RenderOptions, {resolveImport, resolveLink
 <label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
 <nav id="observablehq-sidebar">
   <ol>
-    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
+    <li class="observablehq-sidebar-close-item" aria-hidden="true"><label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label></li>
     <li class="observablehq-link${
       normalizePath(path) === "/index" ? " observablehq-link-active" : ""
     }"><a href="${encodeURI(resolveLink("/"))}">${html.unsafe(home)}</a></li>
   </ol>${
     search
-      ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search"></div>
+      ? html`\n  <div id="observablehq-search"><input type="search" placeholder="Search" aria-label="Search"></div>
   <div id="observablehq-search-results"></div>
   <script>{${html.unsafe(
     (await rollupClient(getClientPath("search-init.js"), root, path, {resolveImport, minify: true})).trim()
