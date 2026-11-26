@@ -29,7 +29,10 @@ registerFile("../top.js", {"name":"../top.js","mimeType":"text/javascript","path
 registerFile("./hello.txt", {"name":"./hello.txt","mimeType":"text/plain","path":"../_file/foo/hello.5891b5b5.txt","lastModified":/* ts */1706742000000,"size":6});
 
 define({id: "261e010e", inputs: ["display","FileAttachment"], outputs: ["d3","bar","top"], body: async (display,FileAttachment) => {
-const [d3, {bar}, {top}] = await Promise.all([import("../_npm/d3@7.8.5/cd372fb8.js"), import("../_import/bar/bar.4460ccc2.js"), import("../_import/top.160847a6.js")]);
+const [$module0, $module1, $module2] = await Promise.all([import("../_npm/d3@7.8.5/cd372fb8.js"), import("../_import/bar/bar.4460ccc2.js"), import("../_import/top.160847a6.js")]);
+if (!("bar" in $module1)) throw new SyntaxError("The requested module '../bar/bar.js' does not provide an export named 'bar'");
+if (!("top" in $module2)) throw new SyntaxError("The requested module '/top.js' does not provide an export named 'top'");
+const [d3, {bar}, {top}] = [$module0, $module1, $module2];
 
 display(bar);
 display(top);
@@ -38,7 +41,9 @@ return {d3,bar,top};
 }});
 
 define({id: "ec24b17a", inputs: ["display"], outputs: ["foobar"], body: async (display) => {
-const {foobar} = await import("./foo%20bar.js");
+const $module = await import("./foo%20bar.js");
+if (!("foobar" in $module)) throw new SyntaxError("The requested module './foo%20bar.js' does not provide an export named 'foobar'");
+const {foobar} = $module;
 display(foobar);
 return {foobar};
 }});

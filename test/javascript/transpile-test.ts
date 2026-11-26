@@ -2,6 +2,8 @@ import assert from "node:assert";
 import {readdirSync, statSync} from "node:fs";
 import {mkdir, readFile, unlink, writeFile} from "node:fs/promises";
 import {basename, join, resolve} from "node:path/posix";
+import {pathToFileURL} from "node:url";
+import {temporaryDirectoryTask} from "tempy";
 import {isEnoent} from "../../src/error.js";
 import {parseJavaScript} from "../../src/javascript/parse.js";
 import type {TranspileModuleOptions} from "../../src/javascript/transpile.js";
@@ -92,6 +94,59 @@ describe("transpileJavaScript(input, options)", () => {
     const node = parseJavaScript("\ntest\n", {path: "index.js"});
     const body = transpileJavaScript(node, {id: "0", path: "index.js"});
     assert.strictEqual(body, 'define({id: "0", inputs: ["test","display"], body: async (test,display) => {\ndisplay(await(\ntest\n))\n}});\n'); // prettier-ignore
+  });
+});
+
+describe("the static imports of a JavaScript code block", () => {
+  // Runs the specified code block against a module at ./bar.js, and returns the result of the block.
+  async function run(
+    input: string,
+    module: string
+  ): Promise<{status: "fulfilled"; value: any} | {status: "rejected"; error: any}> {
+    const node = parseJavaScript(input, {path: "block.js"});
+    const code = transpileJavaScript(node, {id: "0", path: "block.js", resolveImport: mockResolveImport});
+    return temporaryDirectoryTask(async (root) => {
+      await mkdir(join(root, "_import"));
+      await writeFile(join(root, "package.json"), '{"type":"module"}');
+      await writeFile(join(root, "_import", "bar.js"), module);
+      await writeFile(
+        join(root, "block.js"),
+        `const outcomes = [];\nconst define = ({body}) => outcomes.push(body().then((value) => ({status: "fulfilled", value}), (error) => ({status: "rejected", error})));\n${code}\nexport {outcomes};\n` // prettier-ignore
+      );
+      const {outcomes} = await import(pathToFileURL(join(root, "block.js")).href);
+      return outcomes[0];
+    });
+  }
+
+  it("throws a SyntaxError for a named import that the module does not export", async () => {
+    const outcome = await run('import {doesNotExist} from "./bar.js";\ndoesNotExist();', "export const foo = 1;\n"); // prettier-ignore
+    assert.strictEqual(outcome.status, "rejected");
+    assert.ok(outcome.error instanceof SyntaxError);
+    assert.strictEqual(outcome.error.message, "The requested module './bar.js' does not provide an export named 'doesNotExist'"); // prettier-ignore
+  });
+  it("throws a SyntaxError for a default import that the module does not export", async () => {
+    const outcome = await run('import foo from "./bar.js";\nfoo();', "export const foo = 1;\n");
+    assert.strictEqual(outcome.status, "rejected");
+    assert.ok(outcome.error instanceof SyntaxError);
+    assert.strictEqual(
+      outcome.error.message,
+      "The requested module './bar.js' does not provide an export named 'default'"
+    );
+  });
+  it("does not throw for an export whose value is undefined", async () => {
+    const outcome = await run('import {foo} from "./bar.js";\nif (foo !== undefined) throw new Error("foo should be undefined");', "export let foo;\n"); // prettier-ignore
+    assert.strictEqual(outcome.status, "fulfilled");
+    assert.deepStrictEqual(outcome.value, {foo: undefined});
+  });
+  it("does not throw for a namespace import", async () => {
+    const outcome = await run('import * as bar from "./bar.js";\nbar.foo();', "export const foo = () => 123;\n"); // prettier-ignore
+    assert.strictEqual(outcome.status, "fulfilled");
+    assert.strictEqual(typeof outcome.value.bar.foo, "function");
+  });
+  it("checks each import of a block", async () => {
+    const outcome = await run('import {foo} from "./bar.js";\nimport {doesNotExist} from "./bar.js";\nfoo();', "export const foo = 1;\n"); // prettier-ignore
+    assert.strictEqual(outcome.status, "rejected");
+    assert.strictEqual(outcome.error.message, "The requested module './bar.js' does not provide an export named 'doesNotExist'"); // prettier-ignore
   });
 });
 
