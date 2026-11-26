@@ -25,7 +25,10 @@
 import {define} from "./_observablehq/client.00000001.js";
 
 define({id: "0e3025ad", inputs: ["display"], outputs: ["randomIntegerBetween","randomSeeded","prng"], body: async (display) => {
-const {randomIntegerBetween, randomSeeded} = await import("./_jsr/@std/random@0.1.0/mod.e50195f4.js");
+const $module = await import("./_jsr/@std/random@0.1.0/mod.e50195f4.js");
+if (!("randomIntegerBetween" in $module)) throw new SyntaxError("The requested module 'jsr:@std/random' does not provide an export named 'randomIntegerBetween'");
+if (!("randomSeeded" in $module)) throw new SyntaxError("The requested module 'jsr:@std/random' does not provide an export named 'randomSeeded'");
+const {randomIntegerBetween, randomSeeded} = $module;
 
 const prng = randomSeeded(1n);
 

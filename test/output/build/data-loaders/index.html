@@ -23,7 +23,9 @@ import {registerFile} from "./_observablehq/stdlib.00000003.js";
 registerFile("./test.txt", {"name":"./test.txt","mimeType":"text/plain","path":"./_file/test.f2ca1bb6.txt","lastModified":/* ts */1706742000000,"size":5});
 
 define({id: "05e74070", inputs: ["display"], outputs: ["test"], body: async (display) => {
-const {test} = await import("./_import/import-test.3349a02d.js");
+const $module = await import("./_import/import-test.3349a02d.js");
+if (!("test" in $module)) throw new SyntaxError("The requested module './import-test.js' does not provide an export named 'test'");
+const {test} = $module;
 
 display(await test);
 return {test};

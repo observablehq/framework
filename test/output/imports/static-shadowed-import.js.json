@@ -1,0 +1,169 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 119,
+    "body": [
+      {
+        "type": "ImportDeclaration",
+        "start": 0,
+        "end": 32,
+        "specifiers": [
+          {
+            "type": "ImportNamespaceSpecifier",
+            "start": 7,
+            "end": 15,
+            "local": {
+              "type": "Identifier",
+              "start": 12,
+              "end": 15,
+              "name": "bar"
+            }
+          }
+        ],
+        "source": {
+          "type": "Literal",
+          "start": 21,
+          "end": 31,
+          "value": "./bar.js",
+          "raw": "\"./bar.js\""
+        }
+      },
+      {
+        "type": "ImportDeclaration",
+        "start": 33,
+        "end": 68,
+        "specifiers": [
+          {
+            "type": "ImportSpecifier",
+            "start": 41,
+            "end": 44,
+            "imported": {
+              "type": "Identifier",
+              "start": 41,
+              "end": 44,
+              "name": "foo"
+            },
+            "local": {
+              "type": "Identifier",
+              "start": 41,
+              "end": 44,
+              "name": "foo"
+            }
+          }
+        ],
+        "source": {
+          "type": "Literal",
+          "start": 51,
+          "end": 67,
+          "value": "./other/foo.js",
+          "raw": "\"./other/foo.js\""
+        }
+      },
+      {
+        "type": "VariableDeclaration",
+        "start": 70,
+        "end": 91,
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 76,
+            "end": 90,
+            "id": {
+              "type": "Identifier",
+              "start": 76,
+              "end": 84,
+              "name": "$module0"
+            },
+            "init": {
+              "type": "Identifier",
+              "start": 87,
+              "end": 90,
+              "name": "foo"
+            }
+          }
+        ],
+        "kind": "const"
+      },
+      {
+        "type": "ExpressionStatement",
+        "start": 92,
+        "end": 118,
+        "expression": {
+          "type": "BinaryExpression",
+          "start": 92,
+          "end": 117,
+          "left": {
+            "type": "BinaryExpression",
+            "start": 92,
+            "end": 111,
+            "left": {
+              "type": "Identifier",
+              "start": 92,
+              "end": 100,
+              "name": "$module0"
+            },
+            "operator": "+",
+            "right": {
+              "type": "Identifier",
+              "start": 103,
+              "end": 111,
+              "name": "$module1"
+            }
+          },
+          "operator": "+",
+          "right": {
+            "type": "Identifier",
+            "start": 114,
+            "end": 117,
+            "name": "bar"
+          }
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 12,
+      "end": 15,
+      "name": "bar"
+    },
+    {
+      "type": "Identifier",
+      "start": 41,
+      "end": 44,
+      "name": "foo"
+    },
+    {
+      "type": "Identifier",
+      "start": 76,
+      "end": 84,
+      "name": "$module0"
+    }
+  ],
+  "references": [
+    {
+      "type": "Identifier",
+      "start": 103,
+      "end": 111,
+      "name": "$module1"
+    }
+  ],
+  "files": [],
+  "imports": [
+    {
+      "name": "./bar.js",
+      "type": "local",
+      "method": "static"
+    },
+    {
+      "name": "./other/foo.js",
+      "type": "local",
+      "method": "static"
+    }
+  ],
+  "expression": false,
+  "async": false
+}

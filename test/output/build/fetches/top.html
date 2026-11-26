@@ -26,7 +26,12 @@ registerFile("./top-data.csv", {"name":"./top-data.csv","mimeType":"text/csv","p
 registerFile("./top-data.json", {"name":"./top-data.json","mimeType":"application/json","path":"./_file/top-data.67358ed8.json","lastModified":/* ts */1706742000000,"size":10});
 
 define({id: "cb908c08", inputs: ["display"], outputs: ["fooCsvData","fooJsonData","topCsvData","topJsonData"], body: async (display) => {
-const {fooCsvData, fooJsonData, topCsvData, topJsonData} = await import("./_import/top.bacf54cc.js");
+const $module = await import("./_import/top.bacf54cc.js");
+if (!("fooCsvData" in $module)) throw new SyntaxError("The requested module '/top.js' does not provide an export named 'fooCsvData'");
+if (!("fooJsonData" in $module)) throw new SyntaxError("The requested module '/top.js' does not provide an export named 'fooJsonData'");
+if (!("topCsvData" in $module)) throw new SyntaxError("The requested module '/top.js' does not provide an export named 'topCsvData'");
+if (!("topJsonData" in $module)) throw new SyntaxError("The requested module '/top.js' does not provide an export named 'topJsonData'");
+const {fooCsvData, fooJsonData, topCsvData, topJsonData} = $module;
 
 display(fooJsonData);
 display(fooCsvData);

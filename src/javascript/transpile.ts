@@ -201,16 +201,68 @@ function rewriteImportDeclarations(
 
   const specifiers: string[] = [];
   const imports: string[] = [];
+  const sources: string[] = [];
   for (const node of declarations) {
     output.delete(node.start, node.end + +(output.input[node.end] === "\n"));
     specifiers.push(rewriteImportSpecifiers(node));
-    imports.push(`import(${annotatePath(resolve(getStringLiteralValue(node.source as StringLiteral)))})`);
+    const source = getStringLiteralValue(node.source as StringLiteral);
+    sources.push(source);
+    imports.push(`import(${annotatePath(resolve(source))})`);
   }
-  if (declarations.length > 1) {
-    output.insertLeft(0, `const [${specifiers.join(", ")}] = await Promise.all([${imports.join(", ")}]);\n`);
-  } else if (declarations.length === 1) {
-    output.insertLeft(0, `const ${specifiers[0]} = await ${imports[0]};\n`);
+  if (declarations.length === 0) return;
+  // A named or default import that the module does not export must fail like a
+  // static import does, instead of silently binding undefined, so the module
+  // namespaces are inspected before they are destructured.
+  const names = declarations.map(findImportedNames);
+  const checked = names.some((names) => names.length > 0);
+  const modules = checked ? declarations.map((_, i) => unusedName(body, declarations.length > 1 ? `$module${i}` : "$module")) : specifiers; // prettier-ignore
+  let code =
+    declarations.length > 1
+      ? `const [${modules.join(", ")}] = await Promise.all([${imports.join(", ")}]);\n`
+      : `const ${modules[0]} = await ${imports[0]};\n`;
+  if (checked) {
+    for (let i = 0; i < declarations.length; ++i) {
+      for (const name of names[i]) {
+        const message = `The requested module ${quote(sources[i])} does not provide an export named ${quote(name)}`;
+        code += `if (!(${JSON.stringify(name)} in ${modules[i]})) throw new SyntaxError(${JSON.stringify(message)});\n`;
+      }
+    }
+    code +=
+      declarations.length > 1
+        ? `const [${specifiers.join(", ")}] = [${modules.join(", ")}];\n`
+        : `const ${specifiers[0]} = ${modules[0]};\n`;
   }
+  output.insertLeft(0, code);
+}
+
+/** Returns the names that the default and named specifiers of the specified import declaration import. */
+function findImportedNames(node: ImportDeclaration): string[] {
+  const names = new Set<string>();
+  for (const specifier of node.specifiers) {
+    if (isDefaultSpecifier(specifier)) {
+      names.add("default");
+    } else if (!isNamespaceSpecifier(specifier)) {
+      names.add(getImportedValue(specifier));
+    }
+  }
+  return Array.from(names);
+}
+
+/** Returns the specified name, suffixed as needed so that it is not used as an identifier in the specified node. */
+function unusedName(node: Node, name: string): string {
+  const names = new Set<string>();
+  simple(node, {
+    Identifier(node) {
+      names.add(node.name);
+    }
+  });
+  while (names.has(name)) name += "_";
+  return name;
+}
+
+/** Returns the specified string as a single-quoted string literal, as browsers quote module and export names in this message. */
+function quote(string: string): string {
+  return !/['"\\\n\r]/.test(string) ? `'${string}'` : JSON.stringify(string);
 }
 
 function rewriteImportSpecifiers(node: ImportDeclaration): string {
@@ -233,6 +285,12 @@ function getLocalName(node: ImportSpecifier | ImportDefaultSpecifier): string {
 
 function getImportedName(node: ImportSpecifier): string {
   return node.imported.type === "Identifier" ? node.imported.name : node.imported.raw!;
+}
+
+function getImportedValue(node: ImportSpecifier): string {
+  return node.imported.type === "Identifier"
+    ? node.imported.name
+    : getStringLiteralValue(node.imported as StringLiteral);
 }
 
 function isDefaultSpecifier(

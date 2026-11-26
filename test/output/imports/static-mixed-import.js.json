@@ -1,0 +1,140 @@
+{
+  "body": {
+    "type": "Program",
+    "start": 0,
+    "end": 59,
+    "body": [
+      {
+        "type": "ImportDeclaration",
+        "start": 0,
+        "end": 45,
+        "specifiers": [
+          {
+            "type": "ImportDefaultSpecifier",
+            "start": 7,
+            "end": 8,
+            "local": {
+              "type": "Identifier",
+              "start": 7,
+              "end": 8,
+              "name": "d"
+            }
+          },
+          {
+            "type": "ImportSpecifier",
+            "start": 11,
+            "end": 22,
+            "imported": {
+              "type": "Literal",
+              "start": 11,
+              "end": 16,
+              "value": "a-b",
+              "raw": "\"a-b\""
+            },
+            "local": {
+              "type": "Identifier",
+              "start": 20,
+              "end": 22,
+              "name": "ab"
+            }
+          },
+          {
+            "type": "ImportSpecifier",
+            "start": 24,
+            "end": 27,
+            "imported": {
+              "type": "Identifier",
+              "start": 24,
+              "end": 27,
+              "name": "foo"
+            },
+            "local": {
+              "type": "Identifier",
+              "start": 24,
+              "end": 27,
+              "name": "foo"
+            }
+          }
+        ],
+        "source": {
+          "type": "Literal",
+          "start": 34,
+          "end": 44,
+          "value": "./bar.js",
+          "raw": "\"./bar.js\""
+        }
+      },
+      {
+        "type": "ExpressionStatement",
+        "start": 47,
+        "end": 58,
+        "expression": {
+          "type": "CallExpression",
+          "start": 47,
+          "end": 57,
+          "callee": {
+            "type": "Identifier",
+            "start": 47,
+            "end": 48,
+            "name": "d"
+          },
+          "arguments": [
+            {
+              "type": "CallExpression",
+              "start": 49,
+              "end": 56,
+              "callee": {
+                "type": "Identifier",
+                "start": 49,
+                "end": 51,
+                "name": "ab"
+              },
+              "arguments": [
+                {
+                  "type": "Identifier",
+                  "start": 52,
+                  "end": 55,
+                  "name": "foo"
+                }
+              ],
+              "optional": false
+            }
+          ],
+          "optional": false
+        }
+      }
+    ],
+    "sourceType": "module"
+  },
+  "declarations": [
+    {
+      "type": "Identifier",
+      "start": 7,
+      "end": 8,
+      "name": "d"
+    },
+    {
+      "type": "Identifier",
+      "start": 20,
+      "end": 22,
+      "name": "ab"
+    },
+    {
+      "type": "Identifier",
+      "start": 24,
+      "end": 27,
+      "name": "foo"
+    }
+  ],
+  "references": [],
+  "files": [],
+  "imports": [
+    {
+      "name": "./bar.js",
+      "type": "local",
+      "method": "static"
+    }
+  ],
+  "expression": false,
+  "async": false
+}
